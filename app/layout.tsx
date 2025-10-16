@@ -34,7 +34,7 @@ export default async function RootLayout({
       >
         <SidebarProvider defaultOpen={defaultOpen}>
           <AppSidebar />
-          <main>
+          <main className="h-full w-full">
             <SidebarTrigger />
             {children}
           </main>

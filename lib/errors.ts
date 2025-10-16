@@ -34,3 +34,10 @@ export class NoScrapeUrlsError extends Error {
         this.name = 'NoScrapeUrlsError';
     }
 }
+
+export class NoOpenAIKeyError extends Error {
+    constructor() {
+        super('OPENAI_API_KEY environment variable not set');
+        this.name = 'NoOpenAIKeyError';
+    }
+}

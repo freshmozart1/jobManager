@@ -1,6 +1,6 @@
 import { use } from "react";
 
-export default function FilteredJobsList({ filterInstructions }: { filterInstructions: Promise<string[]>; }) {
-    const _instructions = use<string[]>(filterInstructions);
-    return (<div>{_instructions.map((instruction, index) => <p key={index}>{instruction}</p>)}</div>);
+export default function FilteredJobsList({ filterAgent }: { filterAgent: FilterAgentPromise; }) {
+    const filterAgentResults = use<FilterAgentResult>(filterAgent);
+    return (<div>{filterAgentResults.jobs.map((job, index) => <p key={index}>{job.title}</p>)}</div>);
 }

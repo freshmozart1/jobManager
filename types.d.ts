@@ -31,11 +31,11 @@ type Job = {
 type ScrapeIdDocument = {
     scrapeId: string;
     cTimeMs: bigint;
-}
+};
 
 type ScrapeUrlDocument = {
     url: string;
-}
+};
 
 type PersonalInformationContact = {
     name: string;
@@ -159,4 +159,31 @@ type PromptDocument = {
     createdAt: Date;
     updatedAt: Date;
     prompt: string;
-}
+};
+
+type AgentRunRetryOptions = {
+    retries?: number;
+    baseDelayMs?: number;
+    maxDelayMs?: number;
+    jitterRatio?: number;
+    retryOn?: (info: {
+        status: number | null;
+        error: unknown;
+        attempt: number;
+    }) => boolean;
+    onRetry?: (info: {
+        attempt: number;
+        delayMs: number;
+        reason: string;
+    }) => void;
+    onRequestTooLarge?: () => Promise;
+};
+
+type FilterAgentResult = {
+    jobs: Job[];
+    rejects: Job[];
+    errors: unknown[];
+};
+
+type FilterAgentPromise = Promise<FilterAgentResult>;
+

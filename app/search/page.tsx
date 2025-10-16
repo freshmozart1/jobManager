@@ -1,12 +1,13 @@
 import FilteredJobsList from "@/components/filteredJobsList";
-import { getFilterInstructions } from "@/lib/prompts";
+import { runFilterAgent } from "@/lib/agents";
+
 import { Suspense } from "react";
 
 export default function SearchPage() {
     return (
         <>
             <Suspense fallback={<div>Initializing agent...</div>}>
-                <FilteredJobsList filterInstructions={getFilterInstructions()} />
+                <FilteredJobsList filterAgent={runFilterAgent()} />
             </Suspense>
         </>
     );

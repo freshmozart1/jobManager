@@ -120,7 +120,7 @@ function LoadingTable({ jobs }: { jobs: Job[] }) {
 export default function FilteredJobsList({ fetchJobs, filterAgent }: { fetchJobs: Promise<Job[]>; filterAgent: FilterAgentPromise; }) {
     const jobs = use<Job[]>(fetchJobs);
     return (
-        <div className="overflow-hidden rounded-md border">
+        <div className="overflow-hidden rounded-md border col-span-2 col-start-2">
             <Suspense fallback={<LoadingTable jobs={jobs} />}>
                 <FinalMergedTable jobs={jobs} filterAgent={filterAgent} />
             </Suspense>

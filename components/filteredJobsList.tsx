@@ -1,5 +1,5 @@
 'use client';
-import { use } from "react";
+import { Suspense, use } from "react";
 import {
     Table,
     TableBody,
@@ -30,56 +30,99 @@ const columns: ColumnDef<Job>[] = [
     }
 ];
 
-export default function FilteredJobsList({ filterAgent }: { filterAgent: FilterAgentPromise; }) {
+// Child component that waits for the filterAgent results and then renders the merged table.
+function FinalMergedTable({ jobs, filterAgent }: { jobs: Job[]; filterAgent: FilterAgentPromise; }) {
     const filterAgentResults = use<FilterAgentResult>(filterAgent);
+    const mergedJobs = (() => {
+        if (!filterAgentResults?.jobs?.length) return jobs;
+        const map = new Map<string, Job>();
+        for (const j of jobs) map.set(j.id, j);
+        for (const j of filterAgentResults.jobs) if (!map.has(j.id)) map.set(j.id, j);
+        return Array.from(map.values());
+    })();
+    const filteredIds = new Set(filterAgentResults.jobs.map(j => j.id));
     const table = useReactTable({
-        data: filterAgentResults.jobs,
+        data: mergedJobs,
         columns,
         getCoreRowModel: getCoreRowModel()
     });
-    // return (<div>{filterAgentResults.jobs.map((job, index) => <p key={index}>{job.title}</p>)}</div>);
-    return (<div className="overflow-hidden rounded-md border">
+    return (
         <Table>
             <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
                     <TableRow key={headerGroup.id}>
-                        {headerGroup.headers.map((header) => {
-                            return (
-                                <TableHead key={header.id}>
-                                    {header.isPlaceholder
-                                        ? null
-                                        : flexRender(
-                                            header.column.columnDef.header,
-                                            header.getContext()
-                                        )}
-                                </TableHead>
-                            )
-                        })}
+                        {headerGroup.headers.map((header) => (
+                            <TableHead key={header.id}>
+                                {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                            </TableHead>
+                        ))}
                     </TableRow>
                 ))}
             </TableHeader>
             <TableBody>
-                {table.getRowModel().rows?.length ? (
-                    table.getRowModel().rows.map((row) => (
-                        <TableRow
-                            key={row.id}
-                            data-state={row.getIsSelected() && "selected"}
-                        >
-                            {row.getVisibleCells().map((cell) => (
-                                <TableCell key={cell.id}>
-                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                </TableCell>
-                            ))}
-                        </TableRow>
-                    ))
-                ) : (
-                    <TableRow>
-                        <TableCell colSpan={columns.length} className="h-24 text-center">
-                            No results.
-                        </TableCell>
+                {table.getRowModel().rows.map((row) => (
+                    <TableRow
+                        key={row.id}
+                        data-state={row.getIsSelected() && 'selected'}
+                        className={filteredIds.has((row.original as Job).id) ? 'bg-green-50 dark:bg-green-900/30' : undefined}
+                    >
+                        {row.getVisibleCells().map((cell) => (
+                            <TableCell key={cell.id}>
+                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </TableCell>
+                        ))}
                     </TableRow>
-                )}
+                ))}
             </TableBody>
         </Table>
-    </div>);
+    );
+}
+
+// Fallback table shown while filterAgent (child) is still pending: first row is a loading indicator, followed by the original jobs.
+function LoadingTable({ jobs }: { jobs: Job[] }) {
+    const table = useReactTable({
+        data: jobs,
+        columns,
+        getCoreRowModel: getCoreRowModel()
+    });
+    return (
+        <Table>
+            <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                        {headerGroup.headers.map((header) => (
+                            <TableHead key={header.id}>
+                                {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                            </TableHead>
+                        ))}
+                    </TableRow>
+                ))}
+            </TableHeader>
+            <TableBody>
+                <TableRow key="loading-indicator">
+                    <TableCell colSpan={columns.length} className="text-sm text-muted-foreground">Filtering additional jobs…</TableCell>
+                </TableRow>
+                {table.getRowModel().rows.map((row) => (
+                    <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                        {row.getVisibleCells().map((cell) => (
+                            <TableCell key={cell.id}>
+                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </TableCell>
+                        ))}
+                    </TableRow>
+                ))}
+            </TableBody>
+        </Table>
+    );
+}
+
+export default function FilteredJobsList({ fetchJobs, filterAgent }: { fetchJobs: Promise<Job[]>; filterAgent: FilterAgentPromise; }) {
+    const jobs = use<Job[]>(fetchJobs);
+    return (
+        <div className="overflow-hidden rounded-md border">
+            <Suspense fallback={<LoadingTable jobs={jobs} />}>
+                <FinalMergedTable jobs={jobs} filterAgent={filterAgent} />
+            </Suspense>
+        </div>
+    );
 }

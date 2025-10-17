@@ -2,11 +2,9 @@
 import OpenAI from "openai";
 import { Agent, Runner, setTracingExportApiKey } from '@openai/agents';
 import { sleep } from "./sleep";
-import { NoApifyTokenError, NoDatabaseNameError, NoMongoDBConnectionStringError, NoOpenAIKeyError, NoScrapeUrlsError, ParsingAfterScrapeError } from "./errors";
+import { NoDatabaseNameError, NoMongoDBConnectionStringError, NoOpenAIKeyError } from "./errors";
 import { Db, MongoClient } from "mongodb";
-import { ApifyClient } from "apify-client";
-import { ZJob } from "./zodSchemas";
-import z, { ZodSchema } from "zod";
+import { scrapeJobs } from "@/lib/jobs";
 
 function extractSuggestedDelayMs(err: unknown): number | null {
     if (err && typeof err === 'object') {
@@ -85,27 +83,6 @@ async function safeCall<T>(ctx: string, fn: () => Promise<T>, opts: AgentRunRetr
         }
     }
 }
-async function scrapeJobs(db: Db, actorName: string, zodSchema: ZodSchema = z.array(ZJob)): Promise<Job[]> {
-    const APIFY_TOKEN = process.env.APIFY_TOKEN;
-    if (!APIFY_TOKEN) throw new NoApifyTokenError();
-    const apify = new ApifyClient({ token: APIFY_TOKEN });
-    const scrapeIds = db.collection<ScrapeIdDocument>("scrapeIds");
-    const scrapeUrls = db.collection<ScrapeUrlDocument>("scrapeUrls");
-    const idsFromJobsCollection = await db.collection<Job>("jobs").find().project<{ id: string }>({ id: 1 }).toArray().then(docs => new Set(docs.map(d => d.id)));
-    const latestScrapeIdDocument = await scrapeIds.find().sort("cTimeMs", -1).limit(1).next();
-    const parsedJobs = await zodSchema.safeParseAsync(latestScrapeIdDocument && Date.now() - Number(latestScrapeIdDocument.cTimeMs) < 864e5
-        ? await apify.dataset(latestScrapeIdDocument.scrapeId).listItems().then(r => r.items)
-        : await (async () => {
-            const urls = await scrapeUrls.find().toArray().then(d => d.map(x => x.url));
-            if (!urls.length) throw new NoScrapeUrlsError();
-            const { defaultDatasetId } = await apify.actor(actorName).call({ urls, count: 100 });
-            await scrapeIds.insertOne({ scrapeId: defaultDatasetId, cTimeMs: BigInt(Date.now()) });
-            return apify.dataset(defaultDatasetId).listItems().then(r => r.items);
-        })());
-    if (!parsedJobs.success) throw new ParsingAfterScrapeError(parsedJobs.error);
-    return parsedJobs.data.filter((job: Job) => !idsFromJobsCollection.has(job.id)); //TODO #4
-}
-
 async function fetchPersonalInformation(db: Db) {
     const personalInformationCollection = db.collection<PersonalInformation>("personalInformation");
     const fetch = async <T>(type: string, msg: string) => {

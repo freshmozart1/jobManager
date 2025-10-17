@@ -53,8 +53,12 @@ function FinalMergedTable({ jobs, filterAgent }: { jobs: Job[]; filterAgent: Fil
                 {table.getHeaderGroups().map((headerGroup) => (
                     <TableRow key={headerGroup.id}>
                         {headerGroup.headers.map((header) => (
-                            <TableHead key={header.id}>
-                                {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                            <TableHead key={header.id} className="max-w-[100px] w-[100px]">
+                                {header.isPlaceholder ? null : (
+                                    <div className="max-w-[100px] whitespace-normal break-words [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden">
+                                        {flexRender(header.column.columnDef.header, header.getContext())}
+                                    </div>
+                                )}
                             </TableHead>
                         ))}
                     </TableRow>
@@ -68,8 +72,10 @@ function FinalMergedTable({ jobs, filterAgent }: { jobs: Job[]; filterAgent: Fil
                         className={filteredIds.has((row.original as Job).id) ? 'bg-green-50 dark:bg-green-900/30' : undefined}
                     >
                         {row.getVisibleCells().map((cell) => (
-                            <TableCell key={cell.id}>
-                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            <TableCell key={cell.id} className="max-w-[100px] w-[100px] align-top">
+                                <div className="max-w-[100px] whitespace-normal break-words [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden">
+                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                </div>
                             </TableCell>
                         ))}
                     </TableRow>
@@ -92,8 +98,12 @@ function LoadingTable({ jobs }: { jobs: Job[] }) {
                 {table.getHeaderGroups().map((headerGroup) => (
                     <TableRow key={headerGroup.id}>
                         {headerGroup.headers.map((header) => (
-                            <TableHead key={header.id}>
-                                {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                            <TableHead key={header.id} className="max-w-[100px] w-[100px]">
+                                {header.isPlaceholder ? null : (
+                                    <div className="max-w-[100px] whitespace-normal break-words [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden">
+                                        {flexRender(header.column.columnDef.header, header.getContext())}
+                                    </div>
+                                )}
                             </TableHead>
                         ))}
                     </TableRow>
@@ -106,8 +116,10 @@ function LoadingTable({ jobs }: { jobs: Job[] }) {
                 {table.getRowModel().rows.map((row) => (
                     <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
                         {row.getVisibleCells().map((cell) => (
-                            <TableCell key={cell.id}>
-                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            <TableCell key={cell.id} className="max-w-[100px] w-[100px] align-top">
+                                <div className="max-w-[100px] whitespace-normal break-words [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical] overflow-hidden">
+                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                </div>
                             </TableCell>
                         ))}
                     </TableRow>

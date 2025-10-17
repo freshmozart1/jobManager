@@ -11,7 +11,7 @@ export const ZJob = z.object({
     companyLogo: z.string(),
     companyEmployeesCount: z.optional(z.number()),
     location: z.string(),
-    postedAt: z.string(),
+    postedAt: z.date(),
     salaryInfo: z.array(z.string()),
     salary: z.string(),
     benefits: z.array(z.string()),

@@ -9,7 +9,7 @@ type Job = {
     companyLogo: string;
     companyEmployeesCount?: number | undefined;
     location: string;
-    postedAt: string;
+    postedAt: Date;
     salaryInfo: string[];
     salary: string;
     benefits: string[];

@@ -21,7 +21,8 @@ const columns: ColumnDef<Job>[] = [
     },
     {
         accessorKey: 'postedAt',
-        header: 'Posted at'
+        header: 'Posted at',
+        cell: ({ row }) => (new Date(row.getValue('postedAt')).toLocaleDateString())
     },
     {
         accessorKey: 'applyUrl',

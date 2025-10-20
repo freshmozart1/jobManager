@@ -187,3 +187,4 @@ type FilterAgentResult = {
 
 type FilterAgentPromise = Promise<FilterAgentResult>;
 
+type JobWithNewFlag = Job & { new: boolean };

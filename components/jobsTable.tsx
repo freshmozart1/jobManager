@@ -1,16 +1,47 @@
 'use client';
 import { useFilterTableColumns } from "@/hooks/useFilterTableColumns";
-import { flexRender, getCoreRowModel, getSortedRowModel, SortingState, useReactTable, Table as TanStackTable } from "@tanstack/react-table";
+import { flexRender, getCoreRowModel, getSortedRowModel, SortingState, useReactTable, Table as TanStackTable, PaginationState, getPaginationRowModel, SortDirection } from "@tanstack/react-table";
 import { use, useState, useEffect } from "react";
-
+import {
+    Pagination,
+    PaginationContent,
+    PaginationItem,
+    PaginationLink,
+} from "@/components/ui/pagination"
 type JobsTableProps = {
     jobsPromise: Promise<Job[]>;
     filterAgent: FilterAgentPromise;
     className?: string;
 };
 
+export function JobsTableFooter({ table }: { table: TanStackTable<JobWithNewFlag> }) {
+    const pageButtons = table.getPageCount() <= 1 ? [] : Array.from({ length: table.getPageCount() }, (_, i) => <PaginationItem key={i}><PaginationLink onClick={() => table.setPageIndex(i)} isActive={table.getState().pagination.pageIndex === i}>{i + 1}</PaginationLink></PaginationItem>);
+    return (<Pagination>
+        <PaginationContent>
+            {pageButtons}
+        </PaginationContent>
+    </Pagination>);
+}
+
+function SVGSortIcon({ direction }: { direction: false | SortDirection }) {
+    const SVGBase = ({ d }: { d: string }) => <svg
+        aria-hidden="true"
+        className="size-3 text-foreground"
+        viewBox="0 0 12 12"
+        fill="currentColor"
+        stroke="none"
+        strokeWidth="0"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+    >
+        <path d={d} />
+    </svg>;
+    return <SVGBase d={direction === 'asc' ? "M6 3l-3 4h6L6 3z" : "M6 9l3-4H3l3 4z"} />;
+}
+
 export function JobsTable({ jobsPromise, filterAgent, className }: JobsTableProps) {
     const [sorting, setSorting] = useState<SortingState>([{ id: 'postedAt', desc: true }]);
+    const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
     const [filtering, setFiltering] = useState<boolean>(true);
     const columns = useFilterTableColumns();
     const [data, setData] = useState<JobWithNewFlag[]>(use(jobsPromise).map(j => ({ ...j, new: false })));
@@ -19,14 +50,13 @@ export function JobsTable({ jobsPromise, filterAgent, className }: JobsTableProp
         columns,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        onPaginationChange: setPagination,
         onSortingChange: setSorting,
         state: {
             sorting,
-        },
-        defaultColumn: {
-            maxSize: 25
+            pagination
         }
-
     });
 
     useEffect(() => {
@@ -45,19 +75,19 @@ export function JobsTable({ jobsPromise, filterAgent, className }: JobsTableProp
     }, [filterAgent]);
 
     return (
-        <table className={`text-sm ${className ?? ''}`}>
-            <thead style={{ maxWidth: table.getHeaderGroups().reduce((acc, group) => acc + group.headers.reduce((max, header) => Math.max(max, header.getSize()), 0), 0) }}>
+        <table className={`text-sm ${className ?? ''}`} style={{ minHeight: 370.5, overflow: 'hidden' }}>
+            <thead>
                 {table.getHeaderGroups().map(({ id: headerGroupId, headers }) => (
                     <tr key={headerGroupId}>
                         {headers.map(({ id: headerId, isPlaceholder, column: { columnDef: { header }, getIsSorted, id: columnId }, getContext }) => {
                             const isPostedAt = columnId === 'postedAt';
                             const sortedState = getIsSorted();
                             return (
-                                <th key={headerId} className="text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap border-b">
+                                <th key={headerId} className={`h-10 min-w-[32px] font-medium whitespace-nowrap border-b`}>
                                     {isPlaceholder ? null : (
                                         <div
                                             className={
-                                                "break-words overflow-hidden" +
+                                                "flex items-center" +
                                                 (isPostedAt ? " cursor-pointer select-none" : "")
                                             }
                                             onClick={
@@ -77,12 +107,9 @@ export function JobsTable({ jobsPromise, filterAgent, className }: JobsTableProp
                                             }
                                         >
                                             {flexRender(header, getContext())}
-                                            {isPostedAt
-                                                ? {
-                                                    asc: '🔼',
-                                                    desc: '🔽',
-                                                }[sortedState as string] ?? null
-                                                : null}
+                                            {isPostedAt ? (
+                                                <SVGSortIcon direction={sortedState} />
+                                            ) : null}
                                         </div>
                                     )}
                                 </th>
@@ -92,37 +119,28 @@ export function JobsTable({ jobsPromise, filterAgent, className }: JobsTableProp
                 ))}
             </thead>
             <tbody>
-                {table.getRowModel().rows.map(({ id: rowId, getVisibleCells, original }, rowIndex, { length: rowCount }) => (
+                {table.getRowModel().rows.map(({ id: rowId, getVisibleCells }, rowIndex, { length: rowCount }) => (
                     <tr
                         key={rowId}
-                        className={`${rowIndex < rowCount - 1 ? 'border-b' : ''} transition-colors hover:bg-muted/50`}
+                        className={`${rowIndex < rowCount - 1 ? 'border-b ' : ''}hover:bg-muted/50`}
                     >
                         {getVisibleCells().map(({ id: cellId, column, getContext }) => (
-                            <td key={cellId} className="p-2">
-                                <div className="flex gap-2 items-center">
-                                    {original.new && column.id === 'title'
-                                        ? <svg
-                                            className="size-4 grow-0 fill-green-100 stroke-1 stroke-green-200"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <circle
-                                                cx="12"
-                                                cy="12"
-                                                r="8"
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                            />
-                                        </svg>
-                                        : null
-                                    }
+                            column.columnDef.id !== 'new' ? <td key={cellId} className="p-2 align-middle">
+                                <div className="flex gap-2 items-start">
                                     <span className="line-clamp-2">{flexRender(column.columnDef.cell, getContext())}</span>
                                 </div>
-                            </td>
+                            </td> : <td key={cellId} className="p-2">{flexRender(column.columnDef.cell, getContext())}</td>
                         ))}
                     </tr>
                 ))}
             </tbody>
-        </table >
+            <tfoot>
+                <tr>
+                    <td colSpan={columns.length}>
+                        <JobsTableFooter table={table} />
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
     );
 }

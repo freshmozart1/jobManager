@@ -11,7 +11,7 @@ export default function SearchPage() {
             <JobsTable
                 jobsPromise={fetchJobs()}
                 filterAgent={runFilterAgentMock({ artificialDelayMsPerJob: 1000 })}
-                className="col-span-2 col-start-2"
+                className="col-span-4 col-start-1"
             />
         </Suspense>
     );

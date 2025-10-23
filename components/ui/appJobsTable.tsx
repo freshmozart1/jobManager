@@ -10,18 +10,9 @@ import {
 } from "@/components/ui/pagination"
 type JobsTableProps = {
     jobsPromise: Promise<Job[]>;
-    filterAgent: FilterAgentPromise;
+    filterAgent?: FilterAgentPromise;
     className?: string;
 };
-
-export function JobsTableFooter({ table }: { table: TanStackTable<JobWithNewFlag> }) {
-    const pageButtons = table.getPageCount() <= 1 ? [] : Array.from({ length: table.getPageCount() }, (_, i) => <PaginationItem key={i}><PaginationLink onClick={() => table.setPageIndex(i)} isActive={table.getState().pagination.pageIndex === i}>{i + 1}</PaginationLink></PaginationItem>);
-    return (<Pagination>
-        <PaginationContent>
-            {pageButtons}
-        </PaginationContent>
-    </Pagination>);
-}
 
 function SVGSortIcon({ direction }: { direction: false | SortDirection }) {
     const SVGBase = ({ d }: { d: string }) => <svg
@@ -39,7 +30,7 @@ function SVGSortIcon({ direction }: { direction: false | SortDirection }) {
     return <SVGBase d={direction === 'asc' ? "M6 3l-3 4h6L6 3z" : "M6 9l3-4H3l3 4z"} />;
 }
 
-export function JobsTable({ jobsPromise, filterAgent, className }: JobsTableProps) {
+export function AppJobsTable({ jobsPromise, className, filterAgent }: JobsTableProps) {
     const [sorting, setSorting] = useState<SortingState>([{ id: 'postedAt', desc: true }]);
     const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
     const [filtering, setFiltering] = useState<boolean>(true);
@@ -61,7 +52,7 @@ export function JobsTable({ jobsPromise, filterAgent, className }: JobsTableProp
 
     useEffect(() => {
         if (!filtering) return;
-        filterAgent.then(({ jobs }) => {
+        if (filterAgent) filterAgent.then(({ jobs }) => {
             if (!jobs?.length) return;
             setData(prev => {
                 const map = new Map<string, JobWithNewFlag>();
@@ -137,7 +128,21 @@ export function JobsTable({ jobsPromise, filterAgent, className }: JobsTableProp
             <tfoot>
                 <tr>
                     <td colSpan={columns.length}>
-                        <JobsTableFooter table={table} />
+                        <Pagination>
+                            <PaginationContent>
+                                {
+                                    table.getPageCount() <= 1
+                                        ? null
+                                        : Array.from({ length: table.getPageCount() }, (_, i) =>
+                                            <PaginationItem key={i}>
+                                                <PaginationLink onClick={() => table.setPageIndex(i)} isActive={table.getState().pagination.pageIndex === i}>
+                                                    {i + 1}
+                                                </PaginationLink>
+                                            </PaginationItem>
+                                        )
+                                }
+                            </PaginationContent>
+                        </Pagination>
                     </td>
                 </tr>
             </tfoot>

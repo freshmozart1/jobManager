@@ -1,4 +1,5 @@
-import { sleep } from './sleep';
+import { ObjectId } from 'mongodb';
+import { sleep } from "@/lib/utils";
 
 // Mock version of runFilterAgent for local testing without hitting external services.
 // It simulates filtering logic with adjustable acceptance ratio and optional error injection.
@@ -8,7 +9,7 @@ import { sleep } from './sleep';
 //       errorRate: 0.1,
 //       seed: 42
 //   });
-export async function runFilterAgentMock(options: {
+export async function runFilterAgentMock(promptId: ObjectId, options: {
     sampleJobs?: Job[];
     acceptRatio?: number; // 0..1 probability to accept a job
     errorRate?: number;   // 0..1 probability a job evaluation errors

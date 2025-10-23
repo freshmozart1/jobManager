@@ -28,11 +28,6 @@ type Job = {
     companyDescription?: string | undefined;
 };
 
-type ScrapeIdDocument = {
-    scrapeId: string;
-    cTimeMs: bigint;
-};
-
 type ScrapeUrlDocument = {
     url: string;
 };
@@ -153,8 +148,10 @@ type PersonalInformation = {
     career_goals: PersonalInformationCareerGoal[];
 };
 
+type AgentType = 'filter' | 'writer' | 'evaluator';
+
 type PromptDocument = {
-    agentType: string;
+    agentType: AgentType;
     name: string;
     createdAt: Date;
     updatedAt: Date;

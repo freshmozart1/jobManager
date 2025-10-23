@@ -1,3 +1,4 @@
+import { corsHeaders } from "@/lib/cors";
 import { MissingPromptIdInRequestBodyError, NoActorQueryParameterError, NoApifyTokenError, NoDatabaseNameError, NoOpenAIKeyError, NoPersonalInformationCareerGoalsError, NoPersonalInformationCertificationsError, NoPersonalInformationConstraintsError, NoPersonalInformationContactError, NoPersonalInformationEducationError, NoPersonalInformationEligibilityError, NoPersonalInformationExclusionsError, NoPersonalInformationExperienceError, NoPersonalInformationLanguageSpokenError, NoPersonalInformationMotivationsError, NoPersonalInformationPreferencesError, NoPersonalInformationSkillsError, NoScrapeUrlsError, PromptNotFoundError } from "@/lib/errors";
 import mongoPromise from "@/lib/mongodb";
 import { sleep } from "@/lib/utils";
@@ -108,6 +109,10 @@ async function fetchPersonalInformation(db: Db) {
     ]);
 }
 
+export function OPTIONS() {
+    return new NextResponse(null, { headers: corsHeaders() });
+}
+
 export async function POST(req: NextRequest) {
     const runner = new Runner({ workflowName: 'jobManager - filter jobs' });
     const { APIFY_TOKEN, DATABASE_NAME, OPENAI_API_KEY } = process.env;
@@ -133,7 +138,7 @@ export async function POST(req: NextRequest) {
                 .toArray()).map(d => d.id)
         )).has(j.id));
     const jobs: Job[] = [], rejects: Job[] = [], errors: unknown[] = [];
-    if (!scrapedJobs.length) return NextResponse.json({ jobs, rejects, errors }, { status: 200 });
+    if (!scrapedJobs.length) return NextResponse.json({ jobs, rejects, errors }, { status: 200, headers: corsHeaders(req.headers.get('origin') || undefined) });
     const promptDoc = await db.collection<PromptDocument>('prompts').findOne({ _id: promptId });
     if (!promptDoc) return NextResponse.json({}, { status: 404, statusText: PromptNotFoundError.name });
     let personalInformation: PersonalInformation;
@@ -163,7 +168,7 @@ export async function POST(req: NextRequest) {
         const statusText = (typeof e === 'object' && e !== null && 'statusText' in e && typeof (e as { statusText?: unknown }).statusText === 'string')
             ? (e as { statusText: string }).statusText
             : 'Error fetching personal information';
-        return NextResponse.json({}, { status, statusText });
+        return NextResponse.json({}, { status, statusText, headers: corsHeaders(req.headers.get('origin') || undefined) });
     }
     (await Promise.allSettled(scrapedJobs.map((job, jobIndex) => safeCall<Job | null>(`Filter job #${job.id} (${jobIndex + 1}/${scrapedJobs.length})`, async () => {
         const result = (await runner.run(
@@ -192,5 +197,5 @@ export async function POST(req: NextRequest) {
     });
     // Clone jobs before inserting to prevent MongoDB driver from mutating originals with _id
     if (jobs.length) await db.collection<Job>('jobs').insertMany(jobs.map(j => ({ ...j })));
-    return NextResponse.json({ jobs, rejects, errors }, { status: 200 });
+    return NextResponse.json({ jobs, rejects, errors }, { status: 200, headers: corsHeaders(req.headers.get('origin') || undefined) });
 }

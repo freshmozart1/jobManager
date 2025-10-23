@@ -2,6 +2,11 @@ import { InvalidAgentTypeQueryParameterError, MissingSortOrOrderQueryParameterEr
 import mongoPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { NextRequest, NextResponse } from "next/server";
+import { corsHeaders } from "@/lib/cors";
+
+export function OPTIONS() {
+    return new NextResponse(null, { headers: corsHeaders() });
+}
 
 export async function GET(req: NextRequest) {
     const DATABASE_NAME = process.env.DATABASE_NAME;
@@ -15,14 +20,14 @@ export async function GET(req: NextRequest) {
     const id = (new URL(req.url)).searchParams.get('id');
     if (id && ObjectId.isValid(id)) {
         const prompt = await db.collection<PromptDocument>('prompts').findOne({ _id: new ObjectId(id) });
-        return NextResponse.json(prompt ? prompt : {}, { status: prompt ? 200 : 404 });
+        return NextResponse.json(prompt ? prompt : {}, { status: prompt ? 200 : 404, headers: corsHeaders(req.headers.get('origin') || undefined) });
     }
     if ((sort && !order) || (!sort && order)) {
-        return NextResponse.json({}, { status: 400, statusText: MissingSortOrOrderQueryParameterError.name });
+        return NextResponse.json({}, { status: 400, statusText: MissingSortOrOrderQueryParameterError.name, headers: corsHeaders(req.headers.get('origin') || undefined) });
     }
 
     if (agentType && !['filter', 'writer', 'evaluator'].includes(agentType)) {
-        return NextResponse.json({}, { status: 400, statusText: InvalidAgentTypeQueryParameterError.name });
+        return NextResponse.json({}, { status: 400, statusText: InvalidAgentTypeQueryParameterError.name, headers: corsHeaders(req.headers.get('origin') || undefined) });
     }
     const prompts = await db.collection<PromptDocument>('prompts').find(agentType ? { agentType: agentType as AgentType } : {}, {
         sort: sort ? { [sort]: order === 'asc' ? 1 : -1 } : undefined,
@@ -30,6 +35,6 @@ export async function GET(req: NextRequest) {
     }).toArray();
     return NextResponse.json(
         prompts.length ? prompts : {},
-        { status: prompts.length ? 200 : 404 }
+        { status: prompts.length ? 200 : 404, headers: corsHeaders(req.headers.get('origin') || undefined) }
     );
 }

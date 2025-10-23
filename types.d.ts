@@ -151,6 +151,7 @@ type PersonalInformation = {
 type AgentType = 'filter' | 'writer' | 'evaluator';
 
 type PromptDocument = {
+    _id: string | ObjectId;
     agentType: AgentType;
     name: string;
     createdAt: Date;

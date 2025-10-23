@@ -9,7 +9,7 @@ import { sleep } from "@/lib/utils";
 //       errorRate: 0.1,
 //       seed: 42
 //   });
-export async function runFilterAgentMock(promptId: ObjectId, options: {
+export async function runFilterAgentMock(promptId: string | ObjectId, options: {
     sampleJobs?: Job[];
     acceptRatio?: number; // 0..1 probability to accept a job
     errorRate?: number;   // 0..1 probability a job evaluation errors

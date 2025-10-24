@@ -6,6 +6,33 @@ import { LoaderCircle } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
+function hasSalary(job: Job): boolean {
+    return typeof job.salary === 'string' && job.salary.trim() !== '';
+}
+
+function hasSalaryInfo(job: Job): boolean {
+    return Array.isArray(job.salaryInfo) && job.salaryInfo.some(info => typeof info === 'string' && info.trim() !== '');
+}
+
+function renderSalaryInfo(job: Job) {
+    if (!hasSalary(job) && !hasSalaryInfo(job)) return null;
+    return (
+        <div>
+            <h3 className="font-semibold text-sm text-muted-foreground mb-2">Salary Information</h3>
+            {hasSalary(job) && <p>{job.salary}</p>}
+            {hasSalaryInfo(job) && (
+                <ul className="list-disc list-inside">
+                    {job.salaryInfo
+                        .filter(info => typeof info === 'string' && info.trim() !== '')
+                        .map((info, idx) => (
+                            <li key={idx}>{info}</li>
+                        ))}
+                </ul>
+            )}
+        </div>
+    );
+}
+
 export default function JobDetailPage() {
     const params = useParams();
     const router = useRouter();
@@ -64,7 +91,7 @@ export default function JobDetailPage() {
             <Button onClick={() => router.back()} className="mb-4" variant="outline">
                 ← Back to Jobs
             </Button>
-            
+
             <Card>
                 <CardHeader>
                     <CardTitle className="text-2xl">{job.title}</CardTitle>
@@ -98,20 +125,7 @@ export default function JobDetailPage() {
                     </div>
 
                     {/* Salary Information */}
-                    {((job.salary && job.salary.trim() !== '') || (job.salaryInfo && job.salaryInfo.filter(info => info.trim() !== '').length > 0)) && (
-                        <div>
-                            <h3 className="font-semibold text-sm text-muted-foreground mb-2">Salary Information</h3>
-                            {job.salary && job.salary.trim() !== '' && <p>{job.salary}</p>}
-                            {job.salaryInfo && job.salaryInfo.filter(info => info.trim() !== '').length > 0 && (
-                                <ul className="list-disc list-inside">
-                                    {job.salaryInfo.filter(info => info.trim() !== '').map((info, idx) => (
-                                        <li key={idx}>{info}</li>
-                                    ))}
-                                </ul>
-                            )}
-                        </div>
-                    )}
-
+                    {renderSalaryInfo(job)}
                     {/* Benefits */}
                     {job.benefits && job.benefits.length > 0 && (
                         <div>
@@ -172,7 +186,7 @@ export default function JobDetailPage() {
                         <div className="border-t pt-6">
                             <h3 className="font-semibold text-lg mb-4">Job Description</h3>
                             {/* Note: HTML content comes from LinkedIn job descriptions stored in database */}
-                            <div 
+                            <div
                                 className="prose prose-sm max-w-none"
                                 dangerouslySetInnerHTML={{ __html: job.descriptionHtml }}
                             />
@@ -215,6 +229,6 @@ export default function JobDetailPage() {
                     )}
                 </CardContent>
             </Card>
-        </div>
+        </div >
     );
 }

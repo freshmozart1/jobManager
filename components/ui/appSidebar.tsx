@@ -32,7 +32,7 @@ export function AppSidebar() {
                         <SidebarMenu>
                             <SidebarMenuItem>
                                 <SidebarMenuButton asChild>
-                                    <a href="#">
+                                    <a href="/search">
                                         <Search />
                                         <span>Search</span>
                                     </a>

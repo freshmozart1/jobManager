@@ -1,0 +1,188 @@
+type Job = {
+    id: string;
+    trackingId: string;
+    refId: string;
+    link: string;
+    title: string;
+    companyName: string;
+    companyLinkedinUrl: string;
+    companyLogo: string;
+    companyEmployeesCount?: number | undefined;
+    location: string;
+    postedAt: Date;
+    salaryInfo: string[];
+    salary: string;
+    benefits: string[];
+    descriptionHtml: string;
+    applicantsCount: number | string;
+    applyUrl: string;
+    descriptionText: string;
+    seniorityLevel?: string | undefined;
+    employmentType: string;
+    jobFunction?: string | undefined;
+    industries?: string | undefined;
+    inputUrl: string;
+    companyAddress?: PostalAddress | undefined;
+    companyWebsite?: string | undefined;
+    companySlogan?: string | null | undefined;
+    companyDescription?: string | undefined;
+};
+
+type ScrapeUrlDocument = {
+    url: string;
+};
+
+type PersonalInformationContact = {
+    name: string;
+    email: string;
+    phone: string;
+    portfolio_urls: string[];
+};
+
+type PersonalInformationEligibility = {
+    work_authorization: {
+        region: string;
+        status: string;
+    }[];
+    security_clearance: string | null;
+    relocation: {
+        willing: boolean;
+        regions: string[];
+    };
+    remote: {
+        willing: boolean;
+        time_zone: string;
+    };
+    availability: {
+        notice_period_days: number;
+    };
+    work_schedule_constraints: {
+        weekends: boolean;
+        nights: boolean;
+    };
+};
+
+type PersonalInformationConstraints = {
+    salary_min: {
+        currency: string;
+        amount: number;
+    };
+    locations_allowed: string[];
+};
+
+type PersonalInformationPreferences = {
+    roles: string[];
+    seniority: string[];
+    company_size: string[];
+    work_mode: {
+        mode: string;
+    }[];
+    industries: string[];
+};
+
+type PersonalInformationSkill = {
+    name: string;
+    aliases: string[];
+    category: string;
+    level: string;
+    years: number;
+    last_used: string;
+    primary: boolean;
+};
+
+type PersonalInformationExperience = {
+    years_total: number;
+    domains: string[];
+    recent_titles: string[];
+    achievements: {
+        tag: string;
+        brief: string;
+    }[];
+};
+
+type PersonalInformationEducation = {
+    degree: string;
+    field: string;
+    institution: string;
+    graduation_year: number;
+};
+
+type PersonalInformationCertification = {
+    name: string;
+    issued: string;
+    expires: string | null;
+};
+
+type PersonalInformationLanguageSpoken = {
+    language: string;
+    level: string;
+};
+
+type PersonalInformationExclusions = {
+    avoid_roles: string[];
+    avoid_technologies: string[];
+    avoid_industries: string[];
+    avoid_companies: string[];
+};
+
+type PersonalInformationMotivation = {
+    topic: string;
+    description: string;
+    reason_lite: string;
+};
+
+type PersonalInformationCareerGoal = PersonalInformationMotivation;
+
+type PersonalInformation = {
+    contact: PersonalInformationContact,
+    eligibility: PersonalInformationEligibility,
+    constraints: PersonalInformationConstraints,
+    preferences: PersonalInformationPreferences,
+    skills: PersonalInformationSkill[],
+    experience: PersonalInformationExperience,
+    education: PersonalInformationEducation[],
+    certifications: PersonalInformationCertification[],
+    languages_spoken: PersonalInformationLanguageSpoken[],
+    exclusions: PersonalInformationExclusions,
+    motivations: PersonalInformationMotivation[],
+    career_goals: PersonalInformationCareerGoal[];
+};
+
+type AgentType = 'filter' | 'writer' | 'evaluator';
+
+type PromptDocument = {
+    _id: string | ObjectId;
+    agentType: AgentType;
+    name: string;
+    createdAt: Date;
+    updatedAt: Date;
+    prompt: string;
+};
+
+type AgentRunRetryOptions = {
+    retries?: number;
+    baseDelayMs?: number;
+    maxDelayMs?: number;
+    jitterRatio?: number;
+    retryOn?: (info: {
+        status: number | null;
+        error: unknown;
+        attempt: number;
+    }) => boolean;
+    onRetry?: (info: {
+        attempt: number;
+        delayMs: number;
+        reason: string;
+    }) => void;
+    onRequestTooLarge?: () => Promise;
+};
+
+type FilterAgentResult = {
+    jobs: Job[];
+    rejects: Job[];
+    errors: unknown[];
+};
+
+type FilterAgentPromise = Promise<FilterAgentResult>;
+
+type JobWithNewFlag = Job & { new: boolean };

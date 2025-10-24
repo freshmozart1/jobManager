@@ -1,7 +1,7 @@
 'use client';
 import { useFilterTableColumns } from "@/hooks/useFilterTableColumns";
 import { flexRender, getCoreRowModel, getSortedRowModel, SortingState, useReactTable, Table as TanStackTable, PaginationState, getPaginationRowModel, SortDirection } from "@tanstack/react-table";
-import { use, useState, useEffect } from "react";
+import { useState } from "react";
 import {
     Pagination,
     PaginationContent,
@@ -9,8 +9,7 @@ import {
     PaginationLink,
 } from "@/components/ui/pagination"
 type JobsTableProps = {
-    jobsPromise: Promise<Job[]>;
-    filterAgent?: FilterAgentPromise;
+    jobs: JobWithNewFlag[];
     className?: string;
 };
 
@@ -30,14 +29,12 @@ function SVGSortIcon({ direction }: { direction: false | SortDirection }) {
     return <SVGBase d={direction === 'asc' ? "M6 3l-3 4h6L6 3z" : "M6 9l3-4H3l3 4z"} />;
 }
 
-export function AppJobsTable({ jobsPromise, className, filterAgent }: JobsTableProps) {
+export function AppJobsTable({ jobs, className }: JobsTableProps) {
     const [sorting, setSorting] = useState<SortingState>([{ id: 'postedAt', desc: true }]);
     const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
-    const [filtering, setFiltering] = useState<boolean>(true);
     const columns = useFilterTableColumns();
-    const [data, setData] = useState<JobWithNewFlag[]>(use(jobsPromise).map(j => ({ ...j, new: false })));
     const table: TanStackTable<JobWithNewFlag> = useReactTable({
-        data,
+        data: jobs,
         columns,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
@@ -49,21 +46,6 @@ export function AppJobsTable({ jobsPromise, className, filterAgent }: JobsTableP
             pagination
         }
     });
-
-    useEffect(() => {
-        if (!filtering) return;
-        if (filterAgent) filterAgent.then(({ jobs }) => {
-            if (!jobs?.length) return;
-            setData(prev => {
-                const map = new Map<string, JobWithNewFlag>();
-                for (const j of prev) map.set(j.id, j);
-                for (const j of jobs) if (!map.has(j.id)) map.set(j.id, { ...j, new: true });
-                return Array.from(map.values());
-            });
-        });
-        return () => setFiltering(false);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filterAgent]);
 
     return (
         <table className={`text-sm ${className ?? ''}`} style={{ minHeight: 370.5, overflow: 'hidden' }}>

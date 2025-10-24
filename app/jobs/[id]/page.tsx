@@ -21,13 +21,11 @@ function renderSalaryInfo(job: Job) {
             <h3 className="font-semibold text-sm text-muted-foreground mb-2">Salary Information</h3>
             {hasSalary(job) && <p>{job.salary}</p>}
             {hasSalaryInfo(job) && (
-                <ul className="list-disc list-inside">
+                <p>
                     {job.salaryInfo
                         .filter(info => typeof info === 'string' && info.trim() !== '')
-                        .map((info, idx) => (
-                            <li key={idx}>{info}</li>
-                        ))}
-                </ul>
+                        .join(' - ')}
+                </p>
             )}
         </div>
     );

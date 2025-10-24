@@ -98,11 +98,11 @@ export default function JobDetailPage() {
                     </div>
 
                     {/* Salary Information */}
-                    {(job.salary || job.salaryInfo.length > 0) && (
+                    {((job.salary && job.salary.trim() !== '') || (job.salaryInfo && job.salaryInfo.length > 0)) && (
                         <div>
                             <h3 className="font-semibold text-sm text-muted-foreground mb-2">Salary Information</h3>
-                            {job.salary && <p>{job.salary}</p>}
-                            {job.salaryInfo.length > 0 && (
+                            {job.salary && job.salary.trim() !== '' && <p>{job.salary}</p>}
+                            {job.salaryInfo && job.salaryInfo.length > 0 && (
                                 <ul className="list-disc list-inside">
                                     {job.salaryInfo.map((info, idx) => (
                                         <li key={idx}>{info}</li>

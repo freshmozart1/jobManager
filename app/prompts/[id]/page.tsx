@@ -19,6 +19,7 @@ export default function PromptDetailPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [name, setName] = useState('');
     const [promptText, setPromptText] = useState('');
     const [agentType, setAgentType] = useState<AgentType>('filter');
@@ -51,6 +52,7 @@ export default function PromptDetailPage() {
     const handleSave = async () => {
         setSaving(true);
         setError(null);
+        setSuccessMessage(null);
         
         try {
             const response = await fetch(toUrl(`/api/prompts/${promptId}`), {
@@ -71,7 +73,8 @@ export default function PromptDetailPage() {
 
             const updatedPrompt = await response.json();
             setPrompt(updatedPrompt);
-            alert('Prompt updated successfully!');
+            setSuccessMessage('Prompt updated successfully!');
+            setTimeout(() => setSuccessMessage(null), 3000);
         } catch (err) {
             setError('Failed to save prompt');
             console.error('Error saving prompt:', err);
@@ -151,6 +154,10 @@ export default function PromptDetailPage() {
 
                     {error && (
                         <p className="text-destructive text-sm">{error}</p>
+                    )}
+
+                    {successMessage && (
+                        <p className="text-green-600 dark:text-green-400 text-sm">{successMessage}</p>
                     )}
 
                     <div className="flex gap-4">

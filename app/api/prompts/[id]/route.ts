@@ -48,7 +48,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const body = await req.json();
     const { name, prompt, agentType } = body;
     
-    if (!name || !prompt || !agentType) {
+    if (!name?.trim() || !prompt?.trim() || !agentType) {
         return NextResponse.json(
             { error: 'Missing required fields: name, prompt, and agentType are required' },
             { status: 400, headers: corsHeaders(origin) }

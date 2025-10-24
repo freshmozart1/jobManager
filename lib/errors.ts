@@ -42,7 +42,7 @@ export class NoScrapeUrlsError extends Error {
 
 export class NoBaseUrlError extends Error {
     constructor() {
-        super('BASE_URL environment variable not set');
+        super('NEXT_PUBLIC_BASE_URL environment variable not set');
         this.name = 'NoBaseUrlError';
     }
 }

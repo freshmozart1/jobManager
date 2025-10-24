@@ -130,13 +130,20 @@ export async function POST(req: NextRequest) {
     if (!urls.length) return NextResponse.json({}, { status: 500, statusText: NoScrapeUrlsError.name });
     const apify = new ApifyClient({ token: APIFY_TOKEN });
     const lastRun = await apify.actor(actorName).runs().list({ limit: 1, desc: true }).then(r => r.items[0]);
-    const scrapedJobs = (await apify.dataset<Job>(((lastRun && new Date(lastRun.startedAt).toDateString() === new Date().toDateString())
-        ? lastRun
-        : await apify.actor(actorName).call({ urls, count: 100 })).defaultDatasetId).listItems()).items.filter(async j => !(new Set(
-            (await db.collection<{ id: string }>("jobs")
-                .find({}, { projection: { _id: 0, id: 1 } })
-                .toArray()).map(d => d.id)
-        )).has(j.id));
+    let scrapedJobs;
+    if (lastRun && lastRun.startedAt.toDateString() === new Date().toDateString()) {
+        scrapedJobs = (await apify.dataset<Job>(lastRun.defaultDatasetId!).listItems()).items;
+    } else {
+        scrapedJobs = (await apify.actor(actorName).call({ urls, count: 100 }).then(run =>
+            apify.dataset<Job>(run.defaultDatasetId!).listItems()
+        )).items;
+    }
+    const existingJobIdsSet = new Set(
+        (await db.collection<{ id: string }>("jobs")
+            .find({}, { projection: { 'id': 1 } })
+            .toArray()).map(d => d.id)
+    );
+    scrapedJobs = scrapedJobs.filter(j => !existingJobIdsSet.has(j.id));
     const jobs: Job[] = [], rejects: Job[] = [], errors: unknown[] = [];
     if (!scrapedJobs.length) return NextResponse.json({ jobs, rejects, errors }, { status: 200, headers: corsHeaders(req.headers.get('origin') || undefined) });
     const promptDoc = await db.collection<PromptDocument>('prompts').findOne({ _id: promptId });

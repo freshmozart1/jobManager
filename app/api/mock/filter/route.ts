@@ -1,15 +1,9 @@
-import { ObjectId } from 'mongodb';
+import { MissingPromptIdInRequestBodyError, NoActorQueryParameterError } from "@/lib/errors";
 import { sleep } from "@/lib/utils";
+import { ObjectId } from "mongodb";
+import { NextRequest, NextResponse } from "next/server";
 
-// Mock version of runFilterAgent for local testing without hitting external services.
-// It simulates filtering logic with adjustable acceptance ratio and optional error injection.
-// Usage example:
-//   const result = await runFilterAgentMock({
-//       acceptRatio: 0.5,
-//       errorRate: 0.1,
-//       seed: 42
-//   });
-export async function runFilterAgentMock(promptId: string | ObjectId, options: {
+async function runFilterAgentMock(promptId: string | ObjectId, options: {
     sampleJobs?: Job[];
     acceptRatio?: number; // 0..1 probability to accept a job
     errorRate?: number;   // 0..1 probability a job evaluation errors
@@ -61,4 +55,19 @@ export async function runFilterAgentMock(promptId: string | ObjectId, options: {
     }
 
     return { jobs: accepted.map(j => ({ ...j })), rejects: rejected, errors };
+}
+
+export async function POST(req: NextRequest) {
+    const { promptId: promptIdRaw, actorName } = await req.json() as { promptId?: string; actorName?: string; };
+    const promptId = promptIdRaw && ObjectId.isValid(promptIdRaw) ? new ObjectId(promptIdRaw) : undefined;
+    if (!promptId) return NextResponse.json({}, { status: 400, statusText: MissingPromptIdInRequestBodyError.name });
+    if (!actorName) return NextResponse.json({}, { status: 400, statusText: NoActorQueryParameterError.name });
+    return NextResponse.json(
+        await runFilterAgentMock(promptId, {
+            acceptRatio: 0.7,
+            errorRate: 0.05,
+            artificialDelayMsPerJob: 1000
+        }),
+        { status: 200 }
+    );
 }

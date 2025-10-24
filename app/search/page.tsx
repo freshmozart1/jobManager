@@ -22,7 +22,7 @@ export default function SearchPage() {
         });
         return () => {
             if (controller.signal.aborted === false) {
-                controller.abort(); //todo: provide a reason why the fetch is being aborted
+                controller.abort('Component cleanup: either unmounting or dependencies changed');
             }
         };
     }, [toUrl]);

@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import useToUrl from '@/hooks/useToUrl';
 import { LoaderCircle } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 
 export default function JobDetailPage() {
     const params = useParams();
+    const router = useRouter();
     const jobId = params.id as string;
     const toUrl = useToUrl();
     const [job, setJob] = useState<Job | null>(null);
@@ -53,14 +54,14 @@ export default function JobDetailPage() {
         return (
             <div className="w-full h-svh flex flex-col gap-4 items-center justify-center">
                 <p className="text-destructive">{error || 'Job not found'}</p>
-                <Button onClick={() => window.history.back()}>Go Back</Button>
+                <Button onClick={() => router.back()}>Go Back</Button>
             </div>
         );
     }
 
     return (
         <div className="container mx-auto p-6 max-w-4xl">
-            <Button onClick={() => window.history.back()} className="mb-4" variant="outline">
+            <Button onClick={() => router.back()} className="mb-4" variant="outline">
                 ← Back to Jobs
             </Button>
             
@@ -163,6 +164,7 @@ export default function JobDetailPage() {
                     {/* Job Description */}
                     <div className="border-t pt-6">
                         <h3 className="font-semibold text-lg mb-4">Job Description</h3>
+                        {/* Note: HTML content comes from LinkedIn job descriptions stored in database */}
                         <div 
                             className="prose prose-sm max-w-none"
                             dangerouslySetInnerHTML={{ __html: job.descriptionHtml }}

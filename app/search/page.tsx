@@ -20,7 +20,11 @@ export default function SearchPage() {
             setDbJobs(jobs);
             setPrompts(prompts);
         });
-        return () => controller.abort();
+        return () => {
+            if (controller.signal.aborted === false) {
+                controller.abort(); //todo: provide a reason why the fetch is being aborted
+            }
+        };
     }, [toUrl]);
 
     useEffect(() => {

@@ -13,7 +13,7 @@ Job Manager is a web application that scrapes, stores, and displays job listings
 - **Language**: TypeScript 5
 - **Styling**: TailwindCSS 4 with Tailwind Animate CSS
 - **Database**: MongoDB
-- **UI Components**: Radix UI (Dialog, Avatar, Separator, Slot, Tooltip)
+- **UI Components**: [shadcn/ui](https://ui.shadcn.com/docs) on top of Radix UI primitives (Dialog, Avatar, Separator, Slot, Tooltip)
 - **Data Tables**: TanStack React Table
 - **AI/ML**: OpenAI API and OpenAI Agents
 - **Web Scraping**: Apify Client
@@ -58,7 +58,7 @@ Job Manager is a web application that scrapes, stores, and displays job listings
 - Avoid `any` - use `unknown` or proper types instead
 
 ### Naming Conventions
-- **Files**: Use lowercase with hyphens for multi-word files (e.g., `job-card.tsx`)
+- **Files**: Use camelCase for multi-word files (e.g., `jobCard.tsx`) and add 'app' prefix (e.g., `appJobCard.tsx`) to UI components in the `/components` directory
 - **Components**: Use PascalCase (e.g., `JobCard`)
 - **Functions/Variables**: Use camelCase (e.g., `fetchJobs`, `jobData`)
 - **Types**: Use PascalCase (e.g., `Job`, `PersonalInformationContact`)
@@ -69,7 +69,7 @@ Job Manager is a web application that scrapes, stores, and displays job listings
 - Prefer `export default function ComponentName()` for page components
 - Use React Server Components by default (Next.js App Router)
 - Add `'use client'` directive only when client-side features are needed
-- Use Next.js built-in components: `Image`, `Link`, etc.
+- Use Next.js built-in components: `Image`, `Link`, if there are no shadcn/ui equivalents
 - Handle async operations properly in Server Components
 
 ### Styling
@@ -95,6 +95,7 @@ Job Manager is a web application that scrapes, stores, and displays job listings
 
 ### Error Handling
 - Use custom error classes from `@/lib/errors`
+- Always add new error classes in `@/lib/errors.ts` instead of inline errors
 - Return proper HTTP status codes and status text
 - Handle database connection errors gracefully
 - Validate input parameters before processing

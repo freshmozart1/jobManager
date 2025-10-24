@@ -57,7 +57,7 @@ export default function SearchPage() {
                 }
             }).finally(() => setPromptId(null));
         }
-        return () => controller.abort();
+        return () => controller.abort('Component cleanup: either unmounting or dependencies changed');
     }, [promptId, toUrl]);
 
     return (

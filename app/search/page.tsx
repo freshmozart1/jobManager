@@ -20,7 +20,11 @@ export default function SearchPage() {
             setDbJobs(jobs);
             setPrompts(prompts);
         });
-        return () => controller.abort();
+        return () => {
+            if (controller.signal.aborted === false) {
+                controller.abort('Component cleanup: either unmounting or dependencies changed');
+            }
+        };
     }, [toUrl]);
 
     useEffect(() => {
@@ -53,7 +57,11 @@ export default function SearchPage() {
                 }
             }).finally(() => setPromptId(null));
         }
-        return () => controller.abort();
+        return () => {
+            if (controller.signal.aborted === false) {
+                controller.abort('Component cleanup: either unmounting or dependencies changed');
+            }
+        };
     }, [promptId, toUrl]);
 
     return (

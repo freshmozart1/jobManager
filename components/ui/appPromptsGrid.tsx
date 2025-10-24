@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Play, LoaderCircle, SquarePen } from "lucide-react";
+import Link from "next/link";
 
 type AppPromptsGridProps = {
     prompts: PromptDocument[];
@@ -19,8 +20,10 @@ export default function AppPromptsGrid({ prompts, className, onClick, filterAgen
                     <Button className="cursor-pointer" onClick={() => onClick(prompt)} disabled={filterAgentRunning}>
                         {filterAgentRunning ? <LoaderCircle className="animate-spin" /> : <Play />}
                     </Button>
-                    <Button className="cursor-pointer" variant="ghost">
-                        <SquarePen />
+                    <Button className="cursor-pointer" variant="ghost" asChild>
+                        <Link href={`/prompts/${prompt._id}`}>
+                            <SquarePen />
+                        </Link>
                     </Button>
                 </CardFooter>
             </Card>)

@@ -2,6 +2,8 @@
 import { useFilterTableColumns } from "@/hooks/useFilterTableColumns";
 import { flexRender, getCoreRowModel, getSortedRowModel, SortingState, useReactTable, Table as TanStackTable, PaginationState, getPaginationRowModel, SortDirection } from "@tanstack/react-table";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import useToUrl from "@/hooks/useToUrl";
 import {
     Pagination,
     PaginationContent,
@@ -30,6 +32,8 @@ function SVGSortIcon({ direction }: { direction: false | SortDirection }) {
 }
 
 export function AppJobsTable({ jobs, className }: JobsTableProps) {
+    const router = useRouter();
+    const toUrl = useToUrl();
     const [sorting, setSorting] = useState<SortingState>([{ id: 'postedAt', desc: true }]);
     const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
     const columns = useFilterTableColumns();
@@ -46,6 +50,10 @@ export function AppJobsTable({ jobs, className }: JobsTableProps) {
             pagination
         }
     });
+
+    const handleRowClick = (job: JobWithNewFlag) => {
+        router.push(toUrl(`/jobs/${job.id}`));
+    };
 
     return (
         <table className={`text-sm ${className ?? ''}`} style={{ minHeight: 370.5, overflow: 'hidden' }}>
@@ -92,10 +100,11 @@ export function AppJobsTable({ jobs, className }: JobsTableProps) {
                 ))}
             </thead>
             <tbody>
-                {table.getRowModel().rows.map(({ id: rowId, getVisibleCells }, rowIndex, { length: rowCount }) => (
+                {table.getRowModel().rows.map(({ id: rowId, getVisibleCells, original }, rowIndex, { length: rowCount }) => (
                     <tr
                         key={rowId}
-                        className={`${rowIndex < rowCount - 1 ? 'border-b ' : ''}hover:bg-muted/50`}
+                        className={`${rowIndex < rowCount - 1 ? 'border-b ' : ''}hover:bg-muted/50 cursor-pointer`}
+                        onClick={() => handleRowClick(original)}
                     >
                         {getVisibleCells().map(({ id: cellId, column, getContext }) => (
                             column.columnDef.id !== 'new' ? <td key={cellId} className="p-2 align-middle">

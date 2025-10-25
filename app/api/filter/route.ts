@@ -201,8 +201,7 @@ export async function POST(req: NextRequest) {
             job.filterResult = false;
             return job;
         }
-        job.filterResult = { error: `Unexpected agent result: ${result}` };
-        return job;
+        throw new Error(`Unexpected agent result: ${result}`);
     })))).forEach((r, i) => {
         if (r.status === 'fulfilled') {
             if (r.value.filterResult === true) {

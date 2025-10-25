@@ -44,13 +44,16 @@ async function runFilterAgentMock(promptId: string | ObjectId, options: {
 
     const accepted: Job[] = [];
     const rejected: Job[] = [];
+    const errored: Job[] = [];
     const errors: unknown[] = [];
 
     for (const job of sampleJobs) {
         if (artificialDelayMsPerJob > 0) await sleep(artificialDelayMsPerJob);
         const rollError = rnd();
         if (rollError < errorRate) { 
-            errors.push(new Error(`Mock error evaluating job ${job.id}`)); 
+            const error = new Error(`Mock error evaluating job ${job.id}`);
+            errors.push(error); 
+            errored.push({ ...job, filterResult: { error: error.message } });
             continue; 
         }
         const rollAccept = rnd();

@@ -10,6 +10,7 @@ type Job = {
     companyEmployeesCount?: number | undefined;
     location: string;
     postedAt: Date;
+    scrapedAt?: Date | undefined;
     salaryInfo: string[];
     salary: string;
     benefits: string[];

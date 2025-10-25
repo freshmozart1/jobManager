@@ -144,7 +144,7 @@ export async function POST(req: NextRequest) {
             .toArray()).map(d => d.id)
     );
     scrapedJobs = scrapedJobs.filter(j => !existingJobIdsSet.has(j.id));
-    const jobs: Job[] = [], rejects: Job[] = [], errors: unknown[] = [];
+    const jobs: Job[] = [], rejects: Job[] = [], errors: Job[] = [];
     if (!scrapedJobs.length) return NextResponse.json({ jobs, rejects, errors }, { status: 200, headers: corsHeaders(req.headers.get('origin') || undefined) });
     const promptDoc = await db.collection<PromptDocument>('prompts').findOne({ _id: promptId });
     if (!promptDoc) return NextResponse.json({}, { status: 404, statusText: PromptNotFoundError.name });
@@ -177,8 +177,7 @@ export async function POST(req: NextRequest) {
             : 'Error fetching personal information';
         return NextResponse.json({}, { status, statusText, headers: corsHeaders(req.headers.get('origin') || undefined) });
     }
-    const allJobsWithFilterResult: Job[] = [];
-    (await Promise.allSettled(scrapedJobs.map((job, jobIndex) => safeCall<Job | null>(`Filter job #${job.id} (${jobIndex + 1}/${scrapedJobs.length})`, async () => {
+    (await Promise.allSettled(scrapedJobs.map((job, jobIndex) => safeCall<Job>(`Filter job #${job.id} (${jobIndex + 1}/${scrapedJobs.length})`, async () => {
         const result = (await runner.run(
             new Agent({
                 name: 'Job Filter Agent',
@@ -194,26 +193,32 @@ export async function POST(req: NextRequest) {
             }),
             'Decide if the job vacancy is suitable for application.'
         )).finalOutput;
-        if (result === 'true') return job;
-        if (result === 'false') return null;
-        throw new Error(`Unexpected agent result: ${result}`);
+        if (result === 'true') {
+            job.filterResult = true;
+            return job;
+        }
+        if (result === 'false') {
+            job.filterResult = false;
+            return job;
+        }
+        job.filterResult = { error: `Unexpected agent result: ${result}` };
+        return job;
     })))).forEach((r, i) => {
-        const job = scrapedJobs[i];
         if (r.status === 'fulfilled') {
-            if (r.value) {
+            if (r.value.filterResult === true) {
                 jobs.push(r.value);
-                allJobsWithFilterResult.push({ ...job, filterResult: true });
             } else {
-                rejects.push(job);
-                allJobsWithFilterResult.push({ ...job, filterResult: false });
+                rejects.push(r.value);
             }
         } else {
-            errors.push(r.reason);
+            const job = scrapedJobs[i];
             const errorMessage = r.reason instanceof Error ? r.reason.message : String(r.reason);
-            allJobsWithFilterResult.push({ ...job, filterResult: { error: errorMessage } });
+            job.filterResult = { error: errorMessage };
+            errors.push(job);
         }
     });
     // Clone jobs before inserting to prevent MongoDB driver from mutating originals with _id
-    if (allJobsWithFilterResult.length) await db.collection<Job>('jobs').insertMany(allJobsWithFilterResult.map(j => ({ ...j })));
+    const allJobs = [...jobs, ...rejects, ...errors];
+    if (allJobs.length) await db.collection<Job>('jobs').insertMany(allJobs.map(j => ({ ...j })));
     return NextResponse.json({ jobs, rejects, errors }, { status: 200, headers: corsHeaders(req.headers.get('origin') || undefined) });
 }

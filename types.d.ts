@@ -182,7 +182,7 @@ type AgentRunRetryOptions = {
 type FilterAgentResult = {
     jobs: Job[];
     rejects: Job[];
-    errors: unknown[];
+    errors: Job[];
 };
 
 type FilterAgentPromise = Promise<FilterAgentResult>;

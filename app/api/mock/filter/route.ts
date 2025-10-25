@@ -44,15 +44,14 @@ async function runFilterAgentMock(promptId: string | ObjectId, options: {
 
     const accepted: Job[] = [];
     const rejected: Job[] = [];
-    const errors: unknown[] = [];
+    const errors: Job[] = [];
 
     for (const job of sampleJobs) {
         if (artificialDelayMsPerJob > 0) await sleep(artificialDelayMsPerJob);
         const rollError = rnd();
         if (rollError < errorRate) { 
-            // Note: In the real filter, errored jobs are stored in DB with filterResult: { error }.
-            // This mock doesn't store to DB, it only returns FilterAgentResult for UI testing.
-            errors.push(new Error(`Mock error evaluating job ${job.id}`)); 
+            const errorMessage = `Mock error evaluating job ${job.id}`;
+            errors.push({ ...job, filterResult: { error: errorMessage } }); 
             continue; 
         }
         const rollAccept = rnd();

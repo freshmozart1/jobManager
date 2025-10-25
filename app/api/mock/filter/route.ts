@@ -50,6 +50,8 @@ async function runFilterAgentMock(promptId: string | ObjectId, options: {
         if (artificialDelayMsPerJob > 0) await sleep(artificialDelayMsPerJob);
         const rollError = rnd();
         if (rollError < errorRate) { 
+            // Note: In the real filter, errored jobs are stored in DB with filterResult: { error }.
+            // This mock doesn't store to DB, it only returns FilterAgentResult for UI testing.
             errors.push(new Error(`Mock error evaluating job ${job.id}`)); 
             continue; 
         }

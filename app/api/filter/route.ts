@@ -140,9 +140,16 @@ export async function POST(req: NextRequest) {
     }
     const existingJobIdsSet = new Set(
         (await db.collection<{ id: string }>("jobs")
-            .find({}, { projection: { 'id': 1 } })
+            .find({ 'filterResult.error': { $exists: false } }, { projection: { 'id': 1 } })
             .toArray()).map(d => d.id)
     );
+
+    const jobIdsWithFilterErrorsSet = new Set(
+        (await db.collection<{ id: string; filterResult: { error: string } }>("jobs")
+            .find({ 'filterResult.error': { $exists: true } }, { projection: { 'id': 1 } })
+            .toArray()).map(d => d.id)
+    );
+
     scrapedJobs = scrapedJobs.filter(j => !existingJobIdsSet.has(j.id));
     const jobs: Job[] = [], rejects: Job[] = [], errors: Job[] = [];
     if (!scrapedJobs.length) return NextResponse.json({ jobs, rejects, errors }, { status: 200, headers: corsHeaders(req.headers.get('origin') || undefined) });
@@ -216,8 +223,17 @@ export async function POST(req: NextRequest) {
             errors.push(job);
         }
     });
-    // Clone jobs before inserting to prevent MongoDB driver from mutating originals with _id
     const allJobs = [...jobs, ...rejects, ...errors];
-    if (allJobs.length) await db.collection<Job>('jobs').insertMany(allJobs.map(j => ({ ...j })));
+    await Promise.all(allJobs.map(job => {
+        const jobToInsert = { ...job };
+        if (jobIdsWithFilterErrorsSet.has(job.id)) {
+            return db.collection<Job>('jobs').updateOne(
+                { id: job.id },
+                { $set: jobToInsert }
+            );
+        } else {
+            return db.collection<Job>('jobs').insertOne(jobToInsert);
+        }
+    }))
     return NextResponse.json({ jobs, rejects, errors }, { status: 200, headers: corsHeaders(req.headers.get('origin') || undefined) });
 }

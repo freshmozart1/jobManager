@@ -177,6 +177,7 @@ export async function POST(req: NextRequest) {
             : 'Error fetching personal information';
         return NextResponse.json({}, { status, statusText, headers: corsHeaders(req.headers.get('origin') || undefined) });
     }
+    const allJobsWithFilterResult: Job[] = [];
     (await Promise.allSettled(scrapedJobs.map((job, jobIndex) => safeCall<Job | null>(`Filter job #${job.id} (${jobIndex + 1}/${scrapedJobs.length})`, async () => {
         const result = (await runner.run(
             new Agent({
@@ -197,12 +198,22 @@ export async function POST(req: NextRequest) {
         if (result === 'false') return null;
         throw new Error(`Unexpected agent result: ${result}`);
     })))).forEach((r, i) => {
+        const job = scrapedJobs[i];
         if (r.status === 'fulfilled') {
-            if (r.value) jobs.push(r.value);
-            else rejects.push(scrapedJobs[i]);
-        } else errors.push(r.reason);
+            if (r.value) {
+                jobs.push(r.value);
+                allJobsWithFilterResult.push({ ...job, filterResult: true });
+            } else {
+                rejects.push(job);
+                allJobsWithFilterResult.push({ ...job, filterResult: false });
+            }
+        } else {
+            errors.push(r.reason);
+            const errorMessage = r.reason instanceof Error ? r.reason.message : String(r.reason);
+            allJobsWithFilterResult.push({ ...job, filterResult: { error: errorMessage } });
+        }
     });
     // Clone jobs before inserting to prevent MongoDB driver from mutating originals with _id
-    if (jobs.length) await db.collection<Job>('jobs').insertMany(jobs.map(j => ({ ...j })));
+    if (allJobsWithFilterResult.length) await db.collection<Job>('jobs').insertMany(allJobsWithFilterResult.map(j => ({ ...j })));
     return NextResponse.json({ jobs, rejects, errors }, { status: 200, headers: corsHeaders(req.headers.get('origin') || undefined) });
 }

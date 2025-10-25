@@ -49,9 +49,13 @@ async function runFilterAgentMock(promptId: string | ObjectId, options: {
     for (const job of sampleJobs) {
         if (artificialDelayMsPerJob > 0) await sleep(artificialDelayMsPerJob);
         const rollError = rnd();
-        if (rollError < errorRate) { errors.push(new Error(`Mock error evaluating job ${job.id}`)); continue; }
+        if (rollError < errorRate) { 
+            errors.push(new Error(`Mock error evaluating job ${job.id}`)); 
+            continue; 
+        }
         const rollAccept = rnd();
-        if (rollAccept < acceptRatio) accepted.push({ ...job }); else rejected.push({ ...job });
+        if (rollAccept < acceptRatio) accepted.push({ ...job, filterResult: true }); 
+        else rejected.push({ ...job, filterResult: false });
     }
 
     return { jobs: accepted.map(j => ({ ...j })), rejects: rejected, errors };

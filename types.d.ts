@@ -27,6 +27,7 @@ type Job = {
     companyWebsite?: string | undefined;
     companySlogan?: string | null | undefined;
     companyDescription?: string | undefined;
+    filterResult?: boolean | { error: string } | undefined;
 };
 
 type ScrapeUrlDocument = {

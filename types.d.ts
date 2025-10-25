@@ -27,6 +27,7 @@ type Job = {
     companyWebsite?: string | undefined;
     companySlogan?: string | null | undefined;
     companyDescription?: string | undefined;
+    filterResult?: boolean | { error: string } | undefined;
 };
 
 type ScrapeUrlDocument = {
@@ -181,7 +182,7 @@ type AgentRunRetryOptions = {
 type FilterAgentResult = {
     jobs: Job[];
     rejects: Job[];
-    errors: unknown[];
+    errors: Job[];
 };
 
 type FilterAgentPromise = Promise<FilterAgentResult>;

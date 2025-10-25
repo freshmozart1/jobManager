@@ -14,7 +14,7 @@ export default function SearchPage() {
     useEffect(() => {
         const controller = new AbortController();
         Promise.all([
-            fetch(toUrl('/api/jobs'), { signal: controller.signal }).then(res => res.json()).then((data: Job[]) => data.map(job => ({ ...job, postedAt: new Date(job.postedAt), new: false }))),
+            fetch(toUrl('/api/jobs?filterResult=true'), { signal: controller.signal }).then(res => res.json()).then((data: Job[]) => data.map(job => ({ ...job, postedAt: new Date(job.postedAt), new: false }))),
             fetch(toUrl('/api/prompts?agentType=filter'), { signal: controller.signal }).then(res => res.json()).then((data: PromptDocument[]) => data.map(prompt => ({ ...prompt, createdAt: new Date(prompt.createdAt), updatedAt: new Date(prompt.updatedAt) })))
         ]).then(([jobs, prompts]) => {
             setDbJobs(jobs);

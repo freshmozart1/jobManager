@@ -19,15 +19,15 @@ export async function GET(req: Request) {
     const filterParam = url.searchParams.get('filterResult');
     
     // Build MongoDB query based on filterResult parameter
-    let query = {};
+    const query: Record<string, any> = {};
     if (filterParam === 'true') {
-        query = { filterResult: true };
+        query.filterResult = true;
     } else if (filterParam === 'false') {
-        query = { filterResult: false };
+        query.filterResult = false;
     } else if (filterParam === 'error') {
-        query = { 'filterResult.error': { $exists: true } };
+        query['filterResult.error'] = { $exists: true };
     } else if (filterParam === 'undefined') {
-        query = { filterResult: { $exists: false } };
+        query.filterResult = { $exists: false };
     }
     // If filterParam is null or any other value, return all jobs (empty query)
     

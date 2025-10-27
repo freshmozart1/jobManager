@@ -1,12 +1,13 @@
 import { corsHeaders } from "@/lib/cors";
 import { MissingPromptIdInRequestBodyError, NoActorQueryParameterError, NoApifyTokenError, NoDatabaseNameError, NoOpenAIKeyError, NoPersonalInformationCareerGoalsError, NoPersonalInformationCertificationsError, NoPersonalInformationConstraintsError, NoPersonalInformationContactError, NoPersonalInformationEducationError, NoPersonalInformationEligibilityError, NoPersonalInformationExclusionsError, NoPersonalInformationExperienceError, NoPersonalInformationLanguageSpokenError, NoPersonalInformationMotivationsError, NoPersonalInformationPreferencesError, NoPersonalInformationSkillsError, NoScrapeUrlsError, PromptNotFoundError } from "@/lib/errors";
 import mongoPromise from "@/lib/mongodb";
-import { sleep } from "@/lib/utils";
-import { Agent, Runner } from "@openai/agents";
+import { chunkArray, sleep } from "@/lib/utils";
+import { Agent, Runner, tool } from "@openai/agents";
 import { ApifyClient } from "apify-client";
 import { Db, ObjectId } from "mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import z from "zod";
 
 function extractSuggestedDelayMs(err: unknown): number | null {
     if (err && typeof err === 'object') {
@@ -151,6 +152,7 @@ export async function POST(req: NextRequest) {
     );
 
     scrapedJobs = scrapedJobs.filter(j => !existingJobIdsSet.has(j.id));
+
     const jobs: Job[] = [], rejects: Job[] = [], errors: Job[] = [];
     if (!scrapedJobs.length) return NextResponse.json({ jobs, rejects, errors }, { status: 200, headers: corsHeaders(req.headers.get('origin') || undefined) });
     const promptDoc = await db.collection<PromptDocument>('prompts').findOne({ _id: promptId });
@@ -184,10 +186,27 @@ export async function POST(req: NextRequest) {
             : 'Error fetching personal information';
         return NextResponse.json({}, { status, statusText, headers: corsHeaders(req.headers.get('origin') || undefined) });
     }
-    (await Promise.allSettled(scrapedJobs.map((job, jobIndex) => safeCall<Job>(`Filter job #${job.id} (${jobIndex + 1}/${scrapedJobs.length})`, async () => {
+    const scrapedJobChunks = chunkArray(scrapedJobs, 5);
+    (await Promise.allSettled(scrapedJobChunks.map((chunk, chunkIndex) => safeCall<Job[]>(`Filter chunk (${chunkIndex + 1}/${scrapedJobChunks.length})`, async () => {
+        const agentOutput = z.object({ output: z.array(z.boolean()) });
+        type AgentOutputType = z.infer<typeof agentOutput>;
+        let jobIndex = 0;
+        const nextJobTool = tool({
+            name: 'next_job',
+            description: 'Returns the next job from the array of jobs to be filtered. If there are no more jobs, returns null.',
+            parameters: z.object({}),
+            execute: () => {
+                if (jobIndex < chunk.length) {
+                    const job = chunk[jobIndex];
+                    jobIndex++;
+                    return job;
+                } else jobIndex = 0;
+                return null;
+            }
+        });
         const result = (await runner.run(
             new Agent({
-                name: 'Job Filter Agent',
+                name: `Job Filter Agent chunk ${chunkIndex + 1}`,
                 model: 'gpt-5-nano',
                 modelSettings: {
                     maxTokens: 16000,
@@ -196,34 +215,52 @@ export async function POST(req: NextRequest) {
                         summary: "detailed"
                     }
                 },
-                instructions: promptDoc.prompt.replaceAll('{{JOB}}', JSON.stringify(job, null, 2)).replaceAll('{{PERSONAL_INFO}}', JSON.stringify(personalInformation, null, 2))
+                tools: [nextJobTool],
+                instructions: promptDoc.prompt.replaceAll('{{JOB}}', JSON.stringify(chunk, null, 2)).replaceAll('{{PERSONAL_INFO}}', JSON.stringify(personalInformation, null, 2)),
+                outputType: agentOutput
             }),
             'Decide if the job vacancy is suitable for application.'
-        )).finalOutput;
-        if (result === 'true') {
-            job.filterResult = true;
-            return job;
-        }
-        if (result === 'false') {
-            job.filterResult = false;
-            return job;
+        )).finalOutput as AgentOutputType | undefined;
+        if (result && Array.isArray(result.output)) {
+            if (result.output.length !== chunk.length) {
+                throw new Error(`Agent output length ${result.output.length} does not match chunk length ${chunk.length}`);
+            }
+            const resultJobs: Job[] = [];
+            for (let i = 0; i < result.output.length && i < chunk.length; i++) {
+                const res = result.output[i];
+                const job = chunk[i];
+                job.filterResult = typeof res === 'boolean' ? res : { error: `Unexpected output format from agent: ${JSON.stringify(res)}` };
+                resultJobs.push(job);
+            }
+            return resultJobs;
         }
         throw new Error(`Unexpected agent result: ${result}`);
     })))).forEach((r, i) => {
         if (r.status === 'fulfilled') {
-            if (r.value.filterResult === true) {
-                jobs.push(r.value);
-            } else {
-                rejects.push(r.value);
+            const filteredJobs = r.value;
+            for (const job of filteredJobs) {
+                if (typeof job.filterResult === 'boolean') {
+                    if (job.filterResult === true) {
+                        jobs.push(job);
+                    } else {
+                        rejects.push(job);
+                    }
+                } else {
+                    errors.push(job);
+                }
             }
         } else {
-            const job = scrapedJobs[i];
-            const errorMessage = r.reason instanceof Error ? r.reason.message : String(r.reason);
-            job.filterResult = { error: errorMessage };
-            errors.push(job);
+            console.error(`Error processing chunk ${i + 1}:`, r.reason);
+            // On chunk failure, mark all jobs in the chunk as errors
+            const failedChunk = scrapedJobChunks[i];
+            for (const job of failedChunk) {
+                job.filterResult = { error: `Failed to process job due to chunk error: ${r.reason}` };
+                errors.push(job);
+            }
         }
     });
     const allJobs = [...jobs, ...rejects, ...errors];
+    console.log(`Filtered jobs: ${jobs.length} accepted, ${rejects.length} rejected, ${errors.length} errors.`);
     await Promise.all(allJobs.map(job => {
         const jobToInsert = { ...job };
         if (jobIdsWithFilterErrorsSet.has(job.id)) {

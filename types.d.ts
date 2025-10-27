@@ -1,4 +1,6 @@
-type Job = {
+import { ObjectId } from "mongodb";
+
+export type Job = {
     id: string;
     trackingId: string;
     refId: string;
@@ -10,7 +12,7 @@ type Job = {
     companyEmployeesCount?: number | undefined;
     location: string;
     postedAt: Date;
-    scrapedAt?: Date | undefined;
+    filteredAt: Date;
     salaryInfo: string[];
     salary: string;
     benefits: string[];
@@ -28,20 +30,21 @@ type Job = {
     companySlogan?: string | null | undefined;
     companyDescription?: string | undefined;
     filterResult?: boolean | { error: string } | undefined;
+    filteredBy?: string | undefined;
 };
 
-type ScrapeUrlDocument = {
+export type ScrapeUrlDocument = {
     url: string;
 };
 
-type PersonalInformationContact = {
+export type PersonalInformationContact = {
     name: string;
     email: string;
     phone: string;
     portfolio_urls: string[];
 };
 
-type PersonalInformationEligibility = {
+export type PersonalInformationEligibility = {
     work_authorization: {
         region: string;
         status: string;
@@ -64,7 +67,7 @@ type PersonalInformationEligibility = {
     };
 };
 
-type PersonalInformationConstraints = {
+export type PersonalInformationConstraints = {
     salary_min: {
         currency: string;
         amount: number;
@@ -72,7 +75,7 @@ type PersonalInformationConstraints = {
     locations_allowed: string[];
 };
 
-type PersonalInformationPreferences = {
+export type PersonalInformationPreferences = {
     roles: string[];
     seniority: string[];
     company_size: string[];
@@ -82,7 +85,7 @@ type PersonalInformationPreferences = {
     industries: string[];
 };
 
-type PersonalInformationSkill = {
+export type PersonalInformationSkill = {
     name: string;
     aliases: string[];
     category: string;
@@ -92,7 +95,7 @@ type PersonalInformationSkill = {
     primary: boolean;
 };
 
-type PersonalInformationExperience = {
+export type PersonalInformationExperience = {
     years_total: number;
     domains: string[];
     recent_titles: string[];
@@ -102,40 +105,40 @@ type PersonalInformationExperience = {
     }[];
 };
 
-type PersonalInformationEducation = {
+export type PersonalInformationEducation = {
     degree: string;
     field: string;
     institution: string;
     graduation_year: number;
 };
 
-type PersonalInformationCertification = {
+export type PersonalInformationCertification = {
     name: string;
     issued: string;
     expires: string | null;
 };
 
-type PersonalInformationLanguageSpoken = {
+export type PersonalInformationLanguageSpoken = {
     language: string;
     level: string;
 };
 
-type PersonalInformationExclusions = {
+export type PersonalInformationExclusions = {
     avoid_roles: string[];
     avoid_technologies: string[];
     avoid_industries: string[];
     avoid_companies: string[];
 };
 
-type PersonalInformationMotivation = {
+export type PersonalInformationMotivation = {
     topic: string;
     description: string;
     reason_lite: string;
 };
 
-type PersonalInformationCareerGoal = PersonalInformationMotivation;
+export type PersonalInformationCareerGoal = PersonalInformationMotivation;
 
-type PersonalInformation = {
+export type PersonalInformation = {
     contact: PersonalInformationContact,
     eligibility: PersonalInformationEligibility,
     constraints: PersonalInformationConstraints,
@@ -150,10 +153,10 @@ type PersonalInformation = {
     career_goals: PersonalInformationCareerGoal[];
 };
 
-type AgentType = 'filter' | 'writer' | 'evaluator';
+export type AgentType = 'filter' | 'writer' | 'evaluator';
 
-type PromptDocument = {
-    _id: string | ObjectId;
+export type PromptDocument = {
+    _id: ObjectId;
     agentType: AgentType;
     name: string;
     createdAt: Date;
@@ -161,7 +164,7 @@ type PromptDocument = {
     prompt: string;
 };
 
-type AgentRunRetryOptions = {
+export type AgentRunRetryOptions = {
     retries?: number;
     baseDelayMs?: number;
     maxDelayMs?: number;
@@ -179,12 +182,12 @@ type AgentRunRetryOptions = {
     onRequestTooLarge?: () => Promise;
 };
 
-type FilterAgentResult = {
+export type FilterAgentResult = {
     jobs: Job[];
     rejects: Job[];
     errors: Job[];
 };
 
-type FilterAgentPromise = Promise<FilterAgentResult>;
+export type FilterAgentPromise = Promise<FilterAgentResult>;
 
-type JobWithNewFlag = Job & { new: boolean };
+export type JobWithNewFlag = Job & { new: boolean };

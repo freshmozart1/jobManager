@@ -5,6 +5,7 @@ import useToUrl from '@/hooks/useToUrl';
 import { LoaderCircle } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Job } from '@/types';
 
 function hasSalary(job: Job): boolean {
     return typeof job.salary === 'string' && job.salary.trim() !== '';

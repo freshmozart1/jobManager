@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AgentType, PromptDocument } from '@/types';
 
 export default function PromptDetailPage() {
     const params = useParams();
@@ -53,7 +54,7 @@ export default function PromptDetailPage() {
         setSaving(true);
         setError(null);
         setSuccessMessage(null);
-        
+
         try {
             const response = await fetch(toUrl(`/api/prompts/${promptId}`), {
                 method: 'PUT',
@@ -106,7 +107,7 @@ export default function PromptDetailPage() {
             <Button onClick={() => router.back()} className="mb-4" variant="outline">
                 ← Back
             </Button>
-            
+
             <Card>
                 <CardHeader>
                     <CardTitle className="text-2xl">Edit Prompt</CardTitle>

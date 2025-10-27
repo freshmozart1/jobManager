@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { PromptDocument } from "@/types";
 import { Play, LoaderCircle, SquarePen } from "lucide-react";
 import Link from "next/link";
 

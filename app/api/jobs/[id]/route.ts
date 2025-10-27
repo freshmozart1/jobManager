@@ -2,6 +2,7 @@ import { NoDatabaseNameError } from "@/lib/errors";
 import mongoPromise from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { corsHeaders } from "@/lib/cors";
+import { Job } from "@/types";
 
 export function OPTIONS() {
     return new NextResponse(null, { headers: corsHeaders() });

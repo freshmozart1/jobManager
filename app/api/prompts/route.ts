@@ -3,6 +3,7 @@ import mongoPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { corsHeaders } from "@/lib/cors";
+import { PromptDocument } from "@/types";
 
 export function OPTIONS() {
     return new NextResponse(null, { headers: corsHeaders() });
@@ -14,6 +15,9 @@ export async function GET(req: NextRequest) {
     const db = (await mongoPromise).db(DATABASE_NAME);
     await db.command({ ping: 1 }, { timeoutMS: 3000 });
     const agentType = (new URL(req.url)).searchParams.get('agentType');
+    if (agentType !== 'filter' && agentType !== 'writer' && agentType !== 'evaluator' && agentType !== null) {
+        return NextResponse.json({}, { status: 400, statusText: InvalidAgentTypeQueryParameterError.name, headers: corsHeaders(req.headers.get('origin') || undefined) });
+    }
     const sort = (new URL(req.url)).searchParams.get('sort');
     const order = (new URL(req.url)).searchParams.get('order');
     const limit = (new URL(req.url)).searchParams.get('limit');
@@ -29,7 +33,7 @@ export async function GET(req: NextRequest) {
     if (agentType && !['filter', 'writer', 'evaluator'].includes(agentType)) {
         return NextResponse.json({}, { status: 400, statusText: InvalidAgentTypeQueryParameterError.name, headers: corsHeaders(req.headers.get('origin') || undefined) });
     }
-    const prompts = await db.collection<PromptDocument>('prompts').find(agentType ? { agentType: agentType as AgentType } : {}, {
+    const prompts = await db.collection<PromptDocument>('prompts').find(agentType ? { agentType } : {}, {
         sort: sort ? { [sort]: order === 'asc' ? 1 : -1 } : undefined,
         limit: limit ? parseInt(limit) : undefined
     }).toArray();

@@ -10,6 +10,7 @@ import {
     PaginationItem,
     PaginationLink,
 } from "@/components/ui/pagination"
+import { JobWithNewFlag } from "@/types";
 type JobsTableProps = {
     jobs: JobWithNewFlag[];
     className?: string;

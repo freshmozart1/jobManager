@@ -2,6 +2,7 @@ import { corsHeaders } from "@/lib/cors";
 import { MissingPromptIdInRequestBodyError, NoActorQueryParameterError, NoApifyTokenError, NoDatabaseNameError, NoOpenAIKeyError, NoPersonalInformationCareerGoalsError, NoPersonalInformationCertificationsError, NoPersonalInformationConstraintsError, NoPersonalInformationContactError, NoPersonalInformationEducationError, NoPersonalInformationEligibilityError, NoPersonalInformationExclusionsError, NoPersonalInformationExperienceError, NoPersonalInformationLanguageSpokenError, NoPersonalInformationMotivationsError, NoPersonalInformationPreferencesError, NoPersonalInformationSkillsError, NoScrapeUrlsError, PromptNotFoundError } from "@/lib/errors";
 import mongoPromise from "@/lib/mongodb";
 import { chunkArray, sleep } from "@/lib/utils";
+import { AgentRunRetryOptions, Job, PersonalInformation, PersonalInformationCareerGoal, PersonalInformationCertification, PersonalInformationConstraints, PersonalInformationContact, PersonalInformationEducation, PersonalInformationEligibility, PersonalInformationExclusions, PersonalInformationExperience, PersonalInformationLanguageSpoken, PersonalInformationMotivation, PersonalInformationPreferences, PersonalInformationSkill, PromptDocument, ScrapeUrlDocument } from "@/types";
 import { Agent, Runner, tool } from "@openai/agents";
 import { ApifyClient } from "apify-client";
 import { Db, ObjectId } from "mongodb";

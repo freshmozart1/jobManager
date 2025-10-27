@@ -4,6 +4,7 @@ import AppPromptsGrid from "@/components/ui/appPromptsGrid";
 import { useEffect, useState } from "react";
 import useToUrl from "@/hooks/useToUrl";
 import { LoaderCircle } from "lucide-react";
+import { FilterAgentResult, Job, JobWithNewFlag, PromptDocument } from "@/types";
 
 export default function SearchPage() {
     const toUrl = useToUrl();
@@ -68,7 +69,7 @@ export default function SearchPage() {
         dbJobs && prompts
             ? <>
                 <AppJobsTable jobs={dbJobs} />
-                <AppPromptsGrid prompts={prompts} onClick={(prompt: PromptDocument) => setPromptId(prompt._id)} filterAgentRunning={promptId !== null} />
+                <AppPromptsGrid prompts={prompts} onClick={(prompt: PromptDocument) => setPromptId(prompt._id.toString())} filterAgentRunning={promptId !== null} />
             </>
             : <div className="w-full h-svh flex flex-col gap-4 items-center justify-center">
                 <p>Loading jobs and prompts from database</p>

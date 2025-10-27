@@ -204,6 +204,12 @@ export async function POST(req: NextRequest) {
                 return null;
             }
         });
+        const personalInformationTool = tool({
+            name: 'get_profile',
+            description: 'Returns the personal information profile of the job applicant, including contact details, eligibility, constraints, preferences, skills, experience, education, certifications, languages spoken, exclusions, motivations, and career goals.',
+            parameters: z.object({}),
+            execute: () => personalInformation
+        });
         const result = (await runner.run(
             new Agent({
                 name: `Job Filter Agent chunk ${chunkIndex + 1}`,
@@ -215,8 +221,8 @@ export async function POST(req: NextRequest) {
                         summary: "detailed"
                     }
                 },
-                tools: [nextJobTool],
-                instructions: promptDoc.prompt.replaceAll('{{JOB}}', JSON.stringify(chunk, null, 2)).replaceAll('{{PERSONAL_INFO}}', JSON.stringify(personalInformation, null, 2)),
+                tools: [nextJobTool, personalInformationTool],
+                instructions: promptDoc.prompt,
                 outputType: agentOutput
             }),
             'Decide if the job vacancy is suitable for application.'

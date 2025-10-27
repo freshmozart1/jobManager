@@ -2,7 +2,7 @@ import { corsHeaders } from "@/lib/cors";
 import { MissingPromptIdInRequestBodyError, NoActorQueryParameterError, NoApifyTokenError, NoDatabaseNameError, NoOpenAIKeyError, NoPersonalInformationCareerGoalsError, NoPersonalInformationCertificationsError, NoPersonalInformationConstraintsError, NoPersonalInformationContactError, NoPersonalInformationEducationError, NoPersonalInformationEligibilityError, NoPersonalInformationExclusionsError, NoPersonalInformationExperienceError, NoPersonalInformationLanguageSpokenError, NoPersonalInformationMotivationsError, NoPersonalInformationPreferencesError, NoPersonalInformationSkillsError, NoScrapeUrlsError, PromptNotFoundError } from "@/lib/errors";
 import mongoPromise from "@/lib/mongodb";
 import { chunkArray, sleep } from "@/lib/utils";
-import { AgentRunRetryOptions, Job, PersonalInformation, PersonalInformationCareerGoal, PersonalInformationCertification, PersonalInformationConstraints, PersonalInformationContact, PersonalInformationEducation, PersonalInformationEligibility, PersonalInformationExclusions, PersonalInformationExperience, PersonalInformationLanguageSpoken, PersonalInformationMotivation, PersonalInformationPreferences, PersonalInformationSkill, PromptDocument, ScrapeUrlDocument } from "@/types";
+import { AgentRunRetryOptions, Job, PersonalInformation, PersonalInformationCareerGoal, PersonalInformationCertification, PersonalInformationConstraints, PersonalInformationContact, PersonalInformationEducation, PersonalInformationEligibility, PersonalInformationExclusions, PersonalInformationExperience, PersonalInformationLanguageSpoken, PersonalInformationMotivation, PersonalInformationPreferences, PersonalInformationSkill, PromptDocument, ScrapedJob, ScrapeUrlDocument } from "@/types";
 import { Agent, Runner, tool } from "@openai/agents";
 import { ApifyClient } from "apify-client";
 import { Db, ObjectId } from "mongodb";
@@ -120,9 +120,9 @@ export async function POST(req: NextRequest) {
     const { APIFY_TOKEN, DATABASE_NAME, OPENAI_API_KEY } = process.env;
     if (!DATABASE_NAME) return NextResponse.json({}, { status: 500, statusText: NoDatabaseNameError.name });
     if (!OPENAI_API_KEY) return NextResponse.json({}, { status: 500, statusText: NoOpenAIKeyError.name });
-    const { promptId: promptIdRaw, actorName } = await req.json() as { promptId?: string; actorName?: string; };
-    const promptId = promptIdRaw && ObjectId.isValid(promptIdRaw) ? new ObjectId(promptIdRaw) : undefined;
-    if (!promptId) return NextResponse.json({}, { status: 400, statusText: MissingPromptIdInRequestBodyError.name });
+    const { promptId: rawPromptId, actorName } = await req.json() as { promptId?: string; actorName?: string; };
+    if (!rawPromptId || !ObjectId.isValid(rawPromptId)) return NextResponse.json({}, { status: 400, statusText: MissingPromptIdInRequestBodyError.name });
+    const promptId = new ObjectId(rawPromptId);
     const db = (await mongoPromise).db(DATABASE_NAME);
     await db.command({ ping: 1 }, { timeoutMS: 3000 });
     if (!actorName) return NextResponse.json({}, { status: 400, statusText: NoActorQueryParameterError.name });
@@ -134,10 +134,10 @@ export async function POST(req: NextRequest) {
     const lastRun = await apify.actor(actorName).runs().list({ limit: 1, desc: true }).then(r => r.items[0]);
     let scrapedJobs;
     if (lastRun && lastRun.startedAt.toDateString() === new Date().toDateString()) {
-        scrapedJobs = (await apify.dataset<Job>(lastRun.defaultDatasetId!).listItems()).items;
+        scrapedJobs = (await apify.dataset<ScrapedJob>(lastRun.defaultDatasetId!).listItems()).items;
     } else {
         scrapedJobs = (await apify.actor(actorName).call({ urls, count: 100 }).then(run =>
-            apify.dataset<Job>(run.defaultDatasetId!).listItems()
+            apify.dataset<ScrapedJob>(run.defaultDatasetId!).listItems()
         )).items;
     }
     const existingJobIdsSet = new Set(
@@ -235,9 +235,14 @@ export async function POST(req: NextRequest) {
             const resultJobs: Job[] = [];
             for (let i = 0; i < result.output.length && i < chunk.length; i++) {
                 const res = result.output[i];
-                const job = chunk[i];
-                job.filterResult = typeof res === 'boolean' ? res : { error: `Unexpected output format from agent: ${JSON.stringify(res)}` };
-                resultJobs.push(job);
+                resultJobs.push({
+                    ...chunk[i],
+                    filteredAt: new Date(),
+                    filterResult: typeof res === 'boolean'
+                        ? res
+                        : { error: `Unexpected output format from agent: ${JSON.stringify(res)}` },
+                    filteredBy: promptId
+                });
             }
             return resultJobs;
         }
@@ -258,17 +263,19 @@ export async function POST(req: NextRequest) {
             }
         } else {
             console.error(`Error processing chunk ${i + 1}:`, r.reason);
-            // On chunk failure, mark all jobs in the chunk as errors
             const failedChunk = scrapedJobChunks[i];
             for (const job of failedChunk) {
-                job.filterResult = { error: `Failed to process job due to chunk error: ${r.reason}` };
-                errors.push(job);
+                errors.push({
+                    ...job,
+                    filteredAt: new Date(),
+                    filterResult: { error: `Failed to process job due to chunk error: ${r.reason}` },
+                    filteredBy: promptId
+                });
             }
         }
     });
-    const allJobs = [...jobs, ...rejects, ...errors];
     console.log(`Filtered jobs: ${jobs.length} accepted, ${rejects.length} rejected, ${errors.length} errors.`);
-    await Promise.all(allJobs.map(job => {
+    await Promise.all([...jobs, ...rejects, ...errors].map(job => {
         const jobToInsert = { ...job };
         if (jobIdsWithFilterErrorsSet.has(job.id)) {
             return db.collection<Job>('jobs').updateOne(

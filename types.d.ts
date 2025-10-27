@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
 
-export type Job = {
+export type ScrapedJob = {
     id: string;
     trackingId: string;
     refId: string;
@@ -12,7 +12,6 @@ export type Job = {
     companyEmployeesCount?: number | undefined;
     location: string;
     postedAt: Date;
-    filteredAt: Date;
     salaryInfo: string[];
     salary: string;
     benefits: string[];
@@ -29,8 +28,12 @@ export type Job = {
     companyWebsite?: string | undefined;
     companySlogan?: string | null | undefined;
     companyDescription?: string | undefined;
-    filterResult?: boolean | { error: string } | undefined;
-    filteredBy?: string | undefined;
+};
+
+export type Job = ScrapedJob & {
+    filteredAt: Date;
+    filterResult: boolean | { error: string };
+    filteredBy: ObjectId;
 };
 
 export type ScrapeUrlDocument = {

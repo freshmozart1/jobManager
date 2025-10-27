@@ -19,8 +19,13 @@ if (!global._mongoClientPromise) {
     mongoPromise = client.connect();
     // @ts-expect-error -- global is augmented to hold _mongoClientPromise --
     global._mongoClientPromise = mongoPromise;
-    process.on('SIGINT', gracefullyCloseMongoClient);
-    process.on('SIGTERM', gracefullyCloseMongoClient);
+    // Guard against adding duplicate listeners during hot reload / re-imports (dev HMR)
+    if (process.listenerCount('SIGINT') === 0) {
+        process.once('SIGINT', gracefullyCloseMongoClient);
+    }
+    if (process.listenerCount('SIGTERM') === 0) {
+        process.once('SIGTERM', gracefullyCloseMongoClient);
+    }
     // @ts-expect-error -- global is augmented to hold _mongoClientPromise --
 } else mongoPromise = global._mongoClientPromise;
 

@@ -2,7 +2,7 @@ import { corsHeaders } from "@/lib/cors";
 import { MissingPromptIdInRequestBodyError, NoActorQueryParameterError, NoApifyTokenError, NoDatabaseNameError, NoOpenAIKeyError, NoPersonalInformationCareerGoalsError, NoPersonalInformationCertificationsError, NoPersonalInformationConstraintsError, NoPersonalInformationContactError, NoPersonalInformationEducationError, NoPersonalInformationEligibilityError, NoPersonalInformationExclusionsError, NoPersonalInformationExperienceError, NoPersonalInformationLanguageSpokenError, NoPersonalInformationMotivationsError, NoPersonalInformationPreferencesError, NoPersonalInformationSkillsError, NoScrapeUrlsError, PromptNotFoundError } from "@/lib/errors";
 import mongoPromise from "@/lib/mongodb";
 import { chunkArray, sleep } from "@/lib/utils";
-import { AgentRunRetryOptions, Job, PersonalInformation, PromptDocument, ScrapedJob, ScrapeUrlDocument } from "@/types";
+import { AgentRunRetryOptions, Job, PersonalInformation, PersonalInformationDocument, PromptDocument, ScrapedJob, ScrapeUrlDocument } from "@/types";
 import { Agent, Runner, tool } from "@openai/agents";
 import { ApifyClient } from "apify-client";
 import { Db, ObjectId } from "mongodb";
@@ -74,7 +74,7 @@ async function safeCall<T>(ctx: string, fn: () => Promise<T>, opts: AgentRunRetr
 
 // Map-based personal information fetch -> returns object directly
 async function fetchPersonalInformation(db: Db): Promise<PersonalInformation> {
-    const entries = await Promise.all([
+    return Object.fromEntries(await Promise.all([
         ['contact', NoPersonalInformationContactError.name],
         ['eligibility', NoPersonalInformationEligibilityError.name],
         ['constraints', NoPersonalInformationConstraintsError.name],
@@ -88,12 +88,11 @@ async function fetchPersonalInformation(db: Db): Promise<PersonalInformation> {
         ['motivations', NoPersonalInformationMotivationsError.name],
         ['career_goals', NoPersonalInformationCareerGoalsError.name]
     ].map(async ([key, errName]) => {
-        const doc = await db.collection<PersonalInformation>("personalInformation")
-            .findOne<{ type: string; value: unknown }>({ type: key });
+        const doc = await db.collection<PersonalInformationDocument>("personalInformation")
+            .findOne({ type: key });
         if (!doc) throw { status: 400, statusText: errName };
         return [key, doc.value];
-    }));
-    return Object.fromEntries(entries) as PersonalInformation;
+    }))) as PersonalInformation;
 }
 
 export function OPTIONS() {

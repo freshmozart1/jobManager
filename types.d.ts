@@ -156,6 +156,12 @@ export type PersonalInformation = {
     career_goals: PersonalInformationCareerGoal[];
 };
 
+export type PersonalInformationDocument = {
+    _id: ObjectId;
+    type: string;
+    value: PersonalInformationContact | PersonalInformationEligibility | PersonalInformationConstraints | PersonalInformationPreferences | PersonalInformationSkill[] | PersonalInformationExperience | PersonalInformationEducation[] | PersonalInformationCertification[] | PersonalInformationLanguageSpoken[] | PersonalInformationExclusions | PersonalInformationMotivation[] | PersonalInformationCareerGoal[];
+};
+
 export type AgentType = 'filter' | 'writer' | 'evaluator';
 
 export type PromptDocument = {

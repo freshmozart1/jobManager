@@ -130,6 +130,12 @@ export async function POST(req: NextRequest) {
     if (!DATABASE_NAME) return NextResponse.json({}, { status: 500, statusText: NoDatabaseNameError.name });
     const urls = await db.collection<ScrapeUrlDocument>("scrapeUrls").find().toArray().then(d => d.map(x => x.url));
     if (!urls.length) return NextResponse.json({}, { status: 500, statusText: NoScrapeUrlsError.name });
+
+    // Fetch prompt (moved up so we can use updatedAt below)
+    const promptDoc = await db.collection<PromptDocument>('prompts')
+        .findOne({ _id: promptId }, { projection: { prompt: 1, updatedAt: 1 } });
+    if (!promptDoc) return NextResponse.json({}, { status: 404, statusText: PromptNotFoundError.name });
+
     const apify = new ApifyClient({ token: APIFY_TOKEN });
     const lastRun = await apify.actor(actorName).runs().list({ limit: 1, desc: true }).then(r => r.items[0]);
     let scrapedJobs;
@@ -140,24 +146,37 @@ export async function POST(req: NextRequest) {
             apify.dataset<ScrapedJob>(run.defaultDatasetId!).listItems()
         )).items;
     }
-    const existingJobIdsSet = new Set(
-        (await db.collection<{ id: string }>("jobs")
-            .find({ 'filterResult.error': { $exists: false } }, { projection: { 'id': 1 } })
-            .toArray()).map(d => d.id)
-    );
 
-    const jobIdsWithFilterErrorsSet = new Set(
-        (await db.collection<{ id: string; filterResult: { error: string } }>("jobs")
-            .find({ 'filterResult.error': { $exists: true } }, { projection: { 'id': 1 } })
-            .toArray()).map(d => d.id)
-    );
+    const [jobsWithErrorsSet, outdatedJobsSet, notOutdatedJobsSet, filteredByDifferentPromptSet] = await Promise.all([
+        db.collection<{ id: string }>("jobs")
+            .find({ 'filterResult.error': { $exists: true } }, { projection: { id: 1 } })
+            .map(d => d.id).toArray().then(ids => new Set(ids)),
+        db.collection<{ id: string }>("jobs")
+            .find({ filteredBy: promptId, filteredAt: { $lt: promptDoc.updatedAt } }, { projection: { id: 1 } })
+            .map(d => d.id).toArray().then(ids => new Set(ids)),
+        db.collection<{ id: string }>("jobs")
+            .find({ filteredBy: promptId, filteredAt: { $gte: promptDoc.updatedAt } }, { projection: { id: 1 } })
+            .map(d => d.id).toArray().then(ids => new Set(ids)),
+        db.collection<{ id: string }>("jobs")
+            .find({ filteredBy: { $ne: promptId } }, { projection: { id: 1 } })
+            .map(d => d.id).toArray().then(ids => new Set(ids))
+    ]);
 
-    scrapedJobs = scrapedJobs.filter(j => !existingJobIdsSet.has(j.id));
+    let outdatedCount = 0;
+    const mustUpdate = (job: ScrapedJob | Job) => jobsWithErrorsSet.has(job.id) || outdatedJobsSet.has(job.id) || filteredByDifferentPromptSet.has(job.id);
+    scrapedJobs = scrapedJobs.filter(job => {
+        if (mustUpdate(job)) {
+            outdatedCount++;
+            return true;
+        } else if (notOutdatedJobsSet.has(job.id)) {
+            return false;
+        } else return true;
+    });
+
+    console.log(`Total scraped jobs: ${scrapedJobs.length}, to be re-filtered: ${outdatedCount}`);
 
     const jobs: Job[] = [], rejects: Job[] = [], errors: Job[] = [];
     if (!scrapedJobs.length) return NextResponse.json({ jobs, rejects, errors }, { status: 200, headers: corsHeaders(req.headers.get('origin') || undefined) });
-    const promptDoc = await db.collection<PromptDocument>('prompts').findOne({ _id: promptId });
-    if (!promptDoc) return NextResponse.json({}, { status: 404, statusText: PromptNotFoundError.name });
     let personalInformation: PersonalInformation;
     try {
         personalInformation = Object.fromEntries(
@@ -277,7 +296,7 @@ export async function POST(req: NextRequest) {
     console.log(`Filtered jobs: ${jobs.length} accepted, ${rejects.length} rejected, ${errors.length} errors.`);
     await Promise.all([...jobs, ...rejects, ...errors].map(job => {
         const jobToInsert = { ...job };
-        if (jobIdsWithFilterErrorsSet.has(job.id)) {
+        if (mustUpdate(job)) {
             return db.collection<Job>('jobs').updateOne(
                 { id: job.id },
                 { $set: jobToInsert }

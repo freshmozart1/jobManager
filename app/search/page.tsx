@@ -32,7 +32,7 @@ export default function SearchPage() {
         const controller = new AbortController();
         if (promptId) {
             console.log('Starting filtering for promptId:', promptId);
-            fetch(toUrl('/api/mock/filter'), {
+            fetch(toUrl('/api/filter'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 signal: controller.signal,

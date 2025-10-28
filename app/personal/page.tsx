@@ -8,7 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { LoaderCircle, Save } from "lucide-react";
+import { LoaderCircle, Save, ChevronDown } from "lucide-react";
+import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from "@/components/ui/inputGroup";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdownMenu";
 
 export default function PersonalPage() {
     const toUrl = useToUrl();
@@ -16,6 +23,19 @@ export default function PersonalPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [editedField, setEditedField] = useState<string | null>(null);
+
+    const handleCurrencyChange = (currency: string) => {
+        setPersonalInfo(prev => {
+            if (!prev || !prev.constraints.salary_min) return prev;
+            return {
+                ...prev,
+                constraints: {
+                    ...prev.constraints,
+                    salary_min: { ...prev.constraints.salary_min, currency }
+                }
+            };
+        });
+    };
 
     useEffect(() => {
         const controller = new AbortController();
@@ -149,37 +169,39 @@ export default function PersonalPage() {
                     <CardDescription>Your salary and location requirements</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <Label htmlFor="salary-currency">Salary Currency</Label>
-                            <Input
-                                id="salary-currency"
-                                value={personalInfo.constraints.salary_min.currency}
-                                onChange={(e) => setPersonalInfo(prev => prev ? {
-                                    ...prev,
-                                    constraints: {
-                                        ...prev.constraints,
-                                        salary_min: { ...prev.constraints.salary_min, currency: e.target.value }
-                                    }
-                                } : null)}
-                            />
-                        </div>
+                    <div className="space-y-4">
                         <div>
                             <Label htmlFor="salary-amount">Minimum Salary</Label>
-                            <Input
-                                id="salary-amount"
-                                type="number"
-                                value={personalInfo.constraints.salary_min.amount}
-                                onChange={(e) => setPersonalInfo(prev => prev ? {
-                                    ...prev,
-                                    constraints: {
-                                        ...prev.constraints,
-                                        salary_min: { ...prev.constraints.salary_min, amount: Number(e.target.value) }
-                                    }
-                                } : null)}
-                            />
+                            <InputGroup className="[--radius:0.5rem]">
+                                <InputGroupAddon align="inline-start">
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <InputGroupButton variant="ghost" className="!pl-3 !pr-2 text-sm min-w-[3rem]">
+                                                {personalInfo.constraints.salary_min.currency || '$'} <ChevronDown className="size-3 ml-1" />
+                                            </InputGroupButton>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="start" className="[--radius:0.5rem]">
+                                            <DropdownMenuItem onClick={() => handleCurrencyChange('$')}>$</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handleCurrencyChange('€')}>€</DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </InputGroupAddon>
+                                <InputGroupInput
+                                    id="salary-amount"
+                                    type="number"
+                                    placeholder="Enter minimum salary"
+                                    value={personalInfo.constraints.salary_min.amount}
+                                    onChange={(e) => setPersonalInfo(prev => prev ? {
+                                        ...prev,
+                                        constraints: {
+                                            ...prev.constraints,
+                                            salary_min: { ...prev.constraints.salary_min, amount: Number(e.target.value) }
+                                        }
+                                    } : null)}
+                                />
+                            </InputGroup>
                         </div>
-                        <div className="md:col-span-2">
+                        <div>
                             <Label htmlFor="locations">Allowed Locations (comma-separated)</Label>
                             <Input
                                 id="locations"

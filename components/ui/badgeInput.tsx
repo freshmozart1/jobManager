@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ChangeEvent, useRef, useState, KeyboardEvent } from "react";
 import { Label } from "@/components/ui/label";
+import { useUniqueColor } from "@/hooks/useUniqueColor";
 
 interface BadgeInputProps {
     id?: string;
@@ -27,6 +28,7 @@ export default function BadgeInput({
 }: BadgeInputProps) {
     const [inputValue, setInputValue] = useState("");
     const inputRef = useRef<HTMLInputElement | null>(null);
+    const colors = useUniqueColor(tags.length);
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
@@ -68,6 +70,11 @@ export default function BadgeInput({
                         key={`${tag}-${index}`}
                         variant="secondary"
                         className="flex items-center gap-1"
+                        style={{
+                            backgroundColor: colors[index] || '#e5e7eb',
+                            color: '#374151',
+                            borderColor: colors[index] || '#e5e7eb'
+                        }}
                     >
                         {tag}
                         {!disabled && (

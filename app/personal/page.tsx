@@ -142,14 +142,15 @@ export default function PersonalPage() {
                             />
                         </div>
                         <div>
-                            <Label htmlFor="portfolio">Portfolio URLs (comma-separated)</Label>
-                            <Input
+                            <BadgeInput
                                 id="portfolio"
-                                value={personalInfo.contact.portfolio_urls.join(', ')}
-                                onChange={(e) => setPersonalInfo(prev => prev ? {
+                                label="Portfolio URLs"
+                                value={personalInfo.contact.portfolio_urls}
+                                onChange={(urls) => setPersonalInfo(prev => prev ? {
                                     ...prev,
-                                    contact: { ...prev.contact, portfolio_urls: e.target.value.split(',').map(s => s.trim()) }
+                                    contact: { ...prev.contact, portfolio_urls: urls }
                                 } : null)}
+                                placeholder="Type URL and press ','"
                             />
                         </div>
                     </div>
@@ -237,47 +238,51 @@ export default function PersonalPage() {
                 <CardContent className="space-y-4">
                     <div className="space-y-4">
                         <div>
-                            <Label htmlFor="roles">Preferred Roles (comma-separated)</Label>
-                            <Input
+                            <BadgeInput
                                 id="roles"
-                                value={personalInfo.preferences.roles.join(', ')}
-                                onChange={(e) => setPersonalInfo(prev => prev ? {
+                                label="Preferred Roles"
+                                value={personalInfo.preferences.roles}
+                                onChange={(roles) => setPersonalInfo(prev => prev ? {
                                     ...prev,
-                                    preferences: { ...prev.preferences, roles: e.target.value.split(',').map(s => s.trim()) }
+                                    preferences: { ...prev.preferences, roles }
                                 } : null)}
+                                placeholder="Type role and press ','"
                             />
                         </div>
                         <div>
-                            <Label htmlFor="seniority">Seniority Levels (comma-separated)</Label>
-                            <Input
+                            <BadgeInput
                                 id="seniority"
-                                value={personalInfo.preferences.seniority.join(', ')}
-                                onChange={(e) => setPersonalInfo(prev => prev ? {
+                                label="Seniority Levels"
+                                value={personalInfo.preferences.seniority}
+                                onChange={(seniority) => setPersonalInfo(prev => prev ? {
                                     ...prev,
-                                    preferences: { ...prev.preferences, seniority: e.target.value.split(',').map(s => s.trim()) }
+                                    preferences: { ...prev.preferences, seniority }
                                 } : null)}
+                                placeholder="Type level and press ','"
                             />
                         </div>
                         <div>
-                            <Label htmlFor="company-size">Company Sizes (comma-separated)</Label>
-                            <Input
+                            <BadgeInput
                                 id="company-size"
-                                value={personalInfo.preferences.company_size.join(', ')}
-                                onChange={(e) => setPersonalInfo(prev => prev ? {
+                                label="Company Sizes"
+                                value={personalInfo.preferences.company_size}
+                                onChange={(company_size) => setPersonalInfo(prev => prev ? {
                                     ...prev,
-                                    preferences: { ...prev.preferences, company_size: e.target.value.split(',').map(s => s.trim()) }
+                                    preferences: { ...prev.preferences, company_size }
                                 } : null)}
+                                placeholder="Type size and press ','"
                             />
                         </div>
                         <div>
-                            <Label htmlFor="industries">Industries (comma-separated)</Label>
-                            <Input
+                            <BadgeInput
                                 id="industries"
-                                value={personalInfo.preferences.industries.join(', ')}
-                                onChange={(e) => setPersonalInfo(prev => prev ? {
+                                label="Industries"
+                                value={personalInfo.preferences.industries}
+                                onChange={(industries) => setPersonalInfo(prev => prev ? {
                                     ...prev,
-                                    preferences: { ...prev.preferences, industries: e.target.value.split(',').map(s => s.trim()) }
+                                    preferences: { ...prev.preferences, industries }
                                 } : null)}
+                                placeholder="Type industry and press ','"
                             />
                         </div>
                     </div>
@@ -498,47 +503,51 @@ export default function PersonalPage() {
                 <CardContent className="space-y-4">
                     <div className="space-y-4">
                         <div>
-                            <Label htmlFor="avoid-roles">Avoid Roles (comma-separated)</Label>
-                            <Input
+                            <BadgeInput
                                 id="avoid-roles"
-                                value={personalInfo.exclusions.avoid_roles.join(', ')}
-                                onChange={(e) => setPersonalInfo(prev => prev ? {
+                                label="Avoid Roles"
+                                value={personalInfo.exclusions.avoid_roles}
+                                onChange={(avoid_roles) => setPersonalInfo(prev => prev ? {
                                     ...prev,
-                                    exclusions: { ...prev.exclusions, avoid_roles: e.target.value.split(',').map(s => s.trim()) }
+                                    exclusions: { ...prev.exclusions, avoid_roles }
                                 } : null)}
+                                placeholder="Type role and press ','"
                             />
                         </div>
                         <div>
-                            <Label htmlFor="avoid-technologies">Avoid Technologies (comma-separated)</Label>
-                            <Input
+                            <BadgeInput
                                 id="avoid-technologies"
-                                value={personalInfo.exclusions.avoid_technologies.join(', ')}
-                                onChange={(e) => setPersonalInfo(prev => prev ? {
+                                label="Avoid Technologies"
+                                value={personalInfo.exclusions.avoid_technologies}
+                                onChange={(avoid_technologies) => setPersonalInfo(prev => prev ? {
                                     ...prev,
-                                    exclusions: { ...prev.exclusions, avoid_technologies: e.target.value.split(',').map(s => s.trim()) }
+                                    exclusions: { ...prev.exclusions, avoid_technologies }
                                 } : null)}
+                                placeholder="Type technology and press ','"
                             />
                         </div>
                         <div>
-                            <Label htmlFor="avoid-industries">Avoid Industries (comma-separated)</Label>
-                            <Input
+                            <BadgeInput
                                 id="avoid-industries"
-                                value={personalInfo.exclusions.avoid_industries.join(', ')}
-                                onChange={(e) => setPersonalInfo(prev => prev ? {
+                                label="Avoid Industries"
+                                value={personalInfo.exclusions.avoid_industries}
+                                onChange={(avoid_industries) => setPersonalInfo(prev => prev ? {
                                     ...prev,
-                                    exclusions: { ...prev.exclusions, avoid_industries: e.target.value.split(',').map(s => s.trim()) }
+                                    exclusions: { ...prev.exclusions, avoid_industries }
                                 } : null)}
+                                placeholder="Type industry and press ','"
                             />
                         </div>
                         <div>
-                            <Label htmlFor="avoid-companies">Avoid Companies (comma-separated)</Label>
-                            <Input
+                            <BadgeInput
                                 id="avoid-companies"
-                                value={personalInfo.exclusions.avoid_companies.join(', ')}
-                                onChange={(e) => setPersonalInfo(prev => prev ? {
+                                label="Avoid Companies"
+                                value={personalInfo.exclusions.avoid_companies}
+                                onChange={(avoid_companies) => setPersonalInfo(prev => prev ? {
                                     ...prev,
-                                    exclusions: { ...prev.exclusions, avoid_companies: e.target.value.split(',').map(s => s.trim()) }
+                                    exclusions: { ...prev.exclusions, avoid_companies }
                                 } : null)}
+                                placeholder="Type company and press ','"
                             />
                         </div>
                     </div>

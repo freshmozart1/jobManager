@@ -15,3 +15,5 @@ export async function GET() {
     await db.command({ ping: 1 }, { timeoutMS: 3000 });
     return NextResponse.json(await fetchPersonalInformation(db), { headers: corsHeaders() });
 }
+
+//todo #24

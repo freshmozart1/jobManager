@@ -60,15 +60,6 @@ export default function PersonalPage() {
         setSaving(true);
         setEditedField(type);
         try {
-            // Don't save if currency is '-' placeholder
-            if (type === 'constraints' && value && typeof value === 'object' && 'salary_min' in value) {
-                const constraints = value as PersonalInformation['constraints'];
-                if (constraints?.salary_min?.currency === '-') {
-                    console.log('Cannot save with placeholder currency "-"');
-                    return;
-                }
-            }
-            
             const response = await fetch(toUrl('/api/personal'), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -186,11 +177,10 @@ export default function PersonalPage() {
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <InputGroupButton variant="ghost" className="!pl-3 !pr-2 text-sm min-w-[3rem]">
-                                                {personalInfo.constraints.salary_min.currency || '-'} <ChevronDown className="size-3 ml-1" />
+                                                {personalInfo.constraints.salary_min.currency || '$'} <ChevronDown className="size-3 ml-1" />
                                             </InputGroupButton>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="start" className="[--radius:0.5rem]">
-                                            <DropdownMenuItem onClick={() => handleCurrencyChange('-')}>-</DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => handleCurrencyChange('$')}>$</DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => handleCurrencyChange('€')}>€</DropdownMenuItem>
                                         </DropdownMenuContent>

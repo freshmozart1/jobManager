@@ -37,20 +37,6 @@ export default function PersonalPage() {
         });
     };
 
-    const sanitizeConstraints = (constraints: PersonalInformation['constraints']) => {
-        // Filter out '-' placeholder from currency before saving
-        if (constraints?.salary_min?.currency === '-') {
-            return {
-                ...constraints,
-                salary_min: {
-                    ...constraints.salary_min,
-                    currency: ''
-                }
-            };
-        }
-        return constraints;
-    };
-
     useEffect(() => {
         const controller = new AbortController();
         fetch(toUrl('/api/personal'), { signal: controller.signal })
@@ -74,15 +60,19 @@ export default function PersonalPage() {
         setSaving(true);
         setEditedField(type);
         try {
-            let sanitizedValue = value;
+            // Don't save if currency is '-' placeholder
             if (type === 'constraints' && value && typeof value === 'object' && 'salary_min' in value) {
-                sanitizedValue = sanitizeConstraints(value as PersonalInformation['constraints']);
+                const constraints = value as PersonalInformation['constraints'];
+                if (constraints?.salary_min?.currency === '-') {
+                    console.log('Cannot save with placeholder currency "-"');
+                    return;
+                }
             }
             
             const response = await fetch(toUrl('/api/personal'), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type, value: sanitizedValue })
+                body: JSON.stringify({ type, value })
             });
             if (response.ok) {
                 const updated = await response.json();

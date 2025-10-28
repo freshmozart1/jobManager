@@ -21,42 +21,50 @@ const randomLightColor = (hue: number) => {
         .slice(1)}`;
 };
 
-// Shared color pool
-let colorSet: string[] = [];
-
-// Initialize the color set if empty
-const initColorSet = () => {
-    if (colorSet.length === 0) {
-        const hues = {
-            red: 0,
-            blue: 240,
-            green: 120,
-            yellow: 60,
-        };
-
-        for (const hue of Object.values(hues)) {
-            for (let i = 0; i < 5; i++) {
-                colorSet.push(randomLightColor(hue));
-            }
+// Generate a set of unique colors
+const generateColorSet = (size: number): string[] => {
+    const colors: string[] = [];
+    const usedColors = new Set<string>();
+    
+    const hues = [0, 240, 120, 60, 180, 300, 30, 210, 150, 270]; // Extended hue range
+    
+    let hueIndex = 0;
+    let attempts = 0;
+    const maxAttempts = size * 10; // Prevent infinite loops
+    
+    while (colors.length < size && attempts < maxAttempts) {
+        const hue = hues[hueIndex % hues.length];
+        const color = randomLightColor(hue);
+        
+        if (!usedColors.has(color)) {
+            colors.push(color);
+            usedColors.add(color);
         }
-        // Shuffle the array
-        colorSet = colorSet.sort(() => Math.random() - 0.5);
+        
+        hueIndex++;
+        attempts++;
     }
+    
+    // If we couldn't generate enough unique colors, fill with fallback colors
+    while (colors.length < size) {
+        const fallbackColor = `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
+        if (!usedColors.has(fallbackColor)) {
+            colors.push(fallbackColor);
+            usedColors.add(fallbackColor);
+        }
+    }
+    
+    return colors;
 };
 
-// Hook to get a unique color
-export const useUniqueColor = () => {
-    const [color, setColor] = useState<string | null>(null);
+// Hook to get an array of unique colors
+export const useUniqueColor = (size: number = 1): string[] => {
+    const [colors, setColors] = useState<string[]>([]);
 
     useEffect(() => {
-        initColorSet();
-        if (colorSet.length > 0) {
-            const nextColor = colorSet.shift(); // Remove from pool
-            setColor(nextColor!);
-        } else {
-            setColor("#ffffff"); // fallback if colors exhausted
-        }
-    }, []);
+        const uniqueColors = generateColorSet(size);
+        setColors(uniqueColors);
+    }, [size]);
 
-    return color!;
+    return colors;
 };

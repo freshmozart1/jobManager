@@ -25,18 +25,21 @@ export default function PersonalPage() {
     const [editedField, setEditedField] = useState<string | null>(null);
 
     const handleCurrencyChange = (currency: string) => {
-        setPersonalInfo(prev => prev ? {
-            ...prev,
-            constraints: {
-                ...prev.constraints,
-                salary_min: { ...prev.constraints.salary_min, currency }
-            }
-        } : null);
+        setPersonalInfo(prev => {
+            if (!prev || !prev.constraints.salary_min) return prev;
+            return {
+                ...prev,
+                constraints: {
+                    ...prev.constraints,
+                    salary_min: { ...prev.constraints.salary_min, currency }
+                }
+            };
+        });
     };
 
     const sanitizeConstraints = (constraints: PersonalInformation['constraints']) => {
         // Filter out '-' placeholder from currency before saving
-        if (constraints.salary_min.currency === '-') {
+        if (constraints?.salary_min?.currency === '-') {
             return {
                 ...constraints,
                 salary_min: {

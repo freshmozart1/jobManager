@@ -15,3 +15,17 @@ export function chunkArray<T>(array: T[], size: number): T[][] {
   }
   return result;
 }
+
+/**
+ * toUrl
+ * Converts a relative API path to an absolute URL.
+ *  - Leaves existing absolute http/https URLs untouched.
+ *  - On the client, prefixes window.location.origin for relative paths.
+ *  - On the server, falls back to NEXT_PUBLIC_BASE_URL or localhost.
+ */
+export function toUrl(path: string): string {
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  if (typeof window !== 'undefined') return `${window.location.origin}${path}`;
+  const host = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  return `${host}${path}`;
+}

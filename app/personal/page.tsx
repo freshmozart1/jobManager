@@ -24,6 +24,30 @@ export default function PersonalPage() {
     const [saving, setSaving] = useState(false);
     const [editedField, setEditedField] = useState<string | null>(null);
 
+    const handleCurrencyChange = (currency: string) => {
+        setPersonalInfo(prev => prev ? {
+            ...prev,
+            constraints: {
+                ...prev.constraints,
+                salary_min: { ...prev.constraints.salary_min, currency }
+            }
+        } : null);
+    };
+
+    const sanitizeConstraints = (constraints: PersonalInformation['constraints']) => {
+        // Filter out '-' placeholder from currency before saving
+        if (constraints.salary_min.currency === '-') {
+            return {
+                ...constraints,
+                salary_min: {
+                    ...constraints.salary_min,
+                    currency: ''
+                }
+            };
+        }
+        return constraints;
+    };
+
     useEffect(() => {
         const controller = new AbortController();
         fetch(toUrl('/api/personal'), { signal: controller.signal })
@@ -47,19 +71,9 @@ export default function PersonalPage() {
         setSaving(true);
         setEditedField(type);
         try {
-            // Filter out '-' placeholder from currency before saving
             let sanitizedValue = value;
             if (type === 'constraints' && value && typeof value === 'object' && 'salary_min' in value) {
-                const constraints = value as PersonalInformation['constraints'];
-                if (constraints.salary_min.currency === '-') {
-                    sanitizedValue = {
-                        ...constraints,
-                        salary_min: {
-                            ...constraints.salary_min,
-                            currency: ''
-                        }
-                    };
-                }
+                sanitizedValue = sanitizeConstraints(value as PersonalInformation['constraints']);
             }
             
             const response = await fetch(toUrl('/api/personal'), {
@@ -183,27 +197,9 @@ export default function PersonalPage() {
                                             </InputGroupButton>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="start" className="[--radius:0.5rem]">
-                                            <DropdownMenuItem onClick={() => setPersonalInfo(prev => prev ? {
-                                                ...prev,
-                                                constraints: {
-                                                    ...prev.constraints,
-                                                    salary_min: { ...prev.constraints.salary_min, currency: '-' }
-                                                }
-                                            } : null)}>-</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setPersonalInfo(prev => prev ? {
-                                                ...prev,
-                                                constraints: {
-                                                    ...prev.constraints,
-                                                    salary_min: { ...prev.constraints.salary_min, currency: '$' }
-                                                }
-                                            } : null)}>$</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setPersonalInfo(prev => prev ? {
-                                                ...prev,
-                                                constraints: {
-                                                    ...prev.constraints,
-                                                    salary_min: { ...prev.constraints.salary_min, currency: '€' }
-                                                }
-                                            } : null)}>€</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handleCurrencyChange('-')}>-</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handleCurrencyChange('$')}>$</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => handleCurrencyChange('€')}>€</DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </InputGroupAddon>

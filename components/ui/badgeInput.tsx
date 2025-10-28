@@ -63,9 +63,9 @@ export default function BadgeInput({
                 )}
                 onClick={() => !disabled && inputRef.current?.focus()}
             >
-                {tags.map((tag) => (
+                {tags.map((tag, index) => (
                     <Badge
-                        key={tag}
+                        key={`${tag}-${index}`}
                         variant="secondary"
                         className="flex items-center gap-1"
                     >
@@ -74,10 +74,16 @@ export default function BadgeInput({
                             <button
                                 type="button"
                                 onClick={() => handleRemove(tag)}
-                                className="ml-1 text-xs font-bold hover:text-red-500 transition-colors"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        handleRemove(tag);
+                                    }
+                                }}
+                                className="ml-1 text-xs font-bold hover:text-red-500 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 rounded"
                                 aria-label={`Remove ${tag}`}
                             >
-                                ×
+                                ✕
                             </button>
                         )}
                     </Badge>

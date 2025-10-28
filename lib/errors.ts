@@ -1,3 +1,5 @@
+import { VALID_PERSONAL_INFORMATION_TYPES } from "./constants";
+
 export class NoApifyTokenError extends Error {
     constructor() {
         super("APIFY_TOKEN is not set in environment variables.");
@@ -156,5 +158,26 @@ export class PromptNotFoundError extends Error {
     constructor() {
         super('Prompt not found for the specified agent type');
         this.name = 'PromptNotFoundError';
+    }
+}
+
+export class InvalidPersonalInformationTypeError extends Error {
+    constructor() {
+        super(`Invalid personal information type. Must be one of: ${VALID_PERSONAL_INFORMATION_TYPES.join(', ')}`);
+        this.name = 'InvalidPersonalInformationTypeError';
+    }
+}
+
+export class MissingPersonalInformationFieldsError extends Error {
+    constructor() {
+        super('Missing required fields: type and value are required');
+        this.name = 'MissingPersonalInformationFieldsError';
+    }
+}
+
+export class PersonalInformationDocumentNotFoundError extends Error {
+    constructor() {
+        super('Personal information document not found');
+        this.name = 'PersonalInformationDocumentNotFoundError';
     }
 }

@@ -1,10 +1,75 @@
 "use client"
 
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { useRef, useState } from "react";
+
 export default function PlaygroundPage() {
+    const [tags, setTags] = useState(["apple", "banana"]);
+    const [inputValue, setInputValue] = useState("");
+    const inputRef = useRef(null);
+
+    const addTag = (tag) => {
+        const trimmed = tag.trim();
+        if (trimmed && !tags.includes(trimmed)) {
+            setTags((prev) => [...prev, trimmed]);
+        }
+    };
+
+    const handleChange = (e) => {
+        const value = e.target.value;
+        if (value.endsWith(",")) {
+            addTag(value.slice(0, -1));
+            setInputValue("");
+        } else {
+            setInputValue(value);
+        }
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === "Backspace" && inputValue === "" && tags.length > 0) {
+            setTags((prev) => prev.slice(0, -1));
+        }
+    };
+
+    const handleRemove = (tagToRemove) => {
+        setTags((prev) => prev.filter((t) => t !== tagToRemove));
+    };
+
     return (
-        <div className="p-4">
-            <h1 className="text-2xl font-bold mb-4">Playground Page</h1>
-            <p>This is the playground page for testing components and layouts.</p>
+        <div
+            className={cn(
+                "flex flex-wrap items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background",
+                "focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2"
+            )}
+            onClick={() => inputRef.current?.focus()}
+        >
+            {tags.map((tag) => (
+                <Badge
+                    key={tag}
+                    variant="secondary"
+                    className="flex items-center gap-1"
+                >
+                    {tag}
+                    <button
+                        type="button"
+                        onClick={() => handleRemove(tag)}
+                        className="ml-1 text-xs font-bold"
+                    >
+                        ×
+                    </button>
+                </Badge>
+            ))}
+
+            <Input
+                ref={inputRef}
+                value={inputValue}
+                onChange={handleChange}
+                onKeyDown={handleKeyDown}
+                placeholder={tags.length === 0 ? "Type and press ','" : ""}
+                className="flex-1 min-w-[120px] border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+            />
         </div>
-    )
+    );
 }

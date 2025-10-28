@@ -32,9 +32,7 @@ export default function PersonalPage() {
                 }
             });
         return () => {
-            if (controller.signal.aborted === false) {
-                controller.abort('Component cleanup');
-            }
+            controller.abort('Component cleanup');
         };
     }, [toUrl]);
 
@@ -51,8 +49,8 @@ export default function PersonalPage() {
                 const updated = await response.json();
                 setPersonalInfo(prev => prev ? { ...prev, [type]: updated.value } : null);
             }
-        } catch {
-            console.error('Error saving:', err);
+        } catch (saveError) {
+            console.error('Error saving:', saveError);
         } finally {
             setSaving(false);
             setEditedField(null);

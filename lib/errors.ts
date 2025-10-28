@@ -158,3 +158,24 @@ export class PromptNotFoundError extends Error {
         this.name = 'PromptNotFoundError';
     }
 }
+
+export class InvalidPersonalInformationTypeError extends Error {
+    constructor() {
+        super('Invalid personal information type. Must be one of: contact, eligibility, constraints, preferences, skills, experience, education, certifications, languages_spoken, exclusions, motivations, career_goals');
+        this.name = 'InvalidPersonalInformationTypeError';
+    }
+}
+
+export class MissingPersonalInformationFieldsError extends Error {
+    constructor() {
+        super('Missing required fields: type and value are required');
+        this.name = 'MissingPersonalInformationFieldsError';
+    }
+}
+
+export class PersonalInformationDocumentNotFoundError extends Error {
+    constructor() {
+        super('Personal information document not found');
+        this.name = 'PersonalInformationDocumentNotFoundError';
+    }
+}

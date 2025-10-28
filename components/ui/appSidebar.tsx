@@ -1,5 +1,5 @@
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
-import { Home, Search, Settings } from "lucide-react"
+import { Home, Search, Settings, User } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export function AppSidebar() {
@@ -20,6 +20,20 @@ export function AppSidebar() {
                                     <a href="#">
                                         <Home />
                                         <span>Home</span>
+                                    </a>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        </SidebarMenu>
+                    </SidebarGroupContent>
+                </SidebarGroup>
+                <SidebarGroup>
+                    <SidebarGroupContent>
+                        <SidebarMenu>
+                            <SidebarMenuItem>
+                                <SidebarMenuButton asChild>
+                                    <a href="/personal">
+                                        <User />
+                                        <span>Personal</span>
                                     </a>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>

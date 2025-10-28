@@ -122,8 +122,7 @@ export async function POST(req: NextRequest) {
     try {
         const response = await fetch(toUrl('/api/personal'));
         if (!response.ok) {
-            const statusText = response.statusText || 'Error fetching personal information';
-            return NextResponse.json({}, { status: response.status, statusText, headers: corsHeaders(req.headers.get('origin') || undefined) });
+            return NextResponse.json({}, { status: response.status, statusText: response.statusText, headers: corsHeaders(req.headers.get('origin') || undefined) });
         }
         personalInformation = await response.json();
     }

@@ -45,7 +45,7 @@ const initColorSet = () => {
 };
 
 // Hook to get a unique color
-export const useUniqueColor = () => {
+export const useUniqueColor = () => { //todo #36
     const [color, setColor] = useState<string | null>(null);
 
     useEffect(() => {

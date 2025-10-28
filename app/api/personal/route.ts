@@ -4,6 +4,7 @@ import mongoPromise from "@/lib/mongodb";
 import { fetchPersonalInformation } from "@/lib/personal";
 import { NextRequest, NextResponse } from "next/server";
 import { PersonalInformationDocument } from "@/types";
+import { VALID_PERSONAL_INFORMATION_TYPES } from "@/lib/constants";
 
 export function OPTIONS() {
     return new NextResponse(null, { headers: corsHeaders() });
@@ -28,12 +29,6 @@ export async function PUT(req: NextRequest) {
     const body = await req.json();
     const { type, value } = body;
 
-    const validTypes = [
-        'contact', 'eligibility', 'constraints', 'preferences',
-        'skills', 'experience', 'education', 'certifications',
-        'languages_spoken', 'exclusions', 'motivations', 'career_goals'
-    ];
-
     if (!type || value === undefined) {
         return NextResponse.json(
             {},
@@ -41,7 +36,7 @@ export async function PUT(req: NextRequest) {
         );
     }
 
-    if (!validTypes.includes(type)) {
+    if (!VALID_PERSONAL_INFORMATION_TYPES.includes(type)) {
         return NextResponse.json(
             {},
             { status: 400, statusText: InvalidPersonalInformationTypeError.name, headers: corsHeaders(origin) }
@@ -68,6 +63,13 @@ export async function PUT(req: NextRequest) {
         { type },
         { projection: { _id: 0 } }
     );
+
+    if (!updatedDoc) {
+        return NextResponse.json(
+            {},
+            { status: 404, statusText: PersonalInformationDocumentNotFoundError.name, headers: corsHeaders(origin) }
+        );
+    }
 
     return NextResponse.json(updatedDoc, { headers: corsHeaders(origin) });
 }

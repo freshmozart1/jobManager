@@ -1,3 +1,5 @@
+import { VALID_PERSONAL_INFORMATION_TYPES } from "./constants";
+
 export class NoApifyTokenError extends Error {
     constructor() {
         super("APIFY_TOKEN is not set in environment variables.");
@@ -161,7 +163,7 @@ export class PromptNotFoundError extends Error {
 
 export class InvalidPersonalInformationTypeError extends Error {
     constructor() {
-        super('Invalid personal information type. Must be one of: contact, eligibility, constraints, preferences, skills, experience, education, certifications, languages_spoken, exclusions, motivations, career_goals');
+        super(`Invalid personal information type. Must be one of: ${VALID_PERSONAL_INFORMATION_TYPES.join(', ')}`);
         this.name = 'InvalidPersonalInformationTypeError';
     }
 }

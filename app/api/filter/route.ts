@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
     const jobs: Job[] = [], rejects: Job[] = [], errors: Job[] = [];
     if (!scrapedJobs.length) return NextResponse.json({ jobs, rejects, errors }, { status: 200, headers: corsHeaders(req.headers.get('origin') || undefined) });
     let personalInformation: PersonalInformation;
-    try { personalInformation = await fetchPersonalInformation(db); }
+    try { personalInformation = await fetchPersonalInformation(db); } //todo #22
     catch (e: unknown) {
         let status = 500;
         let statusText = 'Error fetching personal information';

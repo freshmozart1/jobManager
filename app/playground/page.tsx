@@ -3,37 +3,33 @@
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { useRef, useState } from "react";
+import { ChangeEvent, useRef, useState, KeyboardEvent, JSX } from "react";
 
 export default function PlaygroundPage() {
     const [tags, setTags] = useState(["apple", "banana"]);
     const [inputValue, setInputValue] = useState("");
-    const inputRef = useRef(null);
+    const inputRef = useRef<HTMLInputElement | null>(null);
 
-    const addTag = (tag) => {
-        const trimmed = tag.trim();
-        if (trimmed && !tags.includes(trimmed)) {
-            setTags((prev) => [...prev, trimmed]);
-        }
-    };
-
-    const handleChange = (e) => {
+    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         if (value.endsWith(",")) {
-            addTag(value.slice(0, -1));
+            const trimmed = value.slice(0, -1).trim();
+            if (trimmed && !tags.includes(trimmed)) {
+                setTags((prev) => [...prev, trimmed]);
+            }
             setInputValue("");
         } else {
             setInputValue(value);
         }
     };
 
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Backspace" && inputValue === "" && tags.length > 0) {
             setTags((prev) => prev.slice(0, -1));
         }
     };
 
-    const handleRemove = (tagToRemove) => {
+    const handleRemove = (tagToRemove: string) => {
         setTags((prev) => prev.filter((t) => t !== tagToRemove));
     };
 

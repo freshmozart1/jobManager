@@ -1,8 +1,7 @@
 import { corsHeaders } from "@/lib/cors";
 import { MissingPromptIdInRequestBodyError, NoActorQueryParameterError, NoApifyTokenError, NoDatabaseNameError, NoOpenAIKeyError, NoScrapeUrlsError, PromptNotFoundError } from "@/lib/errors";
 import mongoPromise from "@/lib/mongodb";
-import { fetchPersonalInformation } from "@/lib/personal";
-import { chunkArray, sleep } from "@/lib/utils";
+import { chunkArray, sleep, toUrl } from "@/lib/utils";
 import { AgentRunRetryOptions, Job, PersonalInformation, PromptDocument, ScrapedJob, ScrapeUrlDocument } from "@/types";
 import { Agent, Runner, tool } from "@openai/agents";
 import { ApifyClient } from "apify-client";
@@ -120,7 +119,13 @@ export async function POST(req: NextRequest) {
     const jobs: Job[] = [], rejects: Job[] = [], errors: Job[] = [];
     if (!scrapedJobs.length) return NextResponse.json({ jobs, rejects, errors }, { status: 200, headers: corsHeaders(req.headers.get('origin') || undefined) });
     let personalInformation: PersonalInformation;
-    try { personalInformation = await fetchPersonalInformation(db); } //todo #22
+    try {
+        const response = await fetch(toUrl('/api/personal'));
+        if (!response.ok) {
+            return NextResponse.json({}, { status: response.status, statusText: response.statusText, headers: corsHeaders(req.headers.get('origin') || undefined) });
+        }
+        personalInformation = await response.json();
+    }
     catch (e: unknown) {
         let status = 500;
         let statusText = 'Error fetching personal information';

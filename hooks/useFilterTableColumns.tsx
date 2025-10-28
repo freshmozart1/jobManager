@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { ColumnDef } from "@tanstack/react-table";
+import { JobWithNewFlag } from "@/types";
 
 function SVGJobIndicator({ newJob }: { newJob: boolean }) {
     const BaseSVG = ({ className }: { className: string }) => <svg

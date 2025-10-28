@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { toUrl } from '@/lib/utils';
 
 /**
  * useToUrl
@@ -8,10 +9,5 @@ import { useCallback } from 'react';
  *  - On the server (should not typically run for client components), falls back to NEXT_PUBLIC_BASE_URL or localhost.
  */
 export default function useToUrl() {
-    return useCallback((path: string) => {
-        if (path.startsWith('http://') || path.startsWith('https://')) return path;
-        if (typeof window !== 'undefined') return `${window.location.origin}${path}`;
-        const host = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-        return `${host}${path}`;
-    }, []);
+    return useCallback((path: string) => toUrl(path), []);
 }

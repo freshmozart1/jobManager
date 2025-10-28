@@ -3,7 +3,7 @@
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { ChangeEvent, useRef, useState, KeyboardEvent, JSX } from "react";
+import { ChangeEvent, useRef, useState, KeyboardEvent } from "react";
 
 export default function PlaygroundPage() {
     const [tags, setTags] = useState(["apple", "banana"]);

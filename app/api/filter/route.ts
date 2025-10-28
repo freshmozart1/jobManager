@@ -1,11 +1,12 @@
 import { corsHeaders } from "@/lib/cors";
-import { MissingPromptIdInRequestBodyError, NoActorQueryParameterError, NoApifyTokenError, NoDatabaseNameError, NoOpenAIKeyError, NoPersonalInformationCareerGoalsError, NoPersonalInformationCertificationsError, NoPersonalInformationConstraintsError, NoPersonalInformationContactError, NoPersonalInformationEducationError, NoPersonalInformationEligibilityError, NoPersonalInformationExclusionsError, NoPersonalInformationExperienceError, NoPersonalInformationLanguageSpokenError, NoPersonalInformationMotivationsError, NoPersonalInformationPreferencesError, NoPersonalInformationSkillsError, NoScrapeUrlsError, PromptNotFoundError } from "@/lib/errors";
+import { MissingPromptIdInRequestBodyError, NoActorQueryParameterError, NoApifyTokenError, NoDatabaseNameError, NoOpenAIKeyError, NoScrapeUrlsError, PromptNotFoundError } from "@/lib/errors";
 import mongoPromise from "@/lib/mongodb";
+import { fetchPersonalInformation } from "@/lib/personal";
 import { chunkArray, sleep } from "@/lib/utils";
-import { AgentRunRetryOptions, Job, PersonalInformation, PersonalInformationDocument, PromptDocument, ScrapedJob, ScrapeUrlDocument } from "@/types";
+import { AgentRunRetryOptions, Job, PersonalInformation, PromptDocument, ScrapedJob, ScrapeUrlDocument } from "@/types";
 import { Agent, Runner, tool } from "@openai/agents";
 import { ApifyClient } from "apify-client";
-import { Db, ObjectId } from "mongodb";
+import { ObjectId } from "mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import z from "zod";
@@ -70,29 +71,6 @@ async function safeCall<T>(ctx: string, fn: () => Promise<T>, opts: AgentRunRetr
         }
     }
     throw new Error(`safeCall: exhausted retries for ${ctx}`);
-}
-
-// Map-based personal information fetch -> returns object directly
-async function fetchPersonalInformation(db: Db): Promise<PersonalInformation> {
-    return Object.fromEntries(await Promise.all([
-        ['contact', NoPersonalInformationContactError.name],
-        ['eligibility', NoPersonalInformationEligibilityError.name],
-        ['constraints', NoPersonalInformationConstraintsError.name],
-        ['preferences', NoPersonalInformationPreferencesError.name],
-        ['skills', NoPersonalInformationSkillsError.name],
-        ['experience', NoPersonalInformationExperienceError.name],
-        ['education', NoPersonalInformationEducationError.name],
-        ['certifications', NoPersonalInformationCertificationsError.name],
-        ['languages_spoken', NoPersonalInformationLanguageSpokenError.name],
-        ['exclusions', NoPersonalInformationExclusionsError.name],
-        ['motivations', NoPersonalInformationMotivationsError.name],
-        ['career_goals', NoPersonalInformationCareerGoalsError.name]
-    ].map(async ([key, errName]) => {
-        const doc = await db.collection<PersonalInformationDocument>("personalInformation")
-            .findOne({ type: key });
-        if (!doc) throw { status: 400, statusText: errName };
-        return [key, doc.value];
-    }))) as PersonalInformation;
 }
 
 export function OPTIONS() {

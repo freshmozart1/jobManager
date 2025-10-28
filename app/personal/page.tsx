@@ -75,7 +75,7 @@ export default function PersonalPage() {
     }
 
     return (
-        <div className="p-6 max-w-7xl mx-auto space-y-6"> {/*todo #28*/}
+        <>
             <h1 className="text-3xl font-bold">Personal Information</h1>
 
             {/* Contact */}
@@ -593,6 +593,6 @@ export default function PersonalPage() {
                     </Button>
                 </CardContent>
             </Card>
-        </div>
+        </>
     );
 }

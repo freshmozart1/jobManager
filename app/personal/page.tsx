@@ -16,6 +16,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdownMenu";
+import BadgeInput from "@/components/ui/badgeInput";
 
 export default function PersonalPage() {
     const toUrl = useToUrl();
@@ -202,17 +203,18 @@ export default function PersonalPage() {
                             </InputGroup>
                         </div>
                         <div>
-                            <Label htmlFor="locations">Allowed Locations (comma-separated)</Label>
-                            <Input
+                            <BadgeInput
                                 id="locations"
-                                value={personalInfo.constraints.locations_allowed.join(', ')}
-                                onChange={(e) => setPersonalInfo(prev => prev ? {
+                                label="Allowed Locations"
+                                value={personalInfo.constraints.locations_allowed}
+                                onChange={(locations) => setPersonalInfo(prev => prev ? {
                                     ...prev,
                                     constraints: {
                                         ...prev.constraints,
-                                        locations_allowed: e.target.value.split(',').map(s => s.trim())
+                                        locations_allowed: locations
                                     }
                                 } : null)}
+                                placeholder="Type location and press ','"
                             />
                         </div>
                     </div>

@@ -29,6 +29,24 @@ export default function BadgeInput({
     const [inputValue, setInputValue] = useState("");
     const inputRef = useRef<HTMLInputElement | null>(null);
     const colors = useUniqueColor(tags.length);
+    
+    // Fallback color for when unique colors are not yet available
+    const FALLBACK_COLOR = '#e5e7eb';
+    
+    // Function to determine text color based on background luminance
+    const getTextColor = (backgroundColor: string): string => {
+        // Convert hex to RGB
+        const hex = backgroundColor.replace('#', '');
+        const r = parseInt(hex.substr(0, 2), 16);
+        const g = parseInt(hex.substr(2, 2), 16);
+        const b = parseInt(hex.substr(4, 2), 16);
+        
+        // Calculate relative luminance
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        
+        // Return dark text for light backgrounds, light text for dark backgrounds
+        return luminance > 0.5 ? '#374151' : '#ffffff';
+    };
 
     const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
@@ -71,9 +89,9 @@ export default function BadgeInput({
                         variant="secondary"
                         className="flex items-center gap-1"
                         style={{
-                            backgroundColor: colors[index] || '#e5e7eb',
-                            color: '#374151',
-                            borderColor: colors[index] || '#e5e7eb'
+                            backgroundColor: colors[index] || FALLBACK_COLOR,
+                            color: getTextColor(colors[index] || FALLBACK_COLOR),
+                            borderColor: colors[index] || FALLBACK_COLOR
                         }}
                     >
                         {tag}

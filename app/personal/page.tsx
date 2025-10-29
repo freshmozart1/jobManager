@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import useToUrl from "@/hooks/useToUrl";
-import { PersonalInformation } from "@/types";
+import { PersonalInformation, type PersonalInformationSkill } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdownMenu";
 import BadgeInput from "@/components/ui/badgeInput";
+import AppSkillsEditor from "@/components/ui/appSkillsEditor";
 
 export default function PersonalPage() {
     const toUrl = useToUrl();
@@ -72,6 +73,32 @@ export default function PersonalPage() {
             }
         } catch (saveError) {
             console.error('Error saving:', saveError);
+        } finally {
+            setSaving(false);
+            setEditedField(null);
+        }
+    };
+
+    const persistSkills = async (nextSkills: PersonalInformationSkill[]) => {
+        setSaving(true);
+        setEditedField('skills');
+        try {
+            const response = await fetch(toUrl('/api/personal'), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'skills', value: nextSkills })
+            });
+
+            if (!response.ok) {
+                const payload = await response.text();
+                throw new Error(payload || 'Failed to save skills');
+            }
+
+            const updated = await response.json();
+            setPersonalInfo(prev => prev ? { ...prev, skills: updated.value } : null);
+        } catch (error) {
+            console.error('Error saving skills:', error);
+            throw (error instanceof Error ? error : new Error(String(error)));
         } finally {
             setSaving(false);
             setEditedField(null);
@@ -313,30 +340,14 @@ export default function PersonalPage() {
                     <CardTitle>Skills</CardTitle>
                     <CardDescription>Your technical and professional skills</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    <div>
-                        <Label htmlFor="skills-json">Skills (JSON format)</Label>
-                        <Textarea
-                            id="skills-json"
-                            rows={8}
-                            value={JSON.stringify(personalInfo.skills, null, 2)}
-                            onChange={(e) => {
-                                try {
-                                    const parsed = JSON.parse(e.target.value);
-                                    setPersonalInfo(prev => prev ? { ...prev, skills: parsed } : null);
-                                } catch {
-                                    // Invalid JSON, don't update
-                                }
-                            }}
-                        />
-                    </div>
-                    <Button
-                        onClick={() => handleSave('skills', personalInfo.skills)}
-                        disabled={saving && editedField === 'skills'}
-                    >
-                        {saving && editedField === 'skills' ? <LoaderCircle className="animate-spin" /> : <Save />}
-                        Save Skills
-                    </Button>
+                <CardContent>
+                    <AppSkillsEditor
+                        skills={personalInfo.skills}
+                        onChange={(nextSkills) => {
+                            setPersonalInfo(prev => prev ? { ...prev, skills: nextSkills } : prev);
+                        }}
+                        onPersist={persistSkills}
+                    />
                 </CardContent>
             </Card>
 

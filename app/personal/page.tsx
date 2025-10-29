@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { LoaderCircle, Save, ChevronDown, Globe, MapPin, Briefcase, Users, Building } from "lucide-react";
+import { LoaderCircle, Save, ChevronDown, Phone, Globe, MapPin, Users, Briefcase, Building } from "lucide-react";
 import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from "@/components/ui/inputGroup";
 import {
     DropdownMenu,
@@ -132,14 +132,20 @@ export default function PersonalPage() {
                         </div>
                         <div>
                             <Label htmlFor="phone">Phone</Label>
-                            <Input
-                                id="phone"
-                                value={personalInfo.contact.phone}
-                                onChange={(e) => setPersonalInfo(prev => prev ? {
-                                    ...prev,
-                                    contact: { ...prev.contact, phone: e.target.value }
-                                } : null)}
-                            />
+                            <InputGroup className="[--radius:0.5rem]">
+                                <InputGroupAddon align="inline-start" className="px-4 py-2">
+                                    <Phone className="size-4 text-muted-foreground" />
+                                </InputGroupAddon>
+                                <InputGroupInput
+                                    id="phone"
+                                    type="tel"
+                                    value={personalInfo.contact.phone}
+                                    onChange={(e) => setPersonalInfo(prev => prev ? {
+                                        ...prev,
+                                        contact: { ...prev.contact, phone: e.target.value }
+                                    } : null)}
+                                />
+                            </InputGroup>
                         </div>
                         <div>
                             <BadgeInput
@@ -376,7 +382,11 @@ export default function PersonalPage() {
                 <CardContent className="space-y-4">
                     <div>
                         <Label htmlFor="education-json">Education (JSON format)</Label>
-                        <Textarea
+                        {personalInfo.education?.length === 0 ? (
+                            <div className="text-sm text-muted-foreground p-4 border rounded-md bg-muted/50">
+                                No education information added yet.
+                            </div>
+                        ) : <Textarea
                             id="education-json"
                             rows={6}
                             value={JSON.stringify(personalInfo.education, null, 2)}
@@ -388,7 +398,7 @@ export default function PersonalPage() {
                                     // Invalid JSON, don't update
                                 }
                             }}
-                        />
+                        />}
                     </div>
                     <Button
                         onClick={() => handleSave('education', personalInfo.education)}

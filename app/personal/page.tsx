@@ -373,10 +373,9 @@ export default function PersonalPage() {
                         <Label htmlFor="education-json">Education (JSON format)</Label>
                         {personalInfo.education?.length === 0 ? (
                             <div className="text-sm text-muted-foreground p-4 border rounded-md bg-muted/50">
-                                No education information added yet. Add your educational background by editing the JSON below.
+                                No education information added yet.
                             </div>
-                        ) : null}
-                        <Textarea
+                        ) : <Textarea
                             id="education-json"
                             rows={6}
                             value={JSON.stringify(personalInfo.education, null, 2)}
@@ -388,7 +387,7 @@ export default function PersonalPage() {
                                     // Invalid JSON, don't update
                                 }
                             }}
-                        />
+                        />}
                     </div>
                     <Button
                         onClick={() => handleSave('education', personalInfo.education)}

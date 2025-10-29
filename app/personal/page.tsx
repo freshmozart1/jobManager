@@ -377,7 +377,11 @@ export default function PersonalPage() {
                 <CardContent className="space-y-4">
                     <div>
                         <Label htmlFor="education-json">Education (JSON format)</Label>
-                        <Textarea
+                        {personalInfo.education?.length === 0 ? (
+                            <div className="text-sm text-muted-foreground p-4 border rounded-md bg-muted/50">
+                                No education information added yet.
+                            </div>
+                        ) : <Textarea
                             id="education-json"
                             rows={6}
                             value={JSON.stringify(personalInfo.education, null, 2)}
@@ -389,7 +393,7 @@ export default function PersonalPage() {
                                     // Invalid JSON, don't update
                                 }
                             }}
-                        />
+                        />}
                     </div>
                     <Button
                         onClick={() => handleSave('education', personalInfo.education)}

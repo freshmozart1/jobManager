@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { LoaderCircle, Save, ChevronDown, Phone } from "lucide-react";
+import { LoaderCircle, Save, ChevronDown, Phone, Globe, MapPin, Users, Briefcase, Building } from "lucide-react";
 import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from "@/components/ui/inputGroup";
 import {
     DropdownMenu,
@@ -157,6 +157,7 @@ export default function PersonalPage() {
                                     contact: { ...prev.contact, portfolio_urls: urls }
                                 } : null)}
                                 placeholder="Type URL and press ','"
+                                icon={Globe}
                             />
                         </div>
                     </div>
@@ -222,6 +223,7 @@ export default function PersonalPage() {
                                     }
                                 } : null)}
                                 placeholder="Type location and press ','"
+                                icon={MapPin}
                             />
                         </div>
                     </div>
@@ -253,6 +255,7 @@ export default function PersonalPage() {
                                     preferences: { ...prev.preferences, roles }
                                 } : null)}
                                 placeholder="Type role and press ','"
+                                icon={Briefcase}
                             />
                         </div>
                         <div>
@@ -277,6 +280,7 @@ export default function PersonalPage() {
                                     preferences: { ...prev.preferences, company_size }
                                 } : null)}
                                 placeholder="Type size and press ','"
+                                icon={Users}
                             />
                         </div>
                         <div>
@@ -289,6 +293,7 @@ export default function PersonalPage() {
                                     preferences: { ...prev.preferences, industries }
                                 } : null)}
                                 placeholder="Type industry and press ','"
+                                icon={Building}
                             />
                         </div>
                     </div>

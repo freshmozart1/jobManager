@@ -134,7 +134,7 @@ export default function PersonalPage() {
                             <Label htmlFor="phone">Phone</Label>
                             <InputGroup className="[--radius:0.5rem]">
                                 <InputGroupAddon align="inline-start">
-                                    <Phone className="size-4 ml-3 text-muted-foreground" />
+                                    <Phone className="size-4 text-muted-foreground" />
                                 </InputGroupAddon>
                                 <InputGroupInput
                                     id="phone"

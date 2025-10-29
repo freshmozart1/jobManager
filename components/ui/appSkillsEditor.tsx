@@ -629,7 +629,7 @@ export default function AppSkillsEditor({ skills, onChange, onPersist }: AppSkil
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
-                                                <Button variant="outline" size="sm" aria-label="Edit skill" onClick={(event) => {
+                                                <Button variant="ghost" size="sm" aria-label="Edit skill" onClick={(event) => {
                                                     event.stopPropagation();
                                                     openEditSheet(skill);
                                                 }}>

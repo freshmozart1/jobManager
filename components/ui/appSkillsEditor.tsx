@@ -644,7 +644,7 @@ export default function AppSkillsEditor({ skills, onChange, onPersist }: AppSkil
                                                         void handleDelete([index]);
                                                     }}
                                                 >
-                                                    <Trash2 className="h-4 w-4" />
+                                                    <Trash2 className="h-4 w-4 text-red-600" />
                                                 </Button>
                                             </div>
                                         </TableCell>

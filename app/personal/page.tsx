@@ -133,11 +133,12 @@ export default function PersonalPage() {
                         <div>
                             <Label htmlFor="phone">Phone</Label>
                             <InputGroup className="[--radius:0.5rem]">
-                                <InputGroupAddon align="inline-start">
+                                <InputGroupAddon align="inline-start" className="px-4 py-2">
                                     <Phone className="size-4 text-muted-foreground" />
                                 </InputGroupAddon>
                                 <InputGroupInput
                                     id="phone"
+                                    type="tel"
                                     value={personalInfo.contact.phone}
                                     onChange={(e) => setPersonalInfo(prev => prev ? {
                                         ...prev,

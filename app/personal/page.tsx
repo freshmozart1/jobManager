@@ -371,6 +371,11 @@ export default function PersonalPage() {
                 <CardContent className="space-y-4">
                     <div>
                         <Label htmlFor="education-json">Education (JSON format)</Label>
+                        {personalInfo.education.length === 0 ? (
+                            <div className="text-sm text-muted-foreground p-4 border rounded-md bg-muted/50">
+                                No education information added yet. Add your educational background by editing the JSON below.
+                            </div>
+                        ) : null}
                         <Textarea
                             id="education-json"
                             rows={6}

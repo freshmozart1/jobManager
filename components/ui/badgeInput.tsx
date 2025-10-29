@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { ChangeEvent, useRef, useState, KeyboardEvent } from "react";
 import { Label } from "@/components/ui/label";
 import { useUniqueColor } from "@/hooks/useUniqueColor";
+import { InputGroup, InputGroupInput, InputGroupAddon } from "@/components/ui/inputGroup";
+import { LucideIcon } from "lucide-react";
 
 interface BadgeInputProps {
     id?: string;
@@ -15,6 +17,7 @@ interface BadgeInputProps {
     placeholder?: string;
     className?: string;
     disabled?: boolean;
+    icon?: LucideIcon;
 }
 
 export default function BadgeInput({
@@ -24,7 +27,8 @@ export default function BadgeInput({
     onChange: setTags,
     placeholder = "Type and press ','",
     className,
-    disabled = false
+    disabled = false,
+    icon: Icon
 }: BadgeInputProps) {
     const [inputValue, setInputValue] = useState("");
     const inputRef = useRef<HTMLInputElement | null>(null);
@@ -71,6 +75,70 @@ export default function BadgeInput({
         setTags(tags.filter((t) => t !== tagToRemove));
     };
 
+    const badgeElements = tags.map((tag, index) => (
+        <Badge
+            key={`${tag}-${index}`}
+            variant="secondary"
+            className="flex items-center gap-1"
+            style={{
+                backgroundColor: colors[index] || FALLBACK_COLOR,
+                color: getTextColor(colors[index] || FALLBACK_COLOR),
+                borderColor: colors[index] || FALLBACK_COLOR
+            }}
+        >
+            {tag}
+            {!disabled && (
+                <button
+                    type="button"
+                    onClick={() => handleRemove(tag)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleRemove(tag);
+                        }
+                    }}
+                    className="ml-1 text-xs font-bold hover:text-red-500 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 rounded"
+                    aria-label={`Remove ${tag}`}
+                >
+                    ✕
+                </button>
+            )}
+        </Badge>
+    ));
+
+    if (Icon) {
+        // Use InputGroup when icon is provided
+        return (
+            <>
+                {label && <Label htmlFor={id}>{label}</Label>}
+                <InputGroup
+                    className={cn(
+                        "flex flex-wrap items-center gap-2 px-3 py-2 mx-[3px] my-[3px] text-sm",
+                        disabled && "opacity-50 cursor-not-allowed",
+                        className
+                    )}
+                    onClick={() => !disabled && inputRef.current?.focus()}
+                >
+                    <InputGroupAddon align="inline-start" className="border-0 px-0 pr-2">
+                        <Icon className="h-4 w-4 text-muted-foreground" />
+                    </InputGroupAddon>
+                    {badgeElements}
+                    <InputGroupInput
+                        id={id}
+                        ref={inputRef}
+                        value={inputValue}
+                        onChange={handleChange}
+                        onKeyDown={handleKeyDown}
+                        disabled={disabled}
+                        className="flex-1 min-w-[120px] border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 px-0"
+                        placeholder={tags.length === 0 ? placeholder : ""}
+                    />
+                </InputGroup>
+            </>
+        );
+    }
+
+    // Original implementation when no icon is provided
     return (
         <>
             {label && <Label htmlFor={id}>{label}</Label>}
@@ -83,36 +151,7 @@ export default function BadgeInput({
                 )}
                 onClick={() => !disabled && inputRef.current?.focus()}
             >
-                {tags.map((tag, index) => (
-                    <Badge
-                        key={`${tag}-${index}`}
-                        variant="secondary"
-                        className="flex items-center gap-1"
-                        style={{
-                            backgroundColor: colors[index] || FALLBACK_COLOR,
-                            color: getTextColor(colors[index] || FALLBACK_COLOR),
-                            borderColor: colors[index] || FALLBACK_COLOR
-                        }}
-                    >
-                        {tag}
-                        {!disabled && (
-                            <button
-                                type="button"
-                                onClick={() => handleRemove(tag)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' || e.key === ' ') {
-                                        e.preventDefault();
-                                        handleRemove(tag);
-                                    }
-                                }}
-                                className="ml-1 text-xs font-bold hover:text-red-500 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 rounded"
-                                aria-label={`Remove ${tag}`}
-                            >
-                                ✕
-                            </button>
-                        )}
-                    </Badge>
-                ))}
+                {badgeElements}
                 <Input
                     id={id}
                     ref={inputRef}

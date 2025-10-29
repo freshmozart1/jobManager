@@ -15,6 +15,7 @@ import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/com
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SquarePen, Trash2 } from "lucide-react";
 
 const PAGE_SIZE = 10;
 
@@ -628,21 +629,22 @@ export default function AppSkillsEditor({ skills, onChange, onPersist }: AppSkil
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
-                                                <Button variant="outline" size="sm" onClick={(event) => {
+                                                <Button variant="ghost" size="sm" aria-label="Edit skill" onClick={(event) => {
                                                     event.stopPropagation();
                                                     openEditSheet(skill);
                                                 }}>
-                                                    Edit
+                                                    <SquarePen className="h-4 w-4" />
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
+                                                    aria-label="Delete skill"
                                                     onClick={(event) => {
                                                         event.stopPropagation();
                                                         void handleDelete([index]);
                                                     }}
                                                 >
-                                                    Delete
+                                                    <Trash2 className="h-4 w-4 text-red-600" />
                                                 </Button>
                                             </div>
                                         </TableCell>

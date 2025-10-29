@@ -15,6 +15,7 @@ import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/com
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AppCategoryCombobox } from "@/components/ui/appCategoryCombobox";
 import { SquarePen, Trash2 } from "lucide-react";
 
 const PAGE_SIZE = 10;
@@ -24,6 +25,7 @@ const SEARCH_DEBOUNCE_MS = 150;
 const BANNER_TIMEOUT_MS = 5000;
 const MAX_ALIAS_COUNT = 5;
 const MAX_ALIAS_LENGTH = 10;
+const MAX_CATEGORY_LENGTH = 30;
 
 type SkillDraft = {
     name: string;
@@ -105,6 +107,13 @@ function validateSkillDraft(
         if (clashes) {
             errors.name = "Name must be unique.";
         }
+    }
+
+    const trimmedCategory = draft.category.trim();
+    if (!trimmedCategory) {
+        errors.category = "Category is required.";
+    } else if (trimmedCategory.length > MAX_CATEGORY_LENGTH) {
+        errors.category = "Category must be 30 characters or less.";
     }
 
     const yearsNumber = Number(draft.years);
@@ -255,13 +264,16 @@ export default function AppSkillsEditor({ skills, onChange, onPersist }: AppSkil
     }, [filteredRows, pageIndex]);
 
     const categoryOptions = useMemo(() => {
-        const categories = new Set<string>();
+        const categories = new Map<string, string>();
         internalSkills.forEach((skill) => {
-            if (skill.category.trim()) {
-                categories.add(skill.category);
+            const trimmed = skill.category.trim();
+            if (!trimmed) return;
+            const key = normaliseName(trimmed);
+            if (!categories.has(key)) {
+                categories.set(key, trimmed);
             }
         });
-        return Array.from(categories).sort((a, b) => a.localeCompare(b));
+        return Array.from(categories.values()).sort((a, b) => a.localeCompare(b));
     }, [internalSkills]);
 
     useEffect(() => {
@@ -754,10 +766,14 @@ export default function AppSkillsEditor({ skills, onChange, onPersist }: AppSkil
                         </div>
                         <div className="space-y-1.5">
                             <Label htmlFor="skill-category">Category</Label>
-                            <Input
+                            <AppCategoryCombobox
                                 id="skill-category"
                                 value={draft.category}
-                                onChange={(event) => updateDraft({ category: event.target.value })}
+                                options={categoryOptions}
+                                onChange={(category) => updateDraft({ category })}
+                                error={draftErrors.category}
+                                disabled={isPersisting}
+                                maxLength={MAX_CATEGORY_LENGTH}
                             />
                         </div>
                         <div className="space-y-1.5">

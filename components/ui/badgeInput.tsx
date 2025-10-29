@@ -33,10 +33,10 @@ export default function BadgeInput({
     const [inputValue, setInputValue] = useState("");
     const inputRef = useRef<HTMLInputElement | null>(null);
     const colors = useUniqueColor(tags.length);
-    
+
     // Fallback color for when unique colors are not yet available
     const FALLBACK_COLOR = '#e5e7eb';
-    
+
     // Function to determine text color based on background luminance
     const getTextColor = (backgroundColor: string): string => {
         // Convert hex to RGB
@@ -44,10 +44,10 @@ export default function BadgeInput({
         const r = parseInt(hex.substr(0, 2), 16);
         const g = parseInt(hex.substr(2, 2), 16);
         const b = parseInt(hex.substr(4, 2), 16);
-        
+
         // Calculate relative luminance
         const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-        
+
         // Return dark text for light backgrounds, light text for dark backgrounds
         return luminance > 0.5 ? '#374151' : '#ffffff';
     };
@@ -113,13 +113,13 @@ export default function BadgeInput({
                 {label && <Label htmlFor={id}>{label}</Label>}
                 <InputGroup
                     className={cn(
-                        "flex flex-wrap items-center gap-2 px-3 py-2 mx-[3px] my-[3px] text-sm",
+                        "flex flex-wrap items-center gap-2 px-4 text-sm",
                         disabled && "opacity-50 cursor-not-allowed",
                         className
                     )}
                     onClick={() => !disabled && inputRef.current?.focus()}
                 >
-                    <InputGroupAddon align="inline-start" className="border-0 px-0 pr-2">
+                    <InputGroupAddon align="inline-start" className="border-r pr-4 py-2">
                         <Icon className="h-4 w-4 text-muted-foreground" />
                     </InputGroupAddon>
                     {badgeElements}

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { LoaderCircle, Save, ChevronDown } from "lucide-react";
+import { LoaderCircle, Save, ChevronDown, Phone } from "lucide-react";
 import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from "@/components/ui/inputGroup";
 import {
     DropdownMenu,
@@ -132,14 +132,19 @@ export default function PersonalPage() {
                         </div>
                         <div>
                             <Label htmlFor="phone">Phone</Label>
-                            <Input
-                                id="phone"
-                                value={personalInfo.contact.phone}
-                                onChange={(e) => setPersonalInfo(prev => prev ? {
-                                    ...prev,
-                                    contact: { ...prev.contact, phone: e.target.value }
-                                } : null)}
-                            />
+                            <InputGroup className="[--radius:0.5rem]">
+                                <InputGroupAddon align="inline-start">
+                                    <Phone className="size-4 ml-3 text-muted-foreground" />
+                                </InputGroupAddon>
+                                <InputGroupInput
+                                    id="phone"
+                                    value={personalInfo.contact.phone}
+                                    onChange={(e) => setPersonalInfo(prev => prev ? {
+                                        ...prev,
+                                        contact: { ...prev.contact, phone: e.target.value }
+                                    } : null)}
+                                />
+                            </InputGroup>
                         </div>
                         <div>
                             <BadgeInput

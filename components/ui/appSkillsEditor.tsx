@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import BadgeInput from "@/components/ui/badgeInput";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -820,17 +821,15 @@ export default function AppSkillsEditor({ skills, onChange, onPersist }: AppSkil
                             {draftErrors.aliases && <p className="text-sm text-destructive">{draftErrors.aliases}</p>}
                         </div>
                         <div className="flex items-center justify-between rounded-md border px-3 py-2">
-                            <div>
-                                <p className="font-medium">Primary skill</p>
+                            <div className="space-y-0.5">
+                                <Label htmlFor="skill-primary" className="font-medium">Primary skill</Label>
                                 <p className="text-sm text-muted-foreground">Primary skills appear first on initial load.</p>
                             </div>
-                            <Button
-                                variant={draft.primary ? "default" : "outline"}
-                                size="sm"
-                                onClick={() => updateDraft({ primary: !draft.primary })}
-                            >
-                                {draft.primary ? "Primary" : "Make primary"}
-                            </Button>
+                            <Checkbox
+                                id="skill-primary"
+                                checked={draft.primary}
+                                onCheckedChange={(checked) => updateDraft({ primary: Boolean(checked) })}
+                            />
                         </div>
                     </div>
                     <SheetFooter>

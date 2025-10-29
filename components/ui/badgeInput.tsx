@@ -1,7 +1,6 @@
 "use client"
 
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { ChangeEvent, useRef, useState, KeyboardEvent } from "react";
 import { Label } from "@/components/ui/label";
@@ -26,13 +25,14 @@ export default function BadgeInput({
     value: tags,
     onChange: setTags,
     placeholder = "Type and press ','",
-    className,
     disabled = false,
     icon: Icon
 }: BadgeInputProps) {
     const [inputValue, setInputValue] = useState("");
     const inputRef = useRef<HTMLInputElement | null>(null);
     const colors = useUniqueColor(tags.length);
+    const inputStyling = "flex-1 min-w-[120px] border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0";
+    const inputGroupStyling = "relative w-full shadow-xs transition-[color,box-shadow] has-[:focus-visible]:border-ring has-[:focus-visible]:ring-ring/50 has-[:focus-visible]:ring-[3px] has-[:disabled]:opacity-50 flex flex-wrap items-center gap-2 px-4 text-sm rounded-md border border-input bg-background ring-offset-background focus-within:ring-[3px] focus-within:ring-ring/50"
 
     // Fallback color for when unique colors are not yet available
     const FALLBACK_COLOR = '#e5e7eb';
@@ -79,7 +79,7 @@ export default function BadgeInput({
         <Badge
             key={`${tag}-${index}`}
             variant="secondary"
-            className="flex items-center gap-1"
+            className="flex items-center my-1"
             style={{
                 backgroundColor: colors[index] || FALLBACK_COLOR,
                 color: getTextColor(colors[index] || FALLBACK_COLOR),
@@ -106,17 +106,12 @@ export default function BadgeInput({
         </Badge>
     ));
 
-    if (Icon) {
-        // Use InputGroup when icon is provided
-        return (
-            <>
-                {label && <Label htmlFor={id}>{label}</Label>}
-                <InputGroup
-                    className={cn(
-                        "flex flex-wrap items-center gap-2 px-4 text-sm",
-                        disabled && "opacity-50 cursor-not-allowed",
-                        className
-                    )}
+    return (<>
+        {label && <Label htmlFor={id}>{label}</Label>}
+        {
+            Icon
+                ? <InputGroup
+                    className={inputGroupStyling}
                     onClick={() => !disabled && inputRef.current?.focus()}
                 >
                     <InputGroupAddon align="inline-start" className="border-r pr-4 py-2">
@@ -130,39 +125,26 @@ export default function BadgeInput({
                         onChange={handleChange}
                         onKeyDown={handleKeyDown}
                         disabled={disabled}
-                        className="flex-1 min-w-[120px] border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 px-0"
+                        className={inputStyling}
                         placeholder={tags.length === 0 ? placeholder : ""}
                     />
                 </InputGroup>
-            </>
-        );
-    }
-
-    // Original implementation when no icon is provided
-    return (
-        <>
-            {label && <Label htmlFor={id}>{label}</Label>}
-            <div
-                className={cn(
-                    "flex flex-wrap items-center gap-2 rounded-md border border-input bg-background px-3 py-2 mx-[3px] my-[3px] text-sm ring-offset-background",
-                    "focus-within:ring-[3px] focus-within:ring-ring/50",
-                    disabled && "opacity-50 cursor-not-allowed",
-                    className
-                )}
-                onClick={() => !disabled && inputRef.current?.focus()}
-            >
-                {badgeElements}
-                <Input
-                    id={id}
-                    ref={inputRef}
-                    value={inputValue}
-                    onChange={handleChange}
-                    onKeyDown={handleKeyDown}
-                    disabled={disabled}
-                    className="flex-1 min-w-[120px] border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                    placeholder={tags.length === 0 ? placeholder : ""}
-                />
-            </div>
-        </>
-    );
+                : <div
+                    className={inputGroupStyling}
+                    onClick={() => !disabled && inputRef.current?.focus()}
+                >
+                    {badgeElements}
+                    <Input
+                        id={id}
+                        ref={inputRef}
+                        value={inputValue}
+                        onChange={handleChange}
+                        onKeyDown={handleKeyDown}
+                        disabled={disabled}
+                        className={inputStyling}
+                        placeholder={tags.length === 0 ? placeholder : ""}
+                    />
+                </div>
+        }
+    </>);
 }

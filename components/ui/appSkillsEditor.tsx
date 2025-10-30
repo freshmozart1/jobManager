@@ -16,7 +16,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AppCategoryCombobox } from "@/components/ui/appCategoryCombobox";
-import { ChevronsUpDown, SquarePen, Trash2 } from "lucide-react";
+import { InputGroup, InputGroupInput, InputGroupAddon } from "@/components/ui/inputGroup";
+import { ChevronsUpDown, SquarePen, Trash2, Search } from "lucide-react";
 
 const PAGE_SIZE = 10;
 
@@ -726,17 +727,21 @@ export default function AppSkillsEditor({ skills, onChange, onPersist }: AppSkil
                 <div className="flex-1 space-y-3">
                     <div className="space-y-1.5">
                         <Label htmlFor="skills-search">Search skills</Label>
-                        <Input
-                            id="skills-search"
-                            className="min-w-[200px]"
-                            value={search}
-                            onChange={(event) => {
-                                setSearch(event.target.value);
-                                setPageIndex(0);
-                                resetSelection();
-                            }}
-                            placeholder="Search by name, category, level, or alias"
-                        />
+                        <InputGroup className="[--radius:0.5rem] min-w-[200px]">
+                            <InputGroupAddon align="inline-start" className="px-4 py-2">
+                                <Search className="size-4 text-muted-foreground" />
+                            </InputGroupAddon>
+                            <InputGroupInput
+                                id="skills-search"
+                                value={search}
+                                onChange={(event) => {
+                                    setSearch(event.target.value);
+                                    setPageIndex(0);
+                                    resetSelection();
+                                }}
+                                placeholder="Search by name, category, level, or alias"
+                            />
+                        </InputGroup>
                     </div>
                     <div className="flex items-center gap-2">
                         <div className="relative flex-1">

@@ -347,7 +347,7 @@ export default function PersonalPage() {
                     <CardTitle>Your skills</CardTitle>
                     <Button
                         type="button"
-                        variant="ghost"
+                        variant="default"
                         size="icon"
                         aria-label="Add skill"
                         onClick={() => openSkillsSheetRef.current?.()}

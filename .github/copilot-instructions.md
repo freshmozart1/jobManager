@@ -173,6 +173,7 @@ Ensure the following environment variables are configured:
 - Ensure all TypeScript types are properly defined
 - Test changes in development mode before building
 - Avoid ```import * as``` when possible; use ```import {}``` syntax
+- Call `nextjs_docs` to confirm correct usage of Next.js features when unsure
 
 ## Git Workflow
 

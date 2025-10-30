@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { PersonalInformationSkill } from "@/types";
 
 import { cn } from "@/lib/utils";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -242,9 +242,10 @@ export default function AppSkillsEditor({ skills, onChange, onPersist }: AppSkil
                 skill.name,
                 skill.category,
                 skill.level,
+                skill.years != null ? String(skill.years) : null,
                 ...skill.aliases,
             ]
-                .filter(Boolean)
+                .filter((part): part is string => typeof part === "string" && part.length > 0)
                 .map((part) => part.toLowerCase());
             return haystack.some((part) => part.includes(value));
         });
@@ -499,6 +500,7 @@ export default function AppSkillsEditor({ skills, onChange, onPersist }: AppSkil
                     <Label htmlFor="skills-search">Search skills</Label>
                     <Input
                         id="skills-search"
+                        className="min-w-[200px]"
                         value={search}
                         onChange={(event) => {
                             setSearch(event.target.value);
@@ -551,22 +553,12 @@ export default function AppSkillsEditor({ skills, onChange, onPersist }: AppSkil
             )}
 
             <div className="overflow-hidden rounded-md border">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Category</TableHead>
-                            <TableHead>Level</TableHead>
-                            <TableHead>Years</TableHead>
-                            <TableHead>Last used</TableHead>
-                            <TableHead>Aliases</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
+                <Table aria-label="Skills (searchable by name, category, level, years, aliases)">
+                    {/* Display only name and actions; remaining fields stay editable/searchable via the sheet. */}
                     <TableBody>
                         {pagedRows.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
+                                <TableCell colSpan={2} className="text-center py-6 text-muted-foreground">
                                     No skills found.
                                 </TableCell>
                             </TableRow>
@@ -596,34 +588,6 @@ export default function AppSkillsEditor({ skills, onChange, onPersist }: AppSkil
                                                 <TooltipContent side="top">
                                                     <p>Full name: {tooltipName}</p>
                                                     {tooltipName.length > NAME_TRUNCATE_AT && <p>Truncated for display.</p>}
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TableCell>
-                                        <TableCell>{skill.category || "—"}</TableCell>
-                                        <TableCell>{skill.level || "—"}</TableCell>
-                                        <TableCell>{skill.years.toString()}</TableCell>
-                                        <TableCell>
-                                            <Tooltip>
-                                                <TooltipTrigger>{skill.last_used || "—"}</TooltipTrigger>
-                                                <TooltipContent side="top">
-                                                    <p>Use YYYY-MM (e.g. 2024-09).</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Tooltip>
-                                                <TooltipTrigger className="flex items-center gap-1">
-                                                    <span>{skill.aliases.length}</span>
-                                                </TooltipTrigger>
-                                                <TooltipContent side="top">
-                                                    <p>Up to 5 aliases, each ≤10 chars.</p>
-                                                    {skill.aliases.length > 0 && (
-                                                        <ul className="mt-1 space-y-0.5">
-                                                            {skill.aliases.map((alias) => (
-                                                                <li key={alias}>{alias}</li>
-                                                            ))}
-                                                        </ul>
-                                                    )}
                                                 </TooltipContent>
                                             </Tooltip>
                                         </TableCell>

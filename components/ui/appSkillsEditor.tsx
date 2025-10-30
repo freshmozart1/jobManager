@@ -636,12 +636,8 @@ export default function AppSkillsEditor({ skills, onChange, onPersist, onRegiste
             if (anchorPosition !== -1 && targetPosition !== -1) {
                 setTargetIndex(rowIndex);
                 const [start, end] = anchorPosition < targetPosition ? [anchorPosition, targetPosition] : [targetPosition, anchorPosition];
-                if (end - start <= 1) {
-                    setSelectedIndices(new Set());
-                } else {
-                    const inner = filteredIndices.slice(start + 1, end);
-                    setSelectedIndices(new Set(inner));
-                }
+                const selected = filteredIndices.slice(start, end + 1);
+                setSelectedIndices(new Set(selected));
                 return;
             }
         }

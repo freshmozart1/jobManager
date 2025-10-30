@@ -201,8 +201,10 @@ export default function AppSkillsEditor({ skills, onChange, onPersist, onRegiste
     const previousCategoryOptionsRef = useRef<string[]>([]);
     const triggerRef = useRef<HTMLButtonElement | null>(null);
     const hiddenLabelRef = useRef<HTMLSpanElement | null>(null);
+    const bulkDeleteRef = useRef<HTMLButtonElement | null>(null);
     const [triggerContentWidth, setTriggerContentWidth] = useState(0);
     const [namesLabelWidth, setNamesLabelWidth] = useState(0);
+    const lastShowBulkDeleteRef = useRef(false);
 
     useEffect(() => {
         if (!initialisedRef.current) {
@@ -726,9 +728,20 @@ export default function AppSkillsEditor({ skills, onChange, onPersist, onRegiste
         () => Array.from(selectedIndices).sort((a, b) => a - b),
         [selectedIndices]
     );
-
-    const deleteButtonDisabled = selectedIndicesArray.length === 0 || isPersisting;
+    // Only surface the bulk delete affordance when more than one row is selected.
+    const showBulkDelete = selectedIndicesArray.length > 1;
+    const bulkDeleteDisabled = isPersisting;
     const disableSheetSave = isPersisting || Object.keys(draftErrors).length > 0;
+
+    useEffect(() => {
+        if (!showBulkDelete && lastShowBulkDeleteRef.current) {
+            if (document.activeElement === bulkDeleteRef.current) {
+                const searchInput = document.getElementById("skills-search") as HTMLInputElement | null;
+                searchInput?.focus();
+            }
+        }
+        lastShowBulkDeleteRef.current = showBulkDelete;
+    }, [showBulkDelete]);
 
     return (
         <div className="space-y-4">
@@ -943,14 +956,25 @@ export default function AppSkillsEditor({ skills, onChange, onPersist, onRegiste
                         </Pagination>
                     )}
                     <div className="flex items-center gap-2">
-                        <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => void handleDelete(selectedIndicesArray)}
-                            disabled={deleteButtonDisabled}
-                        >
-                            Delete Selected
-                        </Button>
+                        <div className="flex min-h-[36px] min-w-[140px] items-center justify-end">
+                            <Button
+                                ref={bulkDeleteRef}
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => void handleDelete(selectedIndicesArray)}
+                                disabled={bulkDeleteDisabled}
+                                aria-hidden={showBulkDelete ? undefined : true}
+                                tabIndex={showBulkDelete ? 0 : -1}
+                                className={cn(
+                                    "transition-all duration-150 ease-out",
+                                    showBulkDelete
+                                        ? "opacity-100 scale-100"
+                                        : "pointer-events-none opacity-0 scale-95"
+                                )}
+                            >
+                                Delete Selected
+                            </Button>
+                        </div>
                     </div>
                 </div>
 

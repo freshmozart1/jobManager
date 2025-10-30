@@ -14,9 +14,9 @@ import BadgeInput from "@/components/ui/badgeInput";
 import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AppCategoryCombobox } from "@/components/ui/appCategoryCombobox";
-import { SquarePen, Trash2 } from "lucide-react";
+import { ChevronsUpDown, SquarePen, Trash2 } from "lucide-react";
 
 const PAGE_SIZE = 10;
 
@@ -26,6 +26,7 @@ const BANNER_TIMEOUT_MS = 5000;
 const MAX_ALIAS_COUNT = 5;
 const MAX_ALIAS_LENGTH = 10;
 const MAX_CATEGORY_LENGTH = 30;
+const CATEGORY_FILTER_STORAGE_KEY = "personal.skills.categoryFilter";
 
 type SkillDraft = {
     name: string;
@@ -169,7 +170,8 @@ export default function AppSkillsEditor({ skills, onChange, onPersist }: AppSkil
     const [internalSkills, setInternalSkills] = useState<PersonalInformationSkill[]>(() => sortByPrimaryFirst(skills));
     const [search, setSearch] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
-    const [categoryFilter, setCategoryFilter] = useState("all");
+    const [selectedCategories, setSelectedCategories] = useState<Set<string>>(() => new Set());
+    const [popoverOpen, setPopoverOpen] = useState(false);
     const [pageIndex, setPageIndex] = useState(0);
     const [anchorIndex, setAnchorIndex] = useState<number | null>(null);
     const [targetIndex, setTargetIndex] = useState<number | null>(null);
@@ -193,6 +195,12 @@ export default function AppSkillsEditor({ skills, onChange, onPersist }: AppSkil
     const undoStartRef = useRef<number>(0);
     const [isPersisting, setIsPersisting] = useState(false);
     const [persistError, setPersistError] = useState<string | null>(null);
+    const selectionInitialisedRef = useRef(false);
+    const previousCategoryOptionsRef = useRef<string[]>([]);
+    const triggerRef = useRef<HTMLButtonElement | null>(null);
+    const hiddenLabelRef = useRef<HTMLSpanElement | null>(null);
+    const [triggerContentWidth, setTriggerContentWidth] = useState(0);
+    const [namesLabelWidth, setNamesLabelWidth] = useState(0);
 
     useEffect(() => {
         if (!initialisedRef.current) {
@@ -228,41 +236,45 @@ export default function AppSkillsEditor({ skills, onChange, onPersist }: AppSkil
         }, undoRemainingRef.current);
     }, [undoState]);
 
+    const persistCategorySelection = (next: Set<string>) => {
+        if (typeof window === "undefined") {
+            return;
+        }
+        const sorted = Array.from(next).sort((a, b) => a.localeCompare(b));
+        window.localStorage.setItem(CATEGORY_FILTER_STORAGE_KEY, JSON.stringify(sorted));
+    };
+
+    useEffect(() => {
+        if (typeof window === "undefined") {
+            return;
+        }
+        const element = triggerRef.current;
+        if (!element || typeof window.ResizeObserver === "undefined") {
+            return;
+        }
+
+        const updateWidth = () => {
+            const style = window.getComputedStyle(element);
+            const paddingLeft = parseFloat(style.paddingLeft || "0");
+            const paddingRight = parseFloat(style.paddingRight || "0");
+            const width = element.getBoundingClientRect().width - (paddingLeft + paddingRight);
+            setTriggerContentWidth(Math.max(0, width));
+        };
+
+        updateWidth();
+
+        const observer = new ResizeObserver(() => {
+            updateWidth();
+        });
+
+        observer.observe(element);
+
+        return () => observer.disconnect();
+    }, []);
+
     const skillRows = useMemo(() => {
         return internalSkills.map((skill, index) => ({ skill, index }));
     }, [internalSkills]);
-
-    const filteredRows = useMemo(() => {
-        return skillRows.filter(({ skill }) => {
-            const matchesCategory = categoryFilter === "all" || normaliseName(skill.category) === normaliseName(categoryFilter);
-            if (!matchesCategory) return false;
-            if (!debouncedSearch) return true;
-            const value = debouncedSearch;
-            const haystack = [
-                skill.name,
-                skill.category,
-                skill.level,
-                skill.years != null ? String(skill.years) : null,
-                ...skill.aliases,
-            ]
-                .filter((part): part is string => typeof part === "string" && part.length > 0)
-                .map((part) => part.toLowerCase());
-            return haystack.some((part) => part.includes(value));
-        });
-    }, [skillRows, categoryFilter, debouncedSearch]);
-
-    const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
-
-    useEffect(() => {
-        if (pageIndex > totalPages - 1) {
-            setPageIndex(Math.max(0, totalPages - 1));
-        }
-    }, [pageIndex, totalPages]);
-
-    const pagedRows = useMemo(() => {
-        const start = pageIndex * PAGE_SIZE;
-        return filteredRows.slice(start, start + PAGE_SIZE);
-    }, [filteredRows, pageIndex]);
 
     const categoryOptions = useMemo(() => {
         const categories = new Map<string, string>();
@@ -278,10 +290,168 @@ export default function AppSkillsEditor({ skills, onChange, onPersist }: AppSkil
     }, [internalSkills]);
 
     useEffect(() => {
-        if (categoryFilter !== "all" && !categoryOptions.includes(categoryFilter)) {
-            setCategoryFilter("all");
+        if (typeof window === "undefined") {
+            return;
         }
-    }, [categoryFilter, categoryOptions]);
+
+        if (categoryOptions.length === 0) {
+            const empty = new Set<string>();
+            setSelectedCategories(empty);
+            window.localStorage.removeItem(CATEGORY_FILTER_STORAGE_KEY);
+            selectionInitialisedRef.current = true;
+            previousCategoryOptionsRef.current = categoryOptions;
+            return;
+        }
+
+        const previousOptions = previousCategoryOptionsRef.current;
+
+        if (!selectionInitialisedRef.current) {
+            let storedValues: string[] = [];
+            const raw = window.localStorage.getItem(CATEGORY_FILTER_STORAGE_KEY);
+            if (raw) {
+                try {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed)) {
+                        storedValues = parsed.filter((value): value is string => typeof value === "string");
+                    }
+                } catch (error) {
+                    console.error("Failed to parse stored category filter", error);
+                }
+            }
+            const filteredStored = storedValues.filter((value) => categoryOptions.includes(value));
+            const initialValues = filteredStored.length > 0 ? filteredStored : categoryOptions;
+            const initialSet = new Set(initialValues);
+            setSelectedCategories(initialSet);
+            persistCategorySelection(initialSet);
+            selectionInitialisedRef.current = true;
+            previousCategoryOptionsRef.current = categoryOptions;
+            return;
+        }
+
+        setSelectedCategories((prev) => {
+            const previouslySelectedAll = previousOptions.length > 0 && prev.size === previousOptions.length && previousOptions.every((option) => prev.has(option));
+            const filtered = categoryOptions.filter((category) => prev.has(category));
+            const nextValues = previouslySelectedAll || filtered.length === 0 ? categoryOptions : filtered;
+            const nextSet = new Set(nextValues);
+            const changed = nextSet.size !== prev.size || Array.from(nextSet).some((value) => !prev.has(value));
+            if (!changed) {
+                return prev;
+            }
+            persistCategorySelection(nextSet);
+            return nextSet;
+        });
+
+        previousCategoryOptionsRef.current = categoryOptions;
+    }, [categoryOptions]);
+
+    const filteredRows = useMemo(() => {
+        if (categoryOptions.length === 0) {
+            return skillRows.filter(({ skill }) => {
+                if (!debouncedSearch) return true;
+                const value = debouncedSearch;
+                const haystack = [
+                    skill.name,
+                    skill.category,
+                    skill.level,
+                    skill.years != null ? String(skill.years) : null,
+                    ...skill.aliases,
+                ]
+                    .filter((part): part is string => typeof part === "string" && part.length > 0)
+                    .map((part) => part.toLowerCase());
+                return haystack.some((part) => part.includes(value));
+            });
+        }
+
+        if (selectedCategories.size === 0) {
+            return [];
+        }
+
+        const allCategoriesSelected = selectedCategories.size === categoryOptions.length;
+
+        return skillRows.filter(({ skill }) => {
+            const trimmedCategory = skill.category.trim();
+            if (trimmedCategory.length === 0) {
+                if (!allCategoriesSelected) {
+                    return false;
+                }
+            } else if (!selectedCategories.has(trimmedCategory)) {
+                return false;
+            }
+
+            if (!debouncedSearch) return true;
+            const value = debouncedSearch;
+            const haystack = [
+                skill.name,
+                skill.category,
+                skill.level,
+                skill.years != null ? String(skill.years) : null,
+                ...skill.aliases,
+            ]
+                .filter((part): part is string => typeof part === "string" && part.length > 0)
+                .map((part) => part.toLowerCase());
+            return haystack.some((part) => part.includes(value));
+        });
+    }, [skillRows, selectedCategories, debouncedSearch, categoryOptions]);
+
+    const selectedCategoryArray = useMemo(() => {
+        return Array.from(selectedCategories).sort((a, b) => a.localeCompare(b));
+    }, [selectedCategories]);
+
+    const selectedCategoryCount = selectedCategoryArray.length;
+    const hasCategorySelection = selectedCategoryCount > 0;
+    const namesLabel = selectedCategoryArray.join(", ");
+    const allCategoriesSelected = hasCategorySelection && selectedCategoryCount === categoryOptions.length && categoryOptions.length > 0;
+
+    useEffect(() => {
+        if (typeof window === "undefined") {
+            return;
+        }
+        const frame = window.requestAnimationFrame(() => {
+            if (!hiddenLabelRef.current) {
+                setNamesLabelWidth(0);
+                return;
+            }
+            const width = hiddenLabelRef.current.getBoundingClientRect().width;
+            setNamesLabelWidth(width);
+        });
+        return () => window.cancelAnimationFrame(frame);
+    }, [namesLabel]);
+
+    const shouldShowNames = hasCategorySelection && triggerContentWidth >= 200 && namesLabelWidth > 0 && namesLabelWidth <= triggerContentWidth;
+
+    let categoryDisplayLabel: string;
+    if (!hasCategorySelection) {
+        categoryDisplayLabel = categoryOptions.length === 0 ? "No categories available" : "No categories selected";
+    } else if (shouldShowNames) {
+        categoryDisplayLabel = namesLabel;
+    } else if (allCategoriesSelected) {
+        categoryDisplayLabel = "All categories";
+    } else {
+        categoryDisplayLabel = `${selectedCategoryCount} selected`;
+    }
+
+    const triggerAriaLabel = hasCategorySelection
+        ? `Filter categories: ${namesLabel || `${selectedCategoryCount} selected`}`
+        : categoryOptions.length === 0
+            ? "Filter categories: none available"
+            : "Filter categories: none selected";
+
+    const selectAllDisabled = categoryOptions.length === 0 || (hasCategorySelection && selectedCategoryCount === categoryOptions.length);
+    const deselectAllDisabled = selectedCategoryCount === 0;
+
+    const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
+
+    useEffect(() => {
+        if (pageIndex > totalPages - 1) {
+            setPageIndex(Math.max(0, totalPages - 1));
+        }
+    }, [pageIndex, totalPages]);
+
+    const pagedRows = useMemo(() => {
+        const start = pageIndex * PAGE_SIZE;
+        return filteredRows.slice(start, start + PAGE_SIZE);
+    }, [filteredRows, pageIndex]);
+
 
     const resetSelection = () => {
         setSelectedIndices(new Set());
@@ -469,11 +639,68 @@ export default function AppSkillsEditor({ skills, onChange, onPersist }: AppSkil
         setSelectedIndices(new Set());
     };
 
+    const toggleCategory = (category: string) => {
+        setSelectedCategories((prev) => {
+            const next = new Set(prev);
+            if (next.has(category)) {
+                next.delete(category);
+            } else {
+                next.add(category);
+            }
+            persistCategorySelection(next);
+            return next;
+        });
+        setPageIndex(0);
+        resetSelection();
+    };
+
+    const selectAllCategories = () => {
+        setSelectedCategories((prev) => {
+            if (categoryOptions.length === 0) {
+                const empty = new Set<string>();
+                persistCategorySelection(empty);
+                return empty;
+            }
+            const allSelected = prev.size === categoryOptions.length && categoryOptions.every((category) => prev.has(category));
+            if (allSelected) {
+                return prev;
+            }
+            const next = new Set(categoryOptions);
+            persistCategorySelection(next);
+            return next;
+        });
+        setPageIndex(0);
+        resetSelection();
+    };
+
+    const deselectAllCategories = () => {
+        setSelectedCategories((prev) => {
+            if (prev.size === 0) {
+                return prev;
+            }
+            const next = new Set<string>();
+            persistCategorySelection(next);
+            return next;
+        });
+        setPageIndex(0);
+        resetSelection();
+    };
+
     const clearFilters = () => {
         setSearch("");
         setDebouncedSearch("");
-        setCategoryFilter("all");
         setPageIndex(0);
+        resetSelection();
+        setSelectedCategories(() => {
+            if (categoryOptions.length === 0) {
+                const empty = new Set<string>();
+                persistCategorySelection(empty);
+                return empty;
+            }
+            const next = new Set(categoryOptions);
+            persistCategorySelection(next);
+            return next;
+        });
     };
 
     const handleClearUndo = () => {
@@ -496,47 +723,83 @@ export default function AppSkillsEditor({ skills, onChange, onPersist }: AppSkil
     return (
         <div className="space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                <div className="flex-1 space-y-1.5">
-                    <Label htmlFor="skills-search">Search skills</Label>
-                    <Input
-                        id="skills-search"
-                        className="min-w-[200px]"
-                        value={search}
-                        onChange={(event) => {
-                            setSearch(event.target.value);
-                            setPageIndex(0);
-                            resetSelection();
-                        }}
-                        placeholder="Search by name, category, level, or alias"
-                    />
-                </div>
-                <div className="w-full sm:w-60 space-y-1.5">
-                    <Label htmlFor="skills-category">Category filter</Label>
-                    <div className="flex items-center gap-2">
-                        <Select
-                            value={categoryFilter}
-                            onValueChange={(value) => {
-                                setCategoryFilter(value);
+                <div className="flex-1 space-y-3">
+                    <div className="space-y-1.5">
+                        <Label htmlFor="skills-search">Search skills</Label>
+                        <Input
+                            id="skills-search"
+                            className="min-w-[200px]"
+                            value={search}
+                            onChange={(event) => {
+                                setSearch(event.target.value);
                                 setPageIndex(0);
                                 resetSelection();
                             }}
-                        >
-                            <SelectTrigger id="skills-category" className="w-full">
-                                <SelectValue placeholder="All categories" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">All categories</SelectItem>
-                                {categoryOptions.map((category) => (
-                                    <SelectItem key={category} value={category}>
-                                        {category}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <Button variant="ghost" onClick={() => {
-                            clearFilters();
-                            resetSelection();
-                        }} className="shrink-0">
+                            placeholder="Search by name, category, level, or alias"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <div className="relative flex-1">
+                            <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        id="skills-category-trigger"
+                                        ref={triggerRef}
+                                        variant="outline"
+                                        className="w-full min-w-[200px] justify-between px-3"
+                                        aria-label={triggerAriaLabel}
+                                    >
+                                        <span className="truncate font-normal text-sm">{categoryDisplayLabel}</span>
+                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-60" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-64 p-0" align="start">
+                                    <div className="flex items-center justify-between border-b px-3 py-2">
+                                        <Button variant="ghost" size="sm" onClick={selectAllCategories} disabled={selectAllDisabled}>
+                                            Select all
+                                        </Button>
+                                        <Button variant="ghost" size="sm" onClick={deselectAllCategories} disabled={deselectAllDisabled}>
+                                            Deselect all
+                                        </Button>
+                                    </div>
+                                    <div className="max-h-[300px] overflow-y-auto px-3 py-2" role="group" aria-labelledby="skills-category-checklist">
+                                        <p id="skills-category-checklist" className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                            Categories
+                                        </p>
+                                        {categoryOptions.length === 0 ? (
+                                            <p className="text-sm text-muted-foreground">No categories available.</p>
+                                        ) : (
+                                            <ul className="space-y-1">
+                                                {categoryOptions.map((category) => {
+                                                    const checkboxId = `skills-category-${normaliseName(category)}`;
+                                                    const checked = selectedCategories.has(category);
+                                                    return (
+                                                        <li key={category}>
+                                                            <label htmlFor={checkboxId} className="flex items-center gap-2 text-sm cursor-pointer">
+                                                                <Checkbox
+                                                                    id={checkboxId}
+                                                                    checked={checked}
+                                                                    onCheckedChange={() => toggleCategory(category)}
+                                                                />
+                                                                <span className="truncate">{category}</span>
+                                                            </label>
+                                                        </li>
+                                                    );
+                                                })}
+                                            </ul>
+                                        )}
+                                    </div>
+                                </PopoverContent>
+                            </Popover>
+                            <span
+                                ref={hiddenLabelRef}
+                                className="pointer-events-none absolute left-[-9999px] top-[-9999px] whitespace-nowrap text-sm font-normal"
+                                aria-hidden="true"
+                            >
+                                {namesLabel}
+                            </span>
+                        </div>
+                        <Button variant="ghost" onClick={clearFilters} className="shrink-0">
                             Clear
                         </Button>
                     </div>

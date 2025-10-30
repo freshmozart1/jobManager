@@ -442,6 +442,8 @@ export default function AppSkillsEditor({ skills, onChange, onPersist, onRegiste
     const deselectAllDisabled = selectedCategoryCount === 0;
 
     const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
+    const isFirstPage = pageIndex === 0;
+    const isLastPage = pageIndex >= totalPages - 1;
 
     useEffect(() => {
         if (pageIndex > totalPages - 1) {
@@ -902,12 +904,10 @@ export default function AppSkillsEditor({ skills, onChange, onPersist, onRegiste
                                         href="#"
                                         onClick={(event) => {
                                             event.preventDefault();
-                                            if (pageIndex > 0) {
-                                                setPageIndex((prev) => Math.max(0, prev - 1));
-                                            }
+                                            setPageIndex((prev) => Math.max(0, prev - 1));
                                         }}
-                                        aria-disabled={pageIndex === 0}
-                                        className={pageIndex === 0 ? "pointer-events-none opacity-50" : ""}
+                                        aria-disabled={isFirstPage}
+                                        className={isFirstPage ? "pointer-events-none opacity-50" : ""}
                                     />
                                 </PaginationItem>
                                 {Array.from({ length: totalPages }).map((_, page) => (
@@ -924,7 +924,7 @@ export default function AppSkillsEditor({ skills, onChange, onPersist, onRegiste
                                         </PaginationLink>
                                     </PaginationItem>
                                 ))}
-                                {pageIndex < totalPages - 1 && (
+                                {!isLastPage && (
                                     <PaginationItem>
                                         <PaginationNext
                                             href="#"

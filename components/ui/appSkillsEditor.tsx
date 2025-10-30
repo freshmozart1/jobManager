@@ -895,7 +895,11 @@ export default function AppSkillsEditor({ skills, onChange, onPersist, onRegiste
             </div>
             <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">{filteredRows.length}&nbsp;skills</span>
+                    <span className="text-sm text-muted-foreground">
+                        {(debouncedSearch || (!allCategoriesSelected && categoryOptions.length > 0))
+                            ? `${filteredRows.length}/${skillRows.length}\u00A0skills`
+                            : `${filteredRows.length}\u00A0skills`}
+                    </span>
                     {totalPages > 1 && (
                         <Pagination>
                             <PaginationContent>

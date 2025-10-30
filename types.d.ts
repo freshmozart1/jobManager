@@ -103,6 +103,7 @@ export type PersonalInformationExperience = {
     domains: string[];
     recent_titles: string[];
     achievements: {
+        type: 'project';
         tag: string;
         brief: string;
     }[];

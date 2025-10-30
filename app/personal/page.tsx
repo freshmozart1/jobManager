@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import useToUrl from "@/hooks/useToUrl";
 import { PersonalInformation, type PersonalInformationSkill } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { LoaderCircle, Save, ChevronDown, Phone, Globe, MapPin, Users, Briefcase, Building } from "lucide-react";
+import { LoaderCircle, Save, ChevronDown, Phone, Globe, MapPin, Users, Briefcase, Building, Plus } from "lucide-react";
 import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from "@/components/ui/inputGroup";
 import {
     DropdownMenu,
@@ -25,6 +25,13 @@ export default function PersonalPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [editedField, setEditedField] = useState<string | null>(null);
+    const openSkillsSheetRef = useRef<(() => void) | null>(null);
+    const [canOpenSkillsSheet, setCanOpenSkillsSheet] = useState(false);
+
+    const registerAddSkill = useCallback((handler: (() => void) | null) => {
+        openSkillsSheetRef.current = handler;
+        setCanOpenSkillsSheet(Boolean(handler));
+    }, []);
 
     const handleCurrencyChange = (currency: string) => {
         setPersonalInfo(prev => {
@@ -336,9 +343,18 @@ export default function PersonalPage() {
 
             {/* Skills */}
             <Card>
-                <CardHeader>
-                    <CardTitle>Skills</CardTitle>
-                    <CardDescription>Your technical and professional skills</CardDescription>
+                <CardHeader className="flex flex-row items-center justify-between gap-2">
+                    <CardTitle>Your skills</CardTitle>
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Add skill"
+                        onClick={() => openSkillsSheetRef.current?.()}
+                        disabled={!canOpenSkillsSheet}
+                    >
+                        <Plus className="h-4 w-4" />
+                    </Button>
                 </CardHeader>
                 <CardContent>
                     <AppSkillsEditor
@@ -347,6 +363,7 @@ export default function PersonalPage() {
                             setPersonalInfo(prev => prev ? { ...prev, skills: nextSkills } : prev);
                         }}
                         onPersist={persistSkills}
+                        onRegisterAddSkill={registerAddSkill}
                     />
                 </CardContent>
             </Card>

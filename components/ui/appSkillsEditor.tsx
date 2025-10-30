@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 
 import { PersonalInformationSkill } from "@/types";
 
@@ -51,6 +51,7 @@ type AppSkillsEditorProps = {
     skills: PersonalInformationSkill[];
     onChange: (skills: PersonalInformationSkill[]) => void;
     onPersist: (skills: PersonalInformationSkill[]) => Promise<void>;
+    onRegisterAddSkill?: (handler: (() => void) | null) => void;
 };
 
 function toDraft(skill: PersonalInformationSkill): SkillDraft {
@@ -164,7 +165,7 @@ function validateSkillDraft(
     return errors;
 }
 
-export default function AppSkillsEditor({ skills, onChange, onPersist }: AppSkillsEditorProps) {
+export default function AppSkillsEditor({ skills, onChange, onPersist, onRegisterAddSkill }: AppSkillsEditorProps) {
     const initialisedRef = useRef(false);
     const previousSkillsRef = useRef<PersonalInformationSkill[]>(cloneSkills(skills));
 
@@ -460,7 +461,7 @@ export default function AppSkillsEditor({ skills, onChange, onPersist }: AppSkil
         setAnchorIndex(null);
     };
 
-    const openCreateSheet = () => {
+    const openCreateSheet = useCallback(() => {
         setSheetMode("create");
         setDraft({
             name: "",
@@ -474,7 +475,17 @@ export default function AppSkillsEditor({ skills, onChange, onPersist }: AppSkil
         setOriginalName(undefined);
         setDraftErrors({});
         setSheetOpen(true);
-    };
+    }, []);
+
+    useEffect(() => {
+        if (!onRegisterAddSkill) {
+            return;
+        }
+        onRegisterAddSkill(openCreateSheet);
+        return () => {
+            onRegisterAddSkill(null);
+        };
+    }, [onRegisterAddSkill, openCreateSheet]);
 
     const openEditSheet = (skill: PersonalInformationSkill) => {
         setSheetMode("edit");
@@ -725,21 +736,21 @@ export default function AppSkillsEditor({ skills, onChange, onPersist }: AppSkil
         <div className="space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                 <div className="flex-1 space-y-3">
-                    <div className="space-y-1.5">
-                        <Label htmlFor="skills-search">Search skills</Label>
+                    <div>
                         <InputGroup className="[--radius:0.5rem] min-w-[200px]">
                             <InputGroupAddon align="inline-start" className="px-4 py-2">
                                 <Search className="size-4 text-muted-foreground" />
                             </InputGroupAddon>
                             <InputGroupInput
                                 id="skills-search"
+                                aria-label="Search skills"
                                 value={search}
                                 onChange={(event) => {
                                     setSearch(event.target.value);
                                     setPageIndex(0);
                                     resetSelection();
                                 }}
-                                placeholder="Search by name, category, level, or alias"
+                                placeholder="Name, category, level, alias"
                             />
                         </InputGroup>
                     </div>
@@ -809,9 +820,6 @@ export default function AppSkillsEditor({ skills, onChange, onPersist }: AppSkil
                         </Button>
                     </div>
                 </div>
-                <Button onClick={openCreateSheet} className="sm:self-start">
-                    Add Skill
-                </Button>
             </div>
 
             {persistError && (

@@ -92,6 +92,7 @@ Job Manager is a web application that scrapes, stores, and displays job listings
 - Always check for `DATABASE_NAME` environment variable
 - Use projections to exclude `_id` when appropriate
 - Set appropriate timeouts for database operations (e.g., `timeoutMS: 3000`)
+- Use the `/api/mock/*` endpoints for generating mock data during development
 
 ### Error Handling
 - Use custom error classes from `@/lib/errors`
@@ -146,11 +147,13 @@ Ensure the following environment variables are configured:
 - `@tanstack/react-table`: Advanced data tables
 - `@radix-ui/*`: Accessible UI primitives
 - `lucide-react`: Icon library
+- `shadcn`: UI component library
 
 ### Development Dependencies
 - `eslint` and `eslint-config-next`: Code linting
 - `@tailwindcss/postcss`: Tailwind CSS processing
 - `typescript`: Type checking
+- `shadcn`: UI component library
 
 ## Special Notes
 
@@ -169,6 +172,7 @@ Ensure the following environment variables are configured:
 - Add comments only when necessary to explain complex logic
 - Ensure all TypeScript types are properly defined
 - Test changes in development mode before building
+- Avoid ```import * as``` when possible; use ```import {}``` syntax
 
 ## Git Workflow
 

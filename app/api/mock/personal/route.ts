@@ -152,14 +152,17 @@ function generateMockPersonalInformation(): PersonalInformation {
             ],
             achievements: [
                 {
+                    type: 'project',
                     tag: "Performance",
                     brief: "Optimized application performance resulting in 40% faster load times"
                 },
                 {
+                    type: 'project',
                     tag: "Leadership",
                     brief: "Led a team of 5 developers in migrating legacy system to modern architecture"
                 },
                 {
+                    type: 'project',
                     tag: "Innovation",
                     brief: "Designed and implemented microservices architecture serving 1M+ users"
                 }

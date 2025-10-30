@@ -560,14 +560,13 @@ export default function AppSkillsEditor({ skills, onChange, onPersist }: AppSkil
                             <TableHead>Years</TableHead>
                             <TableHead>Last used</TableHead>
                             <TableHead>Aliases</TableHead>
-                            <TableHead className="text-center">Primary</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {pagedRows.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={8} className="text-center py-6 text-muted-foreground">
+                                <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
                                     No skills found.
                                 </TableCell>
                             </TableRow>
@@ -625,17 +624,6 @@ export default function AppSkillsEditor({ skills, onChange, onPersist }: AppSkil
                                                             ))}
                                                         </ul>
                                                     )}
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TableCell>
-                                        <TableCell className="text-center">
-                                            <Tooltip>
-                                                <TooltipTrigger className={cn("inline-flex h-6 w-6 items-center justify-center rounded-full border", skill.primary ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}
-                                                >
-                                                    {skill.primary ? "●" : "○"}
-                                                </TooltipTrigger>
-                                                <TooltipContent side="top">
-                                                    <p>Marks skill as primary; primary skills appear first on initial load.</p>
                                                 </TooltipContent>
                                             </Tooltip>
                                         </TableCell>

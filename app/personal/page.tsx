@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import useToUrl from "@/hooks/useToUrl";
-import { PersonalInformation, type PersonalInformationSkill } from "@/types";
+import { PersonalInformation, type PersonalInformationSkill, type PersonalInformationExperienceItem } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,8 @@ import {
 } from "@/components/ui/dropdownMenu";
 import BadgeInput from "@/components/ui/badgeInput";
 import AppSkillsEditor from "@/components/ui/appSkillsEditor";
+import AppExperienceEditor from "@/components/ui/appExperienceEditor";
+import { normaliseExperienceItems, serializeExperienceItems } from "@/lib/experience";
 
 export default function PersonalPage() {
     const toUrl = useToUrl();
@@ -51,7 +53,8 @@ export default function PersonalPage() {
         fetch(toUrl('/api/personal'), { signal: controller.signal })
             .then(res => res.json())
             .then((data: PersonalInformation) => {
-                setPersonalInfo(data);
+                const normalizedExperience = normaliseExperienceItems(data.experience);
+                setPersonalInfo({ ...data, experience: normalizedExperience });
                 setLoading(false);
             })
             .catch(err => {
@@ -80,6 +83,47 @@ export default function PersonalPage() {
             }
         } catch (saveError) {
             console.error('Error saving:', saveError);
+        } finally {
+            setSaving(false);
+            setEditedField(null);
+        }
+    };
+
+    const persistExperience = async (nextItems: PersonalInformationExperienceItem[]) => {
+        setSaving(true);
+        setEditedField('experience');
+        try {
+            const payload = serializeExperienceItems(nextItems);
+            const response = await fetch(toUrl('/api/personal'), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'experience', value: payload })
+            });
+
+            if (!response.ok) {
+                let message = 'Failed to save experience.';
+                try {
+                    const parsed = await response.json();
+                    if (parsed?.error) {
+                        message = parsed.error;
+                    }
+                } catch {
+                    try {
+                        const text = await response.text();
+                        if (text) message = text;
+                    } catch {
+                        // ignore
+                    }
+                }
+                throw new Error(message);
+            }
+
+            const updated = await response.json();
+            const normalizedExperience = normaliseExperienceItems(updated.value);
+            setPersonalInfo(prev => prev ? { ...prev, experience: normalizedExperience } : null);
+        } catch (error) {
+            console.error('Error saving experience:', error);
+            throw (error instanceof Error ? error : new Error('Failed to save experience.'));
         } finally {
             setSaving(false);
             setEditedField(null);
@@ -374,30 +418,12 @@ export default function PersonalPage() {
                     <CardTitle>Experience</CardTitle>
                     <CardDescription>Your professional experience</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    <div>
-                        <Label htmlFor="experience-json">Experience (JSON format)</Label>
-                        <Textarea
-                            id="experience-json"
-                            rows={8}
-                            value={JSON.stringify(personalInfo.experience, null, 2)}
-                            onChange={(e) => {
-                                try {
-                                    const parsed = JSON.parse(e.target.value);
-                                    setPersonalInfo(prev => prev ? { ...prev, experience: parsed } : null);
-                                } catch {
-                                    // Invalid JSON, don't update
-                                }
-                            }}
-                        />
-                    </div>
-                    <Button
-                        onClick={() => handleSave('experience', personalInfo.experience)}
-                        disabled={saving && editedField === 'experience'}
-                    >
-                        {saving && editedField === 'experience' ? <LoaderCircle className="animate-spin" /> : <Save />}
-                        Save Experience
-                    </Button>
+                <CardContent>
+                    <AppExperienceEditor
+                        experience={personalInfo.experience}
+                        onChange={(items) => setPersonalInfo(prev => prev ? { ...prev, experience: items } : prev)}
+                        onPersist={persistExperience}
+                    />
                 </CardContent>
             </Card>
 

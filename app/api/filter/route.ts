@@ -1,7 +1,7 @@
 import { corsHeaders } from "@/lib/cors";
 import { MissingPromptIdInRequestBodyError, NoActorQueryParameterError, NoApifyTokenError, NoDatabaseNameError, NoOpenAIKeyError, NoScrapeUrlsError, PromptNotFoundError } from "@/lib/errors";
 import mongoPromise from "@/lib/mongodb";
-import { chunkArray, sleep, toUrl } from "@/lib/utils";
+import { chunkArray, sleep, toUrl, startAgentRun, completeAgentRun } from "@/lib/utils";
 import { AgentRunRetryOptions, Job, PersonalInformation, PromptDocument, ScrapedJob, ScrapeUrlDocument } from "@/types";
 import { Agent, Runner, tool } from "@openai/agents";
 import { ApifyClient } from "apify-client";
@@ -9,6 +9,16 @@ import { ObjectId } from "mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import z from "zod";
+
+/**
+ * Deterministic agent execution (policy notes)
+ *
+ * - Always run with temperature=0 (or the most deterministic setting exposed by the library).
+ * - Use an explicitly versioned prompt (PromptDocument.updatedAt acts as a watermark) to guarantee reproducibility.
+ * - Capture a trace for each run (runId, promptVersion, inputs/outputs, timestamps) using utilities from lib/utils.
+ * - Validate agent output strictly with zod before use; reject or retry on schema mismatch.
+ * - Respect backoff on 429/5xx and parse Retry-After headers when available.
+ */
 
 function extractSuggestedDelayMs(err: unknown): number | null {
     if (err && typeof err === 'object') {
@@ -141,6 +151,11 @@ export async function POST(req: NextRequest) {
         }
         return NextResponse.json({}, { status, statusText, headers: corsHeaders(req.headers.get('origin') || undefined) });
     }
+    const runTrace = startAgentRun({
+        agent: 'filter',
+        promptVersion: promptDoc.updatedAt.toISOString(),
+        input: { jobsCount: scrapedJobs.length, promptId }
+    });
     const scrapedJobChunks = chunkArray(scrapedJobs, 5);
     const settled = await Promise.allSettled(scrapedJobChunks.map((chunk, chunkIndex) =>
         safeCall<Job[]>(`Filter chunk ${chunkIndex + 1}`, async () => {
@@ -203,5 +218,8 @@ export async function POST(req: NextRequest) {
             ? db.collection<Job>('jobs').updateOne({ id: j.id }, { $set: j })
             : db.collection<Job>('jobs').insertOne({ ...j })
     ));
+    completeAgentRun(runTrace, {
+        output: { accepted: jobs.length, rejected: rejects.length, errors: errors.length }
+    });
     return NextResponse.json({ jobs, rejects, errors }, { status: 200, headers: corsHeaders(req.headers.get('origin') || undefined) });
 }

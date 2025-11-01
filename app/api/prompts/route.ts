@@ -5,6 +5,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { corsHeaders } from "@/lib/cors";
 import { PromptDocument } from "@/types";
 
+/**
+ * Prompt storage convention (deterministic templates)
+ *
+ * - Prompts are stored in the `prompts` collection with fields: {_id, agentType, name, createdAt, updatedAt, prompt}
+ * - Each prompt should include a fixed, versioned prefix and postfix that set deterministic constraints
+ *   Example:
+ *     prefix (immutable):
+ *       - "You are the Filter Agent v1.0.0. Follow instructions exactly."
+ *       - "Output strictly matches the declared JSON schema."
+ *     postfix (immutable):
+ *       - "Do not include explanations."
+ *       - "If uncertain, return the default false value."
+ * - The variable middle section can be edited between versions, but prefix/postfix should be treated as locked to
+ *   preserve behavior across runs and enable reproducibility.
+ * - Consumers must reference a concrete prompt document by _id and treat updatedAt as the version watermark.
+ */
+
 export function OPTIONS() {
     return new NextResponse(null, { headers: corsHeaders() });
 }

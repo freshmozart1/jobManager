@@ -282,8 +282,8 @@ Notes (US3 alternates):
 
 - **Job**: Represents a job posting with core fields (title, company, location,
   description, identifiers, metadata such as salary and benefits).
-- **Application Document**: Generated artifact (e.g., cover letter, CV) linked to
-  a job and a generation run; includes metadata (type, created time).
+- **Job Artifact**: Generated artifact (cover letter or CV) linked to a job and
+  a generation run; includes metadata (type, fileName, contentType, createdAt).
 - **Personal Profile**: Structured personal data used for generation (contact,
   preferences, skills, experience, education, etc.).
 - **Agent Run**: A trace record for filtering/generation containing prompt
@@ -305,3 +305,51 @@ Notes (US3 alternates):
   status updates.
 - **SC-005**: 100% of agent runs are traceable by run ID with recorded inputs,
   outputs, and prompt version.
+
+## Appendix: Canonical Type Definitions (excerpt)
+
+Authoritative source is `types.d.ts`. This excerpt highlights the core API data shapes referenced in this spec. See `data-model.md` for the full set.
+
+```ts
+import { ObjectId } from "mongodb";
+
+export type JobArtifactType = 'cover-letter' | 'cv';
+
+export type JobGenerationArtifact = {
+  type: JobArtifactType;
+  contentType: string;
+  fileName: string;
+  createdAt: Date;
+};
+
+export type JobGenerationMetadata = {
+  runId: string;
+  generatedAt: Date;
+  types: JobArtifactType[];
+  artifacts: JobGenerationArtifact[];
+};
+
+export type Job = ScrapedJob & {
+  filteredAt: Date;
+  filterResult: boolean | { error: string };
+  filteredBy: ObjectId;
+  generation?: JobGenerationMetadata;
+  appliedAt?: Date;
+};
+
+export type JobArtifactDocument = {
+  jobId: string;
+  runId: string;
+  type: JobArtifactType;
+  contentType: string;
+  fileName: string;
+  content: string;
+  createdAt: Date;
+};
+
+export type FilterAgentResult = {
+  jobs: Job[];
+  rejects: Job[];
+  errors: Job[];
+};
+```

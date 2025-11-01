@@ -13,10 +13,10 @@ Represents a scraped job posting and its derived metadata.
 - Derived fields: filteredAt, filterResult (boolean or error), filteredBy (ObjectId)
 - Constraints: id, trackingId, and refId are deduplication keys; postedAt is a Date
 
-### Application Document
-Generated document for a specific job.
-- Fields: id, jobId, type (cover-letter | cv | attachment), createdAt, content/meta
-- Relationships: belongs to Job; linked to Agent Run for traceability
+### Job Artifact
+Generated artifact for a specific job (e.g., cover letter, CV).
+- Fields: jobId, runId, type ("cover-letter" | "cv"), fileName, contentType, content, createdAt
+- Relationships: belongs to Job; linked to an Agent Run via runId for traceability
 
 ### Personal Profile
 Structured personal data used for filtering and generation.
@@ -55,3 +55,241 @@ User-initiated updates to a Job’s lifecycle.
 - No PII in logs; redact sensitive fields in traces
 - Ensure deterministic agent params (temperature=0) captured per run
 - Required fields for generated documents (type, jobId, createdAt) must be present
+
+---
+
+## Canonical Type Definitions (source of truth: `types.d.ts`)
+
+The following TypeScript definitions are the canonical data shapes used by the application. Keep this section in sync with `types.d.ts`.
+
+```ts
+import { ObjectId } from "mongodb";
+
+export type ScrapedJob = {
+  id: string;
+  trackingId: string;
+  refId: string;
+  link: string;
+  title: string;
+  companyName: string;
+  companyLinkedinUrl: string;
+  companyLogo: string;
+  companyEmployeesCount?: number | undefined;
+  location: string;
+  postedAt: Date;
+  salaryInfo: string[];
+  salary: string;
+  benefits: string[];
+  descriptionHtml: string;
+  applicantsCount: number | string;
+  applyUrl: string;
+  descriptionText: string;
+  seniorityLevel?: string | undefined;
+  employmentType: string;
+  jobFunction?: string | undefined;
+  industries?: string | undefined;
+  inputUrl: string;
+  companyAddress?: PostalAddress | undefined;
+  companyWebsite?: string | undefined;
+  companySlogan?: string | null | undefined;
+  companyDescription?: string | undefined;
+};
+
+export type JobArtifactType = 'cover-letter' | 'cv';
+
+export type JobGenerationArtifact = {
+  type: JobArtifactType;
+  contentType: string;
+  fileName: string;
+  createdAt: Date;
+};
+
+export type JobGenerationMetadata = {
+  runId: string;
+  generatedAt: Date;
+  types: JobArtifactType[];
+  artifacts: JobGenerationArtifact[];
+};
+
+export type JobArtifactDocument = {
+  jobId: string;
+  runId: string;
+  type: JobArtifactType;
+  contentType: string;
+  fileName: string;
+  content: string;
+  createdAt: Date;
+};
+
+export type Job = ScrapedJob & {
+  filteredAt: Date;
+  filterResult: boolean | { error: string };
+  filteredBy: ObjectId;
+  generation?: JobGenerationMetadata;
+  appliedAt?: Date;
+};
+
+export type ScrapeUrlDocument = {
+  url: string;
+};
+
+export type PersonalInformationContact = {
+  name: string;
+  email: string;
+  phone: string;
+  portfolio_urls: string[];
+};
+
+export type PersonalInformationEligibility = {
+  work_authorization: {
+    region: string;
+    status: string;
+  }[];
+  security_clearance: string | null;
+  relocation: {
+    willing: boolean;
+    regions: string[];
+  };
+  remote: {
+    willing: boolean;
+    time_zone: string;
+  };
+  availability: {
+    notice_period_days: number;
+  };
+  work_schedule_constraints: {
+    weekends: boolean;
+    nights: boolean;
+  };
+};
+
+export type PersonalInformationConstraints = {
+  salary_min: {
+    currency: string;
+    amount: number;
+  };
+  locations_allowed: string[];
+};
+
+export type PersonalInformationPreferences = {
+  roles: string[];
+  seniority: string[];
+  company_size: string[];
+  work_mode: {
+    mode: string;
+  }[];
+  industries: string[];
+};
+
+export type PersonalInformationSkill = {
+  name: string;
+  aliases: string[];
+  category: string;
+  level: string;
+  years: number;
+  last_used: string;
+  primary: boolean;
+};
+
+export type PersonalInformationExperienceItem = {
+  from: Date;
+  to?: Date;
+  role: string;
+  company: string;
+  summary: string;
+  tags: string[];
+};
+
+export type PersonalInformationEducation = {
+  degree: string;
+  field: string;
+  institution: string;
+  graduation_year: number;
+};
+
+export type PersonalInformationCertification = {
+  name: string;
+  issued: string;
+  expires: string | null;
+};
+
+export type PersonalInformationLanguageSpoken = {
+  language: string;
+  level: string;
+};
+
+export type PersonalInformationExclusions = {
+  avoid_roles: string[];
+  avoid_technologies: string[];
+  avoid_industries: string[];
+  avoid_companies: string[];
+};
+
+export type PersonalInformationMotivation = {
+  topic: string;
+  description: string;
+  reason_lite: string;
+};
+
+export type PersonalInformationCareerGoal = PersonalInformationMotivation;
+
+export type PersonalInformation = {
+  contact: PersonalInformationContact,
+  eligibility: PersonalInformationEligibility,
+  constraints: PersonalInformationConstraints,
+  preferences: PersonalInformationPreferences,
+  skills: PersonalInformationSkill[],
+  experience: PersonalInformationExperienceItem[],
+  education: PersonalInformationEducation[],
+  certifications: PersonalInformationCertification[],
+  languages_spoken: PersonalInformationLanguageSpoken[],
+  exclusions: PersonalInformationExclusions,
+  motivations: PersonalInformationMotivation[],
+  career_goals: PersonalInformationCareerGoal[];
+};
+
+export type PersonalInformationDocument = {
+  _id: ObjectId;
+  type: string;
+  value: PersonalInformationContact | PersonalInformationEligibility | PersonalInformationConstraints | PersonalInformationPreferences | PersonalInformationSkill[] | PersonalInformationExperienceItem[] | PersonalInformationEducation[] | PersonalInformationCertification[] | PersonalInformationLanguageSpoken[] | PersonalInformationExclusions | PersonalInformationMotivation[] | PersonalInformationCareerGoal[];
+};
+
+export type AgentType = 'filter' | 'writer' | 'evaluator';
+
+export type PromptDocument = {
+  _id: ObjectId;
+  agentType: AgentType;
+  name: string;
+  createdAt: Date;
+  updatedAt: Date;
+  prompt: string;
+};
+
+export type AgentRunRetryOptions = {
+  retries?: number;
+  baseDelayMs?: number;
+  maxDelayMs?: number;
+  jitterRatio?: number;
+  retryOn?: (info: {
+    status: number | null;
+    error: unknown;
+    attempt: number;
+  }) => boolean;
+  onRetry?: (info: {
+    attempt: number;
+    delayMs: number;
+    reason: string;
+  }) => void;
+  onRequestTooLarge?: () => Promise;
+};
+
+export type FilterAgentResult = {
+  jobs: Job[];
+  rejects: Job[];
+  errors: Job[];
+};
+
+export type FilterAgentPromise = Promise<FilterAgentResult>;
+
+export type JobWithNewFlag = Job & { new: boolean };
+```

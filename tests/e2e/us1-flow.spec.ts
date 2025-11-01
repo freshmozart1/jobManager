@@ -5,6 +5,6 @@ import { test, expect } from '@playwright/test';
 // Detailed flow steps (filter → generate → download → apply) will be added as features land.
 
 test('US1 smoke: search page loads', async ({ page, baseURL }) => {
-  await page.goto(`${baseURL ?? ''}/search`, { waitUntil: 'load' });
-  await expect(page.locator('body')).toBeVisible();
+    await page.goto(`${baseURL ?? ''}/search`, { waitUntil: 'load' });
+    await expect(page.locator('body')).toBeVisible();
 });

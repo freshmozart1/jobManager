@@ -1,4 +1,5 @@
-import { NoDatabaseNameError } from "@/lib/errors";
+import { jsonError } from "@/lib/api";
+import { JobNotFoundError, NoDatabaseNameError } from "@/lib/errors";
 import mongoPromise from "@/lib/mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import { corsHeaders } from "@/lib/cors";
@@ -14,8 +15,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const db = (await mongoPromise).db(DATABASE_NAME);
     await db.command({ ping: 1 }, { timeoutMS: 3000 });
     const origin = req.headers.get('origin') || undefined;
-    return NextResponse.json(
-        await db.collection<Job>('jobs').find({ id: (await params).id }, { projection: { _id: 0 } }).toArray(),
-        { headers: corsHeaders(origin) }
-    );
+    const { id } = await params;
+    const job = await db.collection<Job>('jobs').findOne({ id }, { projection: { _id: 0 } });
+    if (!job) return jsonError(404, JobNotFoundError.name, `Job ${id} not found`, origin);
+    return NextResponse.json(job, { headers: corsHeaders(origin) });
 }

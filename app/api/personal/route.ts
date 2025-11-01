@@ -5,6 +5,7 @@ import { fetchPersonalInformation } from "@/lib/personal";
 import { NextRequest, NextResponse } from "next/server";
 import { PersonalInformationDocument } from "@/types";
 import { VALID_PERSONAL_INFORMATION_TYPES } from "@/lib/constants";
+import { normaliseTags } from "@/lib/utils";
 
 export function OPTIONS() {
     return new NextResponse(null, { headers: corsHeaders() });
@@ -112,7 +113,7 @@ export async function PUT(req: NextRequest) {
                 if (!Array.isArray(tags)) {
                     errors.push(`Entry ${index + 1} field "tags" must be an array of strings.`);
                 } else {
-                    normalizedTags = tags.map(tag => (typeof tag === 'string' ? tag.trim() : '')).filter(Boolean);
+                    normalizedTags = normaliseTags(tags);
                 }
             }
 

@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import BadgeInput from "@/components/ui/badgeInput";
 import AppMonthYearPicker from "@/components/ui/appMonthYearPicker";
 import { PersonalInformationExperienceItem } from "@/types";
+import { normaliseTags } from "@/lib/utils";
 
 const MAX_TAG_COUNT = 10;
 const MAX_TAG_LENGTH = 20;
@@ -55,7 +56,7 @@ function toDraft(source?: PersonalInformationExperienceItem): ExperienceDraft {
         role: source.role ?? "",
         company: source.company ?? "",
         summary: source.summary ?? "",
-        tags: Array.isArray(source.tags) ? [...source.tags] : [],
+        tags: Array.isArray(source.tags) ? normaliseTags(source.tags) : [],
     };
 }
 
@@ -69,7 +70,7 @@ function toPayload(draft: ExperienceDraft): PersonalInformationExperienceItem {
         role: draft.role.trim(),
         company: draft.company.trim(),
         summary: draft.summary.trim(),
-        tags: draft.tags.map((tag) => tag.trim()),
+        tags: normaliseTags(draft.tags),
     };
 }
 
@@ -164,9 +165,7 @@ export default function AppExperienceItemForm({
 
     const handleTagsChange = (next: string[]) => {
         let errorMessage: string | undefined;
-        let sanitized = next
-            .map((tag) => tag.trim())
-            .filter((tag, index, array) => tag.length > 0 && array.indexOf(tag) === index);
+        let sanitized = normaliseTags(next);
 
         if (sanitized.some((tag) => tag.length > MAX_TAG_LENGTH)) {
             errorMessage = `Tags must be ${MAX_TAG_LENGTH} characters or fewer.`;

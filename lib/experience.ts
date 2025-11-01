@@ -1,5 +1,5 @@
 import { PersonalInformationExperienceItem } from "@/types";
-import { formatMonthYear, makeUtcMonthYear } from "@/lib/utils";
+import { formatMonthYear, makeUtcMonthYear, normaliseTags } from "@/lib/utils";
 
 export type ExperiencePayloadItem = {
     from: string;
@@ -49,11 +49,7 @@ export function normaliseExperienceItems(value: unknown): PersonalInformationExp
             const role = typeof source.role === "string" ? source.role.trim() : "";
             const company = typeof source.company === "string" ? source.company.trim() : "";
             const summary = typeof source.summary === "string" ? source.summary.trim() : "";
-            const tags = Array.isArray(source.tags)
-                ? source.tags
-                    .map((tag) => (typeof tag === "string" ? tag.trim() : ""))
-                    .filter((tag, index, array) => tag.length > 0 && array.indexOf(tag) === index)
-                : [];
+            const tags = normaliseTags(source.tags);
             if (!role || !company || !summary) return null;
             const normalised: PersonalInformationExperienceItem = {
                 from,
@@ -77,7 +73,7 @@ export function serializeExperienceItems(items: PersonalInformationExperienceIte
         role: item.role.trim(),
         company: item.company.trim(),
         summary: item.summary.trim(),
-        tags: Array.isArray(item.tags) ? item.tags.map((tag) => tag.trim()).filter(Boolean) : [],
+        tags: normaliseTags(item.tags),
     }));
 }
 

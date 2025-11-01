@@ -63,8 +63,8 @@ export function parseMonthYear(value: string): Date | null {
   if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) return null;
   const date = makeUtcMonthYear(year, month - 1);
   return Number.isNaN(date.getTime()) ? null : date;
-// --- Structured logging (placeholder utility) ---
-
+  // --- Structured logging (placeholder utility) ---
+}
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 type LogMeta = Record<string, unknown> | undefined;

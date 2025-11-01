@@ -141,7 +141,7 @@ export async function PUT(req: NextRequest) {
             };
         });
 
-        if (errors.length > 0 || parsed.some(item => item === null)) {
+        if (errors.length > 0) {
             return NextResponse.json(
                 { error: 'Invalid experience payload.', details: errors },
                 { status: 400, headers: corsHeaders(origin) }

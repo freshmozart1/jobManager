@@ -14,3 +14,5 @@ export const VALID_PERSONAL_INFORMATION_TYPES = [
 ] as const;
 
 export type PersonalInformationType = typeof VALID_PERSONAL_INFORMATION_TYPES[number];
+
+export const JOB_ARTIFACT_TYPES = ['cover-letter', 'cv'] as const;

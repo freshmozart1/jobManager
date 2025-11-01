@@ -48,13 +48,13 @@ description: "Task list for baseline feature implementation"
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T009 [P] [US1] Contract test: POST /api/filter in `/Users/ole/VS Code Workspace/jobManager/tests/contract/filter.post.test.ts`
-- [ ] T010 [P] [US1] Contract test: GET /api/jobs?filter=relevant in `/Users/ole/VS Code Workspace/jobManager/tests/contract/jobs.get.relevant.test.ts`
-- [ ] T011 [P] [US1] Contract test: GET /api/jobs/{id} in `/Users/ole/VS Code Workspace/jobManager/tests/contract/jobs.id.get.test.ts`
-- [ ] T012 [P] [US1] Contract test: POST /api/jobs/{id}/generate in `/Users/ole/VS Code Workspace/jobManager/tests/contract/jobs.id.generate.post.test.ts`
-- [ ] T013 [P] [US1] Contract test: GET /api/jobs/{id}/download in `/Users/ole/VS Code Workspace/jobManager/tests/contract/jobs.id.download.get.test.ts`
-- [ ] T014 [P] [US1] Contract test: POST /api/jobs/{id}/apply in `/Users/ole/VS Code Workspace/jobManager/tests/contract/jobs.id.apply.post.test.ts`
-- [ ] T015 [US1] E2E test: filter → generate → download → apply in `/Users/ole/VS Code Workspace/jobManager/tests/e2e/us1-flow.spec.ts`
+- [x] T009 [P] [US1] Contract test: POST /api/filter in `/Users/ole/VS Code Workspace/jobManager/tests/contract/filter.post.test.ts`
+- [x] T010 [P] [US1] Contract test: GET /api/jobs?filter=relevant in `/Users/ole/VS Code Workspace/jobManager/tests/contract/jobs.get.relevant.test.ts`
+- [x] T011 [P] [US1] Contract test: GET /api/jobs/{id} in `/Users/ole/VS Code Workspace/jobManager/tests/contract/jobs.id.get.test.ts`
+- [x] T012 [P] [US1] Contract test: POST /api/jobs/{id}/generate in `/Users/ole/VS Code Workspace/jobManager/tests/contract/jobs.id.generate.post.test.ts`
+- [x] T013 [P] [US1] Contract test: GET /api/jobs/{id}/download in `/Users/ole/VS Code Workspace/jobManager/tests/contract/jobs.id.download.get.test.ts`
+- [x] T014 [P] [US1] Contract test: POST /api/jobs/{id}/apply in `/Users/ole/VS Code Workspace/jobManager/tests/contract/jobs.id.apply.post.test.ts`
+- [x] T015 [US1] E2E test: filter → generate → download → apply in `/Users/ole/VS Code Workspace/jobManager/tests/e2e/us1-flow.spec.ts`
 
 ### Implementation for User Story 1
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Edit, Plus, RotateCcw, Trash } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -142,7 +142,7 @@ export default function AppExperienceEditor({ experience, onChange, onPersist }:
     }, [items, refreshParent, persistChanges]);
 
     const handleDelete = (index: number) => {
-        if (interactionsLocked || pendingDelete) return;
+        if (interactionsLocked) return;
         const target = items[index];
         if (!target) return;
         const state: PendingDeleteState = {
@@ -165,8 +165,6 @@ export default function AppExperienceEditor({ experience, onChange, onPersist }:
 
     const pendingKey = pendingDelete?.key;
 
-    const cards = useMemo(() => sortExperienceItems(items), [items]);
-
     return (
         <div className="space-y-4">
             <div aria-live="polite" className="sr-only">
@@ -178,7 +176,7 @@ export default function AppExperienceEditor({ experience, onChange, onPersist }:
                     className={cn(
                         "rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive",
                         "transition-opacity duration-200",
-                        errorMessage ? "opacity-100" : "opacity-0"
+                        "opacity-100"
                     )}
                 >
                     {errorMessage}
@@ -199,7 +197,7 @@ export default function AppExperienceEditor({ experience, onChange, onPersist }:
                         Add experience
                     </span>
                 </button>
-                {cards.map((item, index) => {
+                {items.map((item, index) => {
                     const key = getItemKey(item);
                     const isPending = pendingKey === key;
                     const snippet = truncateSummary(item.summary);
@@ -267,7 +265,7 @@ export default function AppExperienceEditor({ experience, onChange, onPersist }:
             <AppExperienceItemForm
                 open={sheetOpen}
                 mode={sheetMode}
-                initialValue={sheetItemIndex != null ? cards[sheetItemIndex] : undefined}
+                initialValue={sheetItemIndex != null ? items[sheetItemIndex] : undefined}
                 onOpenChange={(next) => {
                     if (!next) {
                         setSheetOpen(false);

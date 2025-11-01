@@ -181,3 +181,66 @@ export class PersonalInformationDocumentNotFoundError extends Error {
         this.name = 'PersonalInformationDocumentNotFoundError';
     }
 }
+
+export class JobNotFoundError extends Error {
+    constructor() {
+        super('Job not found');
+        this.name = 'JobNotFoundError';
+    }
+}
+
+export class InvalidGenerationTypesError extends Error {
+    constructor() {
+        super('Invalid generation types requested');
+        this.name = 'InvalidGenerationTypesError';
+    }
+}
+
+export class ProfileIncompleteError extends Error {
+    constructor() {
+        super('Personal profile is incomplete');
+        this.name = 'ProfileIncompleteError';
+    }
+}
+
+export class InvalidArtifactTypeError extends Error {
+    constructor() {
+        super('Invalid artifact type requested');
+        this.name = 'InvalidArtifactTypeError';
+    }
+}
+
+export class JobArtifactNotReadyError extends Error {
+    constructor() {
+        super('Requested artifact has not been generated yet');
+        this.name = 'JobArtifactNotReadyError';
+    }
+}
+
+export class InvalidAppliedAtError extends Error {
+    constructor() {
+        super('Invalid appliedAt timestamp');
+        this.name = 'InvalidAppliedAtError';
+    }
+}
+
+export class JobAlreadyAppliedError extends Error {
+    constructor() {
+        super('Job already marked as applied');
+        this.name = 'JobAlreadyAppliedError';
+    }
+}
+
+export class JobGenerationFailedError extends Error {
+    constructor() {
+        super('Failed to generate job artifacts');
+        this.name = 'JobGenerationFailedError';
+    }
+}
+
+export class MissingArtifactTypeQueryError extends Error {
+    constructor() {
+        super('Artifact type query parameter is required');
+        this.name = 'MissingArtifactTypeQueryError';
+    }
+}

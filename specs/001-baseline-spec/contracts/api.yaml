@@ -1,0 +1,120 @@
+openapi: 3.0.3
+info:
+  title: Application Manager API (Baseline)
+  version: 0.1.0
+  description: Endpoints derived from baseline functional requirements.
+servers:
+  - url: http://localhost:3000
+paths:
+  /api/jobs:
+    get:
+      summary: List jobs
+      parameters:
+        - in: query
+          name: filter
+          schema:
+            type: string
+          description: optional filter (e.g., relevant)
+      responses:
+        '200':
+          description: OK
+  /api/jobs/{id}:
+    get:
+      summary: Get job by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/filter:
+    post:
+      summary: Run relevance filter on new jobs
+      requestBody:
+        required: false
+      responses:
+        '202':
+          description: Accepted (async)
+  /api/jobs/{id}/generate:
+    post:
+      summary: Generate application documents for a job
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+      responses:
+        '202':
+          description: Accepted (async)
+  /api/jobs/{id}/download:
+    get:
+      summary: Download generated documents
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/jobs/{id}/apply:
+    post:
+      summary: Mark job as applied
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /api/jobs/{id}/notes:
+    post:
+      summary: Add a note to a job
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+      responses:
+        '201':
+          description: Created
+  /api/jobs/{id}/interview:
+    post:
+      summary: Schedule an interview for a job
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+      responses:
+        '201':
+          description: Created
+  /api/jobs/{id}/feedback:
+    post:
+      summary: Record company feedback for a job
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+      responses:
+        '201':
+          description: Created

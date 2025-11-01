@@ -98,15 +98,13 @@ export type PersonalInformationSkill = {
     primary: boolean;
 };
 
-export type PersonalInformationExperience = {
-    years_total: number;
-    domains: string[];
-    recent_titles: string[];
-    achievements: {
-        type: 'project';
-        tag: string;
-        brief: string;
-    }[];
+export type PersonalInformationExperienceItem = {
+    from: Date;
+    to?: Date;
+    role: string;
+    company: string;
+    summary: string;
+    tags: string[];
 };
 
 export type PersonalInformationEducation = {
@@ -148,7 +146,7 @@ export type PersonalInformation = {
     constraints: PersonalInformationConstraints,
     preferences: PersonalInformationPreferences,
     skills: PersonalInformationSkill[],
-    experience: PersonalInformationExperience,
+    experience: PersonalInformationExperienceItem[],
     education: PersonalInformationEducation[],
     certifications: PersonalInformationCertification[],
     languages_spoken: PersonalInformationLanguageSpoken[],
@@ -160,7 +158,7 @@ export type PersonalInformation = {
 export type PersonalInformationDocument = {
     _id: ObjectId;
     type: string;
-    value: PersonalInformationContact | PersonalInformationEligibility | PersonalInformationConstraints | PersonalInformationPreferences | PersonalInformationSkill[] | PersonalInformationExperience | PersonalInformationEducation[] | PersonalInformationCertification[] | PersonalInformationLanguageSpoken[] | PersonalInformationExclusions | PersonalInformationMotivation[] | PersonalInformationCareerGoal[];
+    value: PersonalInformationContact | PersonalInformationEligibility | PersonalInformationConstraints | PersonalInformationPreferences | PersonalInformationSkill[] | PersonalInformationExperienceItem[] | PersonalInformationEducation[] | PersonalInformationCertification[] | PersonalInformationLanguageSpoken[] | PersonalInformationExclusions | PersonalInformationMotivation[] | PersonalInformationCareerGoal[];
 };
 
 export type AgentType = 'filter' | 'writer' | 'evaluator';

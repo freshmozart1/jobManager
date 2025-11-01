@@ -4,7 +4,7 @@ import mongoPromise from "@/lib/mongodb";
 import { fetchPersonalInformation } from "@/lib/personal";
 import { NextRequest, NextResponse } from "next/server";
 import { PersonalInformationDocument } from "@/types";
-import { VALID_PERSONAL_INFORMATION_TYPES } from "@/lib/constants";
+import { MaxTagCount, MaxTagLength, VALID_PERSONAL_INFORMATION_TYPES } from "@/lib/constants";
 import { normaliseTags } from "@/lib/utils";
 
 export function OPTIONS() {
@@ -117,12 +117,12 @@ export async function PUT(req: NextRequest) {
                 }
             }
 
-            if (normalizedTags.length > 10) {
-                errors.push(`Entry ${index + 1} cannot contain more than 10 tags.`);
+            if (normalizedTags.length > MaxTagCount) {
+                errors.push(`Entry ${index + 1} cannot contain more than ${MaxTagCount} tags.`);
             }
 
-            if (normalizedTags.some(tag => tag.length > 20)) {
-                errors.push(`Entry ${index + 1} tags must be 20 characters or fewer.`);
+            if (normalizedTags.some(tag => tag.length > MaxTagLength)) {
+                errors.push(`Entry ${index + 1} tags must be ${MaxTagLength} characters or fewer.`);
             }
 
             if (parsedFrom && parsedTo && parsedTo.getTime() < parsedFrom.getTime()) {

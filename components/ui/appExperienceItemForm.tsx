@@ -13,9 +13,8 @@ import BadgeInput from "@/components/ui/badgeInput";
 import AppMonthYearPicker from "@/components/ui/appMonthYearPicker";
 import { PersonalInformationExperienceItem } from "@/types";
 import { normaliseTags } from "@/lib/utils";
+import { MaxTagCount, MaxTagLength } from "@/lib/constants";
 
-const MAX_TAG_COUNT = 10;
-const MAX_TAG_LENGTH = 20;
 const MAX_SUMMARY_LENGTH = 2000;
 
 export type ExperienceDraft = {
@@ -99,10 +98,10 @@ function validateDraft(draft: ExperienceDraft): ExperienceDraftErrors {
         errors.to = "End month cannot be before the start month.";
     }
 
-    if (draft.tags.length > MAX_TAG_COUNT) {
-        errors.tags = `Up to ${MAX_TAG_COUNT} tags allowed.`;
-    } else if (draft.tags.some((tag) => tag.length > MAX_TAG_LENGTH)) {
-        errors.tags = `Tags must be ${MAX_TAG_LENGTH} characters or fewer.`;
+    if (draft.tags.length > MaxTagCount) {
+        errors.tags = `Up to ${MaxTagCount} tags allowed.`;
+    } else if (draft.tags.some((tag) => tag.length > MaxTagLength)) {
+        errors.tags = `Tags must be ${MaxTagLength} characters or fewer.`;
     }
 
     return errors;
@@ -167,14 +166,14 @@ export default function AppExperienceItemForm({
         let errorMessage: string | undefined;
         let sanitized = normaliseTags(next);
 
-        if (sanitized.some((tag) => tag.length > MAX_TAG_LENGTH)) {
-            errorMessage = `Tags must be ${MAX_TAG_LENGTH} characters or fewer.`;
-            sanitized = sanitized.filter((tag) => tag.length <= MAX_TAG_LENGTH);
+        if (sanitized.some((tag) => tag.length > MaxTagLength)) {
+            errorMessage = `Tags must be ${MaxTagLength} characters or fewer.`;
+            sanitized = sanitized.filter((tag) => tag.length <= MaxTagLength);
         }
 
-        if (sanitized.length > MAX_TAG_COUNT) {
-            errorMessage = `Up to ${MAX_TAG_COUNT} tags allowed.`;
-            sanitized = sanitized.slice(0, MAX_TAG_COUNT);
+        if (sanitized.length > MaxTagCount) {
+            errorMessage = `Up to ${MaxTagCount} tags allowed.`;
+            sanitized = sanitized.slice(0, MaxTagCount);
         }
 
         setDraft((prev) => ({ ...prev, tags: sanitized }));
@@ -332,7 +331,7 @@ export default function AppExperienceItemForm({
                                 </div>
                             </TooltipTrigger>
                             <TooltipContent side="top">
-                                <p>Up to {MAX_TAG_COUNT} tags, each ≤{MAX_TAG_LENGTH} chars.</p>
+                                <p>Up to {MaxTagCount} tags, each ≤{MaxTagLength} chars.</p>
                                 {errors.tags && <p>Fix to enable save.</p>}
                             </TooltipContent>
                         </Tooltip>

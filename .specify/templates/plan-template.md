@@ -31,7 +31,14 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+The following gates derive from the Constitution and MUST be addressed in this plan:
+
+- UX Benefit (Principle II): State the tangible user benefit for this feature.
+- Security (Principle III): Confirm no PII in logs, TLS in transit, and secrets in env.
+- AI Determinism (Principle IV): Document prompt version, parameters (e.g., temp=0),
+  and traceability (run IDs, inputs/outputs persisted).
+- Performance (Principle I): Define acceptance targets/constraints relevant to this work.
+- Extensibility (Principle V): Note impacts on modularity and ability to add future agents/data.
 
 ## Project Structure
 

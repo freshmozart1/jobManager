@@ -4,5 +4,5 @@ import { test } from '@playwright/test';
 // Pending implementation (T020). Creating the test first per TDD.
 
 test.skip('GET /api/jobs/{id}/download returns 200 with PDF stream', async () => {
-  // To be implemented once endpoint exists.
+    // To be implemented once endpoint exists.
 });

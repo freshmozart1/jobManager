@@ -1,0 +1,170 @@
+import { MongoClient, Db, ObjectId } from 'mongodb';
+import type { Job, PersonalInformation } from '@/types';
+
+export type TestDbContext = {
+    client: MongoClient;
+    db: Db;
+};
+
+export async function connectTestDb(): Promise<TestDbContext> {
+    const uri = process.env.MONGODB_CONNECTION_STRING;
+    const dbName = process.env.DATABASE_NAME;
+    if (!uri || !dbName) throw new Error('MongoDB connection details are required for contract tests');
+    const client = await new MongoClient(uri).connect();
+    return { client, db: client.db(dbName) };
+}
+
+export async function disconnectTestDb(context: TestDbContext) {
+    await context.client.close();
+}
+
+export function createJobFixture(jobId: string): Job {
+    const now = new Date();
+    return {
+        id: jobId,
+        trackingId: `tracking-${jobId}`,
+        refId: `ref-${jobId}`,
+        link: `https://example.com/jobs/${jobId}`,
+        title: 'Contract Test Engineer',
+        companyName: 'Contract Testing Co',
+        companyLinkedinUrl: 'https://linkedin.com/company/contract-testing-co',
+        companyLogo: 'https://example.com/assets/logo.png',
+        companyEmployeesCount: 75,
+        location: 'Remote',
+        postedAt: now,
+        salaryInfo: ['USD', '$100k-$120k'],
+        salary: '$110,000',
+        benefits: ['Health', '401k'],
+        descriptionHtml: '<p>Ensure API endpoints meet contract expectations.</p>',
+        applicantsCount: 0,
+        applyUrl: 'https://example.com/apply',
+        descriptionText: 'Ensure API endpoints meet contract expectations.',
+        seniorityLevel: 'Senior',
+        employmentType: 'Full-time',
+        jobFunction: 'Engineering',
+        industries: 'Software',
+        inputUrl: `https://example.com/source/${jobId}`,
+        companyWebsite: 'https://contract-testing.example.com',
+        companySlogan: 'Quality in Every Request',
+        companyDescription: 'We validate critical APIs for fast-moving teams.',
+        filteredAt: now,
+        filterResult: true,
+        filteredBy: new ObjectId()
+    };
+}
+
+const PERSONAL_INFORMATION_FIXTURE: PersonalInformation = {
+    contact: {
+        name: 'Alex Morgan',
+        email: 'alex.morgan@example.com',
+        phone: '+1-555-0123',
+        portfolio_urls: ['https://alexmorgan.dev']
+    },
+    eligibility: {
+        work_authorization: [{ region: 'United States', status: 'Citizen' }],
+        security_clearance: null,
+        relocation: { willing: true, regions: ['Remote'] },
+        remote: { willing: true, time_zone: 'UTC-5' },
+        availability: { notice_period_days: 14 },
+        work_schedule_constraints: { weekends: false, nights: false }
+    },
+    constraints: {
+        salary_min: { currency: 'USD', amount: 100000 },
+        locations_allowed: ['Remote']
+    },
+    preferences: {
+        roles: ['Senior Software Engineer'],
+        seniority: ['Senior'],
+        company_size: ['Scale-up (50-500)'],
+        work_mode: [{ mode: 'Remote' }],
+        industries: ['Software']
+    },
+    skills: [
+        {
+            name: 'TypeScript',
+            aliases: ['TS'],
+            category: 'Programming Language',
+            level: 'Expert',
+            years: 6,
+            last_used: '2024-10',
+            primary: true
+        },
+        {
+            name: 'React',
+            aliases: ['React.js'],
+            category: 'Frontend Framework',
+            level: 'Advanced',
+            years: 5,
+            last_used: '2024-10',
+            primary: true
+        }
+    ],
+    experience: {
+        years_total: 8,
+        domains: ['Web Development', 'API Design'],
+        recent_titles: ['Senior Software Engineer', 'Tech Lead'],
+        achievements: [
+            { type: 'project', tag: 'API Quality', brief: 'Improved API reliability by 30% through contract testing.' }
+        ]
+    },
+    education: [
+        {
+            degree: 'BSc Computer Science',
+            field: 'Computer Science',
+            institution: 'State University',
+            graduation_year: 2016
+        }
+    ],
+    certifications: [
+        {
+            name: 'AWS Certified Developer',
+            issued: '2023-01',
+            expires: '2026-01'
+        }
+    ],
+    languages_spoken: [
+        { language: 'English', level: 'Native' }
+    ],
+    exclusions: {
+        avoid_roles: ['Sales Engineer'],
+        avoid_technologies: ['PHP'],
+        avoid_industries: ['Gambling'],
+        avoid_companies: []
+    },
+    motivations: [
+        {
+            topic: 'Impact',
+            description: 'Deliver resilient systems that users trust.',
+            reason_lite: 'Build reliable products'
+        }
+    ],
+    career_goals: [
+        {
+            topic: 'Technical Leadership',
+            description: 'Lead teams shipping reliable platform features.',
+            reason_lite: 'Grow as a leader'
+        }
+    ]
+};
+
+export async function ensurePersonalInformation(db: Db) {
+    await Promise.all(
+        Object.entries(PERSONAL_INFORMATION_FIXTURE).map(([type, value]) =>
+            db.collection('personalInformation').updateOne(
+                { type },
+                { $set: { value } },
+                { upsert: true }
+            )
+        )
+    );
+}
+
+export async function seedJob(db: Db, job: Job) {
+    await db.collection<Job>('jobs').deleteOne({ id: job.id });
+    await db.collection<Job>('jobs').insertOne(job);
+}
+
+export async function cleanupJobData(db: Db, jobId: string) {
+    await db.collection('jobs').deleteOne({ id: jobId });
+    await db.collection('jobArtifacts').deleteMany({ jobId });
+}

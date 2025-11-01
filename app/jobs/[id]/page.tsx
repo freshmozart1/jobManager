@@ -7,6 +7,18 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Job } from '@/types';
 
+type RawJob = Record<string, unknown> & {
+    postedAt: string;
+    filteredAt: string;
+    appliedAt?: string | null;
+    generation?: {
+        runId: string;
+        generatedAt: string;
+        types: string[];
+        artifacts: Array<Record<string, unknown> & { createdAt: string }>;
+    };
+};
+
 function hasSalary(job: Job): boolean {
     return typeof job.salary === 'string' && job.salary.trim() !== '';
 }
@@ -32,6 +44,28 @@ function renderSalaryInfo(job: Job) {
     );
 }
 
+function normalizeJob(raw: RawJob): Job {
+    const { postedAt, filteredAt, appliedAt, generation, ...rest } = raw;
+    return {
+        ...(rest as Omit<Job, 'postedAt' | 'filteredAt' | 'appliedAt' | 'generation'>),
+        postedAt: new Date(postedAt),
+        filteredAt: new Date(filteredAt),
+        appliedAt: appliedAt ? new Date(appliedAt) : undefined,
+        generation: generation
+            ? {
+                ...generation,
+                generatedAt: new Date(generation.generatedAt),
+                artifacts: Array.isArray(generation.artifacts)
+                    ? generation.artifacts.map(artifact => ({
+                        ...artifact,
+                        createdAt: new Date(artifact.createdAt)
+                    }))
+                    : []
+            }
+            : undefined
+    } as Job;
+}
+
 export default function JobDetailPage() {
     const params = useParams();
     const router = useRouter();
@@ -43,28 +77,47 @@ export default function JobDetailPage() {
 
     useEffect(() => {
         const controller = new AbortController();
+        let isActive = true;
+        setLoading(true);
+        setError(null);
+        setJob(null);
+
         fetch(toUrl(`/api/jobs/${jobId}`), { signal: controller.signal })
-            .then(res => {
+            .then(async res => {
+                if (res.status === 404) {
+                    return { kind: 'error', message: 'Job not found' } as const;
+                }
                 if (!res.ok) {
                     throw new Error('Failed to fetch job details');
                 }
-                return res.json();
+                const payload = await res.json() as RawJob;
+                return { kind: 'success', payload } as const;
             })
-            .then((data: Job[]) => {
-                if (data.length === 0) {
-                    setError('Job not found');
-                } else {
-                    setJob({ ...data[0], postedAt: new Date(data[0].postedAt) });
+            .then(result => {
+                if (!isActive) return;
+                if (result.kind === 'error') {
+                    setError(result.message);
+                    setJob(null);
+                    return;
                 }
-                setLoading(false);
+                const normalized = normalizeJob(result.payload);
+                setJob(normalized);
+                setError(null);
             })
             .catch(err => {
+                if (!isActive) return;
                 if (err.name !== 'AbortError') {
                     setError('Failed to load job details');
-                    setLoading(false);
                 }
+            })
+            .finally(() => {
+                if (!isActive) return;
+                setLoading(false);
             });
-        return () => controller.abort();
+        return () => {
+            isActive = false;
+            controller.abort();
+        };
     }, [jobId, toUrl]);
 
     if (loading) {

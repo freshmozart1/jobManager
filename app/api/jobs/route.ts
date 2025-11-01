@@ -15,12 +15,14 @@ export async function GET(req: Request) {
     await db.command({ ping: 1 }, { timeoutMS: 3000 });
     const origin = req.headers.get('origin') || undefined;
 
-    // Parse query parameter for filterResult
+    // Parse query parameters
     const url = new URL(req.url);
-    const filterParam = url.searchParams.get('filterResult');
+    const filterResultParam = url.searchParams.get('filterResult');
+    const filterAlias = url.searchParams.get('filter'); // e.g., filter=relevant
 
     // Build MongoDB query based on filterResult parameter
     const query: Record<string, boolean | { $exists: boolean } | { error: { $exists: boolean } }> = {};
+    const filterParam = filterResultParam ?? (filterAlias === 'relevant' ? 'true' : undefined);
     if (filterParam === 'true') {
         query.filterResult = true;
     } else if (filterParam === 'false') {

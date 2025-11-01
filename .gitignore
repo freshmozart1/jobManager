@@ -43,5 +43,6 @@ next-env.d.ts
 # github
 .github/*
 !.github/copilot-instructions.md
+!.github/PULL_REQUEST_TEMPLATE.md
 
 test-results

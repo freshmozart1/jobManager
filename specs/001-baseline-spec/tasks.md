@@ -22,19 +22,19 @@ description: "Task list for baseline feature implementation"
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-- [ ] T001 Create `.env.example` documenting required env vars in `/Users/ole/VS Code Workspace/jobManager/.env.example`
-- [ ] T002 Add constitution gates to PR checklist in `/Users/ole/VS Code Workspace/jobManager/.github/PULL_REQUEST_TEMPLATE.md`
-- [ ] T003 [P] Add placeholder log utility for structured logs in `/Users/ole/VS Code Workspace/jobManager/lib/utils.ts`
-- [ ] T004 [P] Add agent run trace helper in `/Users/ole/VS Code Workspace/jobManager/lib/utils.ts` (record runId, promptVersion, inputs/outputs, timestamps)
+- [x] T001 Create `.env.example` documenting required env vars in `/Users/ole/VS Code Workspace/jobManager/.env.example`
+- [x] T002 Add constitution gates to PR checklist in `/Users/ole/VS Code Workspace/jobManager/.github/PULL_REQUEST_TEMPLATE.md`
+- [x] T003 [P] Add placeholder log utility for structured logs in `/Users/ole/VS Code Workspace/jobManager/lib/utils.ts`
+- [x] T004 [P] Add agent run trace helper in `/Users/ole/VS Code Workspace/jobManager/lib/utils.ts` (record runId, promptVersion, inputs/outputs, timestamps)
 
 ---
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 
-- [ ] T005 Ensure MongoDB indexes defined (jobs filteredAt, filterResult) in `/Users/ole/VS Code Workspace/jobManager/app/api/jobs/createIndexes.mongodb.js`
-- [ ] T006 [P] Add unique index for dedupe keys (trackingId, refId) in same file as above
-- [ ] T007 [P] Define prompt template storage convention (fixed prefix/postfix) in `/Users/ole/VS Code Workspace/jobManager/app/api/prompts/route.ts` (docs/comments)
-- [ ] T008 Define agent parameters (temperature=0) and validation in `/Users/ole/VS Code Workspace/jobManager/app/api/filter/route.ts` (docs/comments)
+- [x] T005 Ensure MongoDB indexes defined (jobs filteredAt, filterResult) in `/Users/ole/VS Code Workspace/jobManager/app/api/jobs/createIndexes.mongodb.js`
+- [x] T006 [P] Add unique index for dedupe keys (trackingId, refId) in same file as above
+- [x] T007 [P] Define prompt template storage convention (fixed prefix/postfix) in `/Users/ole/VS Code Workspace/jobManager/app/api/prompts/route.ts` (docs/comments)
+- [x] T008 Define agent parameters (temperature=0) and validation in `/Users/ole/VS Code Workspace/jobManager/app/api/filter/route.ts` (docs/comments)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -48,13 +48,13 @@ description: "Task list for baseline feature implementation"
 
 ### Tests for User Story 1 ⚠️
 
-- [ ] T009 [P] [US1] Contract test: POST /api/filter in `/Users/ole/VS Code Workspace/jobManager/tests/contract/filter.post.test.ts`
-- [ ] T010 [P] [US1] Contract test: GET /api/jobs?filter=relevant in `/Users/ole/VS Code Workspace/jobManager/tests/contract/jobs.get.relevant.test.ts`
-- [ ] T011 [P] [US1] Contract test: GET /api/jobs/{id} in `/Users/ole/VS Code Workspace/jobManager/tests/contract/jobs.id.get.test.ts`
-- [ ] T012 [P] [US1] Contract test: POST /api/jobs/{id}/generate in `/Users/ole/VS Code Workspace/jobManager/tests/contract/jobs.id.generate.post.test.ts`
-- [ ] T013 [P] [US1] Contract test: GET /api/jobs/{id}/download in `/Users/ole/VS Code Workspace/jobManager/tests/contract/jobs.id.download.get.test.ts`
-- [ ] T014 [P] [US1] Contract test: POST /api/jobs/{id}/apply in `/Users/ole/VS Code Workspace/jobManager/tests/contract/jobs.id.apply.post.test.ts`
-- [ ] T015 [US1] E2E test: filter → generate → download → apply in `/Users/ole/VS Code Workspace/jobManager/tests/e2e/us1-flow.spec.ts`
+- [x] T009 [P] [US1] Contract test: POST /api/filter in `/Users/ole/VS Code Workspace/jobManager/tests/contract/filter.post.test.ts`
+- [x] T010 [P] [US1] Contract test: GET /api/jobs?filter=relevant in `/Users/ole/VS Code Workspace/jobManager/tests/contract/jobs.get.relevant.test.ts`
+- [x] T011 [P] [US1] Contract test: GET /api/jobs/{id} in `/Users/ole/VS Code Workspace/jobManager/tests/contract/jobs.id.get.test.ts`
+- [x] T012 [P] [US1] Contract test: POST /api/jobs/{id}/generate in `/Users/ole/VS Code Workspace/jobManager/tests/contract/jobs.id.generate.post.test.ts`
+- [x] T013 [P] [US1] Contract test: GET /api/jobs/{id}/download in `/Users/ole/VS Code Workspace/jobManager/tests/contract/jobs.id.download.get.test.ts`
+- [x] T014 [P] [US1] Contract test: POST /api/jobs/{id}/apply in `/Users/ole/VS Code Workspace/jobManager/tests/contract/jobs.id.apply.post.test.ts`
+- [x] T015 [US1] E2E test: filter → generate → download → apply in `/Users/ole/VS Code Workspace/jobManager/tests/e2e/us1-flow.spec.ts`
 
 ### Implementation for User Story 1
 
@@ -68,7 +68,8 @@ description: "Task list for baseline feature implementation"
 - [ ] T023 [US1] Segment list into relevant / not relevant in `/Users/ole/VS Code Workspace/jobManager/app/search/page.tsx`
 - [ ] T024 [US1] Add generate + download controls in job detail `/Users/ole/VS Code Workspace/jobManager/app/jobs/[id]/page.tsx`
 - [ ] T025 [US1] Add mark-as-applied control in job detail `/Users/ole/VS Code Workspace/jobManager/app/jobs/[id]/page.tsx`
-- [ ] T026 [P] [US1] Wire agent run trace helper usage in `/Users/ole/VS Code Workspace/jobManager/app/api/filter/route.ts`
+- [x] T016 [US1] Implement list filtering param `?filter=relevant` in `/Users/ole/VS Code Workspace/jobManager/app/api/jobs/route.ts`
+- [x] T026 [P] [US1] Wire agent run trace helper usage in `/Users/ole/VS Code Workspace/jobManager/app/api/filter/route.ts`
 
 **Checkpoint**: User Story 1 fully functional and testable independently
 

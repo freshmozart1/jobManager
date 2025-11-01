@@ -49,12 +49,12 @@ export const log = Object.assign(
     warn: (message: string, meta?: LogMeta) => writeLog('warn', message, meta),
     error: (message: string, meta?: LogMeta) => writeLog('error', message, meta),
     with: (base: Record<string, unknown>) =>
-      ({
-        debug: (message: string, meta?: LogMeta) => writeLog('debug', message, { ...base, ...(meta ?? {}) }),
-        info: (message: string, meta?: LogMeta) => writeLog('info', message, { ...base, ...(meta ?? {}) }),
-        warn: (message: string, meta?: LogMeta) => writeLog('warn', message, { ...base, ...(meta ?? {}) }),
-        error: (message: string, meta?: LogMeta) => writeLog('error', message, { ...base, ...(meta ?? {}) }),
-      }),
+    ({
+      debug: (message: string, meta?: LogMeta) => writeLog('debug', message, { ...base, ...(meta ?? {}) }),
+      info: (message: string, meta?: LogMeta) => writeLog('info', message, { ...base, ...(meta ?? {}) }),
+      warn: (message: string, meta?: LogMeta) => writeLog('warn', message, { ...base, ...(meta ?? {}) }),
+      error: (message: string, meta?: LogMeta) => writeLog('error', message, { ...base, ...(meta ?? {}) }),
+    }),
   }
 );
 

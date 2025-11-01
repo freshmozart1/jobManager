@@ -16,6 +16,20 @@ export function chunkArray<T>(array: T[], size: number): T[][] {
   return result;
 }
 
+export function normaliseTags(input: unknown): string[] {
+  if (!Array.isArray(input)) return [];
+  const seen = new Set<string>();
+  const normalised: string[] = [];
+  for (const value of input) {
+    if (typeof value !== "string") continue;
+    const trimmed = value.trim();
+    if (!trimmed || seen.has(trimmed)) continue;
+    seen.add(trimmed);
+    normalised.push(trimmed);
+  }
+  return normalised;
+}
+
 /**
  * toUrl
  * Converts a relative API path to an absolute URL.
@@ -30,6 +44,25 @@ export function toUrl(path: string): string {
   return `${host}${path}`;
 }
 
+export function formatMonthYear(date: Date | null | undefined): string {
+  if (!date) return '';
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth() + 1;
+  return `${year}-${month.toString().padStart(2, '0')}`;
+}
+
+export function makeUtcMonthYear(year: number, monthIndex: number): Date {
+  return new Date(Date.UTC(year, monthIndex, 1, 0, 0, 0, 0));
+}
+
+export function parseMonthYear(value: string): Date | null {
+  if (!/^\d{4}-\d{2}$/.test(value)) return null;
+  const [yearStr, monthStr] = value.split('-');
+  const year = Number(yearStr);
+  const month = Number(monthStr);
+  if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) return null;
+  const date = makeUtcMonthYear(year, month - 1);
+  return Number.isNaN(date.getTime()) ? null : date;
 // --- Structured logging (placeholder utility) ---
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';

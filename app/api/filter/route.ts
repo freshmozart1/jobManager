@@ -189,7 +189,8 @@ export async function POST(req: NextRequest) {
                 ...job,
                 filteredAt: new Date(),
                 filterResult: typeof result.output[i] === 'boolean' ? result.output[i] : { error: 'Non-boolean output' },
-                filteredBy: promptId
+                filteredBy: promptId,
+                generation: []
             }));
         })
     ));
@@ -207,7 +208,8 @@ export async function POST(req: NextRequest) {
                     ...job,
                     filteredAt: new Date(),
                     filterResult: { error: `Chunk error: ${String(r.reason)}` },
-                    filteredBy: promptId
+                    filteredBy: promptId,
+                    generation: []
                 });
             }
         }

@@ -7,18 +7,6 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Job } from '@/types';
 
-type RawJob = Record<string, unknown> & {
-    postedAt: string;
-    filteredAt: string;
-    appliedAt?: string | null;
-    generation?: {
-        runId: string;
-        generatedAt: string;
-        types: string[];
-        artifacts: Array<Record<string, unknown> & { createdAt: string }>;
-    };
-};
-
 function hasSalary(job: Job): boolean {
     return typeof job.salary === 'string' && job.salary.trim() !== '';
 }
@@ -42,28 +30,6 @@ function renderSalaryInfo(job: Job) {
             )}
         </div>
     );
-}
-
-function normalizeJob(raw: RawJob): Job {
-    const { postedAt, filteredAt, appliedAt, generation, ...rest } = raw;
-    return {
-        ...(rest as Omit<Job, 'postedAt' | 'filteredAt' | 'appliedAt' | 'generation'>),
-        postedAt: new Date(postedAt),
-        filteredAt: new Date(filteredAt),
-        appliedAt: appliedAt ? new Date(appliedAt) : undefined,
-        generation: generation
-            ? {
-                ...generation,
-                generatedAt: new Date(generation.generatedAt),
-                artifacts: Array.isArray(generation.artifacts)
-                    ? generation.artifacts.map(artifact => ({
-                        ...artifact,
-                        createdAt: new Date(artifact.createdAt)
-                    }))
-                    : []
-            }
-            : undefined
-    } as Job;
 }
 
 export default function JobDetailPage() {
@@ -90,8 +56,8 @@ export default function JobDetailPage() {
                 if (!res.ok) {
                     throw new Error('Failed to fetch job details');
                 }
-                const payload = await res.json() as RawJob;
-                return { kind: 'success', payload } as const;
+                const payload = await res.json();
+                return { kind: 'success', payload } as { kind: 'success'; payload: Job };
             })
             .then(result => {
                 if (!isActive) return;
@@ -100,8 +66,15 @@ export default function JobDetailPage() {
                     setJob(null);
                     return;
                 }
-                const normalized = normalizeJob(result.payload);
-                setJob(normalized);
+                setJob(() => {
+                    const { postedAt, filteredAt, appliedAt, ...rest } = result.payload;
+                    return {
+                        ...(rest as Omit<Job, 'postedAt' | 'filteredAt' | 'appliedAt'>),
+                        postedAt: new Date(postedAt),
+                        filteredAt: new Date(filteredAt),
+                        appliedAt: appliedAt ? new Date(appliedAt) : undefined
+                    };
+                });
                 setError(null);
             })
             .catch(err => {

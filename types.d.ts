@@ -30,37 +30,21 @@ export type ScrapedJob = {
     companyDescription?: string | undefined;
 };
 
-export type JobArtifactType = 'cover-letter' | 'cv';
-
 export type JobGenerationArtifact = {
-    type: JobArtifactType;
+    _id: ObjectId;
+    jobId: ObjectId;
+    type: 'cover-letter' | 'cv';
     contentType: string;
     fileName: string;
     createdAt: Date;
-};
-
-export type JobGenerationMetadata = {
-    runId: string;
-    generatedAt: Date;
-    types: JobArtifactType[];
-    artifacts: JobGenerationArtifact[];
-};
-
-export type JobArtifactDocument = {
-    jobId: string;
-    runId: string;
-    type: JobArtifactType;
-    contentType: string;
-    fileName: string;
     content: string;
-    createdAt: Date;
 };
 
 export type Job = ScrapedJob & {
     filteredAt: Date;
     filterResult: boolean | { error: string };
     filteredBy: ObjectId;
-    generation?: JobGenerationMetadata;
+    generation: ObjectId[] | [];
     appliedAt?: Date;
 };
 

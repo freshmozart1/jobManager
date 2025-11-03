@@ -185,6 +185,7 @@ Ensure the following environment variables are configured:
 ## Active Technologies
 - TypeScript 5; React 19; Next.js 15 (App Router) + TailwindCSS 4, shadcn/ui (Radix), MongoDB driver, OpenAI SDK (001-baseline-spec)
 - MongoDB (connection via `lib/mongodb.ts`) (001-baseline-spec)
+- MongoDB for prompts; no server draft persistence in this release (anonymous local drafts) (001-ai-cover-letter)
 
 ## Recent Changes
 - 001-baseline-spec: Added TypeScript 5; React 19; Next.js 15 (App Router) + TailwindCSS 4, shadcn/ui (Radix), MongoDB driver, OpenAI SDK

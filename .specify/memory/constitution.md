@@ -68,7 +68,7 @@ Sync Impact Report
 - MUST emit structured JSON logs on errors: include route, error class, status code, and `correlationId`; exclude PII and secrets.
 - SHOULD record basic timing metrics (e.g., query and generation durations) in logs for hotspot analysis.
 - MUST retain Playwright artifacts in CI: traces on first retry, videos/screenshots on failure; persist artifacts for triage.
-- Must use the writeLog function from '@/lib/utils' for all logging to ensure consistency and structure.
+- MUST use the exported `log` API from '@/lib/utils' (not console directly) for all logging to ensure consistency and structure.
 
 ## Governance
 - Precedence: This Constitution supersedes ad-hoc practices when conflicts occur.

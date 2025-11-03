@@ -1,0 +1,278 @@
+openapi: 3.1.0
+info:
+  title: AI Cover Letter Editor (Design Contracts)
+  version: 0.1.0
+  description: Design-level API contracts for draft generation, regeneration, and PDF export. Anonymous draft persistence is out of scope for this release.
+servers:
+  - url: https://example.local
+paths:
+  /api/jobs/{id}/generate:
+    post:
+      summary: Generate initial cover letter draft (anonymous; no server persistence)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: x-correlation-id
+          required: false
+          description: Optional correlation ID provided by the client for end-to-end tracing; echoed back in responses
+          schema:
+            type: string
+        - in: header
+          name: x-device-id
+          required: true
+          description: Device identifier for rate limiting; UUID v4 recommended
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                templateId:
+                  type: string
+                  example: formal-default
+                personalProfile:
+                  type: object
+                options:
+                  type: object
+                  description: Rendering and tone hints
+      responses:
+        '200':
+          description: Draft generated
+          headers:
+            x-correlation-id:
+              description: Correlation ID for tracing this request (echoed from request or generated)
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  html:
+                    type: string
+                  promptId:
+                    type: string
+                  templateId:
+                    type: string
+                  missingFields:
+                    type: array
+                    description: Personal profile field paths missing from input; placeholders inserted in html where applicable
+                    items:
+                      type: string
+                      example: contact.phone
+                  placeholders:
+                    type: array
+                    description: Placeholder markers included in the html for missing data
+                    items:
+                      type: string
+                      example: "{{contact.phone}}"
+        '400':
+          description: Invalid input
+          headers:
+            x-correlation-id:
+              description: Correlation ID for tracing this request (echoed from request or generated)
+              schema:
+                type: string
+        '429':
+          description: Rate limited
+          headers:
+            X-RateLimit-Limit:
+              description: Maximum requests allowed per minute for this job/device window
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              description: Remaining requests in the current window
+              schema:
+                type: integer
+            Retry-After:
+              description: Time to wait before retrying (delta-seconds or HTTP-date per RFC 7231)
+              schema:
+                type: string
+            x-correlation-id:
+              description: Correlation ID for tracing this request (echoed from request or generated)
+              schema:
+                type: string
+        '500':
+          description: Generation error
+          headers:
+            x-correlation-id:
+              description: Correlation ID for tracing this request (echoed from request or generated)
+              schema:
+                type: string
+
+  /api/jobs/{id}/regenerate:
+    post:
+      summary: Generate an alternate draft (does not overwrite current)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: x-correlation-id
+          required: false
+          description: Optional correlation ID provided by the client for end-to-end tracing; echoed back in responses
+          schema:
+            type: string
+        - in: header
+          name: x-device-id
+          required: true
+          description: Device identifier for rate limiting; UUID v4 recommended
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                templateId:
+                  type: string
+                personalProfile:
+                  type: object
+                options:
+                  type: object
+      responses:
+        '200':
+          description: Alternate generated
+          headers:
+            x-correlation-id:
+              description: Correlation ID for tracing this request (echoed from request or generated)
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  html:
+                    type: string
+                  tempAlternateId:
+                    type: string
+                  templateId:
+                    type: string
+                  promptId:
+                    type: string
+                  missingFields:
+                    type: array
+                    description: Personal profile field paths missing from input; placeholders inserted in html where applicable
+                    items:
+                      type: string
+                      example: contact.phone
+                  placeholders:
+                    type: array
+                    description: Placeholder markers included in the html for missing data
+                    items:
+                      type: string
+                      example: "{{contact.phone}}"
+        '400':
+          description: Invalid input
+          headers:
+            x-correlation-id:
+              description: Correlation ID for tracing this request (echoed from request or generated)
+              schema:
+                type: string
+        '429':
+          description: Rate limited
+          headers:
+            X-RateLimit-Limit:
+              description: Maximum requests allowed per minute for this job/device window
+              schema:
+                type: integer
+            X-RateLimit-Remaining:
+              description: Remaining requests in the current window
+              schema:
+                type: integer
+            Retry-After:
+              description: Time to wait before retrying (delta-seconds or HTTP-date per RFC 7231)
+              schema:
+                type: string
+            x-correlation-id:
+              description: Correlation ID for tracing this request (echoed from request or generated)
+              schema:
+                type: string
+        '500':
+          description: Generation error
+          headers:
+            x-correlation-id:
+              description: Correlation ID for tracing this request (echoed from request or generated)
+              schema:
+                type: string
+
+  /api/jobs/{id}/letter/pdf:
+    post:
+      summary: Export provided HTML to PDF using formal template
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: x-correlation-id
+          required: false
+          description: Optional correlation ID provided by the client for end-to-end tracing; echoed back in responses
+          schema:
+            type: string
+        - in: header
+          name: x-device-id
+          required: true
+          description: Device identifier for rate limiting; UUID v4 recommended
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ html ]
+              properties:
+                html:
+                  type: string
+                templateId:
+                  type: string
+                  example: formal-default
+      responses:
+        '200':
+          description: PDF bytes
+          headers:
+            x-correlation-id:
+              description: Correlation ID for tracing this request (echoed from request or generated)
+              schema:
+                type: string
+            x-template-id:
+              description: Template identifier used to render the PDF; should match the templateId associated with the draft
+              schema:
+                type: string
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid input
+          headers:
+            x-correlation-id:
+              description: Correlation ID for tracing this request (echoed from request or generated)
+              schema:
+                type: string
+        '500':
+          description: Export error
+          headers:
+            x-correlation-id:
+              description: Correlation ID for tracing this request (echoed from request or generated)
+              schema:
+                type: string

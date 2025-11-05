@@ -5,7 +5,7 @@ import useToUrl from '@/hooks/useToUrl';
 import { LoaderCircle } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Job } from '@/types';
+import { Job, JobGenerationArtifact } from '@/types';
 
 function hasSalary(job: Job): boolean {
     return typeof job.salary === 'string' && job.salary.trim() !== '';
@@ -39,6 +39,7 @@ export default function JobDetailPage() {
     const toUrl = useToUrl();
     const [job, setJob] = useState<Job | null>(null);
     const [loading, setLoading] = useState(true);
+    const [artifacts, setArtifacts] = useState<Omit<JobGenerationArtifact, '_id' | 'jobId'>[]>([]);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -56,8 +57,15 @@ export default function JobDetailPage() {
                 if (!res.ok) {
                     throw new Error('Failed to fetch job details');
                 }
-                const payload = await res.json();
-                return { kind: 'success', payload } as { kind: 'success'; payload: Job };
+                const payload = await res.json() as Job;
+                if (payload.generation.length > 0) {
+                    const artifactsRes = await fetch(toUrl(`/api/jobs/${jobId}/artifacts`), { signal: controller.signal });
+                    if (artifactsRes.ok) {
+                        const artifactsData = await artifactsRes.json() as Omit<JobGenerationArtifact, '_id' | 'jobId'>[];
+                        setArtifacts(artifactsData);
+                    } else return { kind: 'error', message: 'Failed to fetch job artifacts' } as const;
+                }
+                return { kind: 'success', payload } as const;
             })
             .then(result => {
                 if (!isActive) return;

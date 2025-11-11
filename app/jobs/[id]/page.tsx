@@ -1,11 +1,10 @@
 'use client';
-import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import useToUrl from '@/hooks/useToUrl';
 import { LoaderCircle } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Job, JobGenerationArtifact } from '@/types';
+import { Job } from '@/types';
+import useLoadJob from '@/hooks/useLoadJob';
 
 function hasSalary(job: Job): boolean {
     return typeof job.salary === 'string' && job.salary.trim() !== '';
@@ -36,70 +35,7 @@ export default function JobDetailPage() {
     const params = useParams();
     const router = useRouter();
     const jobId = params.id as string;
-    const toUrl = useToUrl();
-    const [job, setJob] = useState<Job | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [artifacts, setArtifacts] = useState<Omit<JobGenerationArtifact, '_id' | 'jobId'>[]>([]);
-    const [error, setError] = useState<string | null>(null);
-
-    useEffect(() => {
-        const controller = new AbortController();
-        let isActive = true;
-        setLoading(true);
-        setError(null);
-        setJob(null);
-
-        fetch(toUrl(`/api/jobs/${jobId}`), { signal: controller.signal })
-            .then(async res => {
-                if (res.status === 404) {
-                    return { kind: 'error', message: 'Job not found' } as const;
-                }
-                if (!res.ok) {
-                    throw new Error('Failed to fetch job details');
-                }
-                const payload = await res.json() as Job;
-                if (payload.generation.length > 0) {
-                    const artifactsRes = await fetch(toUrl(`/api/jobs/${jobId}/artifacts`), { signal: controller.signal });
-                    if (artifactsRes.ok) {
-                        const artifactsData = await artifactsRes.json() as Omit<JobGenerationArtifact, '_id' | 'jobId'>[];
-                        setArtifacts(artifactsData);
-                    } else return { kind: 'error', message: 'Failed to fetch job artifacts' } as const;
-                }
-                return { kind: 'success', payload } as const;
-            })
-            .then(result => {
-                if (!isActive) return;
-                if (result.kind === 'error') {
-                    setError(result.message);
-                    setJob(null);
-                    return;
-                }
-                setJob(() => {
-                    const { postedAt, filteredAt, appliedAt, ...rest } = result.payload;
-                    return {
-                        ...(rest as Omit<Job, 'postedAt' | 'filteredAt' | 'appliedAt'>),
-                        postedAt: new Date(postedAt),
-                        filteredAt: new Date(filteredAt),
-                        appliedAt: appliedAt ? new Date(appliedAt) : undefined
-                    };
-                });
-                setError(null);
-            })
-            .catch(err => {
-                if (!isActive) return;
-                if (err.name !== 'AbortError') {
-                    setError('Failed to load job details');
-                }
-            })
-            .finally(() => {
-                if (!isActive) return;
-                setLoading(false);
-            });
-        return () => {
-            isActive = false;
-            controller.abort();
-        };
-    }, [jobId, toUrl]);
+    const [job, loading, error] = useLoadJob(jobId);
 
     if (loading) {
         return (
@@ -120,8 +56,8 @@ export default function JobDetailPage() {
     }
 
     return (
-        <div className="container mx-auto p-6 max-w-4xl">
-            <Button onClick={() => router.back()} className="mb-4" variant="outline">
+        <div>
+            <Button onClick={() => router.back()} variant="outline">
                 ← Back to Jobs
             </Button>
 
@@ -213,12 +149,9 @@ export default function JobDetailPage() {
                             )}
                         </div>
                     )}
-
-                    {/* Job Description */}
                     {job.descriptionHtml && (
                         <div className="border-t pt-6">
                             <h3 className="font-semibold text-lg mb-4">Job Description</h3>
-                            {/* Note: HTML content comes from LinkedIn job descriptions stored in database */}
                             <div
                                 className="prose prose-sm max-w-none"
                                 dangerouslySetInnerHTML={{ __html: job.descriptionHtml }}

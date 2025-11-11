@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import useToUrl from "@/hooks/useToUrl";
-import { PersonalInformation, type PersonalInformationSkill, type PersonalInformationExperienceItem } from "@/types";
+import { type PersonalInformationSkill, type PersonalInformationExperienceItem } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,16 +20,16 @@ import BadgeInput from "@/components/ui/badgeInput";
 import AppSkillsEditor from "@/components/ui/appSkillsEditor";
 import AppExperienceEditor from "@/components/ui/appExperienceEditor";
 import { normaliseExperienceItems, serializeExperienceItems } from "@/lib/experience";
+import usePersonal from "@/hooks/usePersonal";
 
 export default function PersonalPage() {
     const toUrl = useToUrl();
-    const [personalInfo, setPersonalInfo] = useState<PersonalInformation | null>(null);
-    const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [editedField, setEditedField] = useState<string | null>(null);
     const openSkillsSheetRef = useRef<(() => void) | null>(null);
     const [canOpenSkillsSheet, setCanOpenSkillsSheet] = useState(false);
 
+    const [personalInfo, setPersonalInfo, loading] = usePersonal();
     const registerAddSkill = useCallback((handler: (() => void) | null) => {
         openSkillsSheetRef.current = handler;
         setCanOpenSkillsSheet(Boolean(handler));
@@ -47,26 +47,6 @@ export default function PersonalPage() {
             };
         });
     };
-
-    useEffect(() => {
-        const controller = new AbortController();
-        fetch(toUrl('/api/personal'), { signal: controller.signal })
-            .then(res => res.json())
-            .then((data: PersonalInformation) => {
-                const normalizedExperience = normaliseExperienceItems(data.experience);
-                setPersonalInfo({ ...data, experience: normalizedExperience });
-                setLoading(false);
-            })
-            .catch(err => {
-                if (err.name !== 'AbortError') {
-                    console.error('Error fetching personal information:', err);
-                    setLoading(false);
-                }
-            });
-        return () => {
-            controller.abort('Component cleanup');
-        };
-    }, [toUrl]);
 
     const handleSave = async (type: string, value: unknown) => {
         setSaving(true);

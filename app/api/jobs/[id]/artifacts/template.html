@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="de">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Cover letter</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #111;
+            box-sizing: border-box;
+        }
+
+        html {
+            background: #f6f6f6;
+            display: grid;
+            place-items: center;
+        }
+
+        #page {
+            width: 210mm;
+            min-height: 297mm;
+            background: #fff;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            box-sizing: border-box;
+
+            &>header {
+                width: 210mm;
+                min-height: 45mm;
+                padding-top: 45mm;
+            }
+
+            & main {
+                width: 210mm;
+                padding: 8.46mm 20mm 8.46mm 25mm;
+                font-size: 12pt;
+            }
+        }
+
+        #addressContainer {
+            height: 45mm;
+            width: 210mm;
+            position: relative;
+        }
+
+        #address1 {
+            width: 85mm;
+            height: 45mm;
+            padding: 0 0 0 5mm;
+            position: absolute;
+            top: 0;
+            left: 20mm;
+
+            &>section:nth-child(1) {
+                height: 17.7mm;
+                font-size: calc(17.7mm/5);
+                line-height: calc(17.7mm/5);
+                overflow: hidden;
+                display: flex;
+                align-items: flex-end;
+            }
+
+            &>section:nth-child(2) {
+                height: 27.3mm;
+                font-size: calc(27.3mm/6);
+                line-height: calc(27.3mm/6);
+                overflow: hidden;
+            }
+        }
+
+        #address2 {
+            display: grid;
+            grid-template-columns: 75px auto;
+            grid-template-rows: calc(27.3mm/6) minmax(calc(27.3mm/6), calc(27.3mm/6*2)) calc(27.3mm/6) calc(27.3mm/6);
+            column-gap: 5mm;
+            font-size: calc(27.3mm/6);
+            align-content: center;
+            align-items: center;
+            justify-items: start;
+            position: absolute;
+            width: 75mm;
+            height: 40mm;
+            right: 10mm;
+            top: 5mm;
+
+
+            >span {
+                overflow-wrap: anywhere;
+            }
+        }
+
+        small {
+            font-size: calc(17.7mm/5);
+            line-height: calc(17.7mm/5);
+        }
+
+        h1 {
+            font-size: 12pt;
+            margin-bottom: 6pt;
+        }
+
+        p {
+            margin-bottom: 6pt;
+        }
+
+        @media print {
+            #page {
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <article id="page">
+        <header>
+            <section id="addressContainer">
+                <section id="address1">
+                    <section>
+                        Addresse
+                    </section>
+                    <section>
+                        Ole&nbsp;K&ouml;ster<br />
+                        Neuenfelder&nbsp;Stra&szlig;e&nbsp;84A<br />
+                        21109&nbsp;Hamburg
+                    </section>
+                </section>
+                <section id="address2">
+                    <small>Bewerber</small>
+                    <span>Ole&nbsp;K&ouml;ster</span>
+                    <small>E-Mail</small>
+                    <span>ole.koester@example.com</span>
+                    <small>Telefon</small>
+                    <span>+49&nbsp;123&nbsp;4567890</span>
+                    <small>Datum</small>
+                    <span>01.&nbsp;Januar&nbsp;2024</span>
+                </section>
+            </section>
+        </header>
+        <main>
+            <h1>Full-stack Developer (Backend Focus) - Mindpeak, Hamburg</h1>
+            <p>Dear Mindpeak Hiring Team,</p>
+            <p>Helping clinicians see signals faster is why I build software. Mindpeak's mission to bring explainable AI
+                to cancer diagnostics resonates with me, and I am excited to apply as a Full-stack Developer (Backend
+                Focus). With 6+ years in TypeScript and 5+ years in React/Node.js, I design robust APIs and data flows
+                and ship production UI that clinicians can trust.</p>
+            <p>At webfoersterei I built frontend apps with Angular and Bootstrap, collaborated on REST route design, and
+                automated deployments with Jenkins. Since then I have focused on API-first development with Node.js and
+                modern React/Next.js frontends, integrating services and databases (4+ years with MongoDB) to deliver
+                reliable features end to end. Those foundations translate well to your backend-heavy work: building
+                secure services, modeling data thoughtfully, and integrating with ML inference endpoints via clean,
+                well-documented APIs. What draws me to Mindpeak is the real-world impact and the rigor behind it - your
+                focus on explainable AI and partnerships with leaders like Paige, PathAI, and ZEISS show a commitment to
+                scalable, trusted solutions. I thrive in cross-functional settings and communicate clearly with
+                engineering, product, and QA peers, and I am eager to collaborate with ML colleagues to turn research
+                into usable products. While your backend centers on Python, I bring transferable backend skills, am
+                comfortable interfacing with Python services, and I am motivated to deepen my Python proficiency as
+                needed.</p>
+            <p>I bring an API-first mindset, strong TypeScript/Node skills, and React/Next.js experience to accelerate
+                integration around your AI models and data pipelines. I can help define clear service boundaries,
+                document interfaces, and ship reliable features with CI (Jenkins), enabling faster, safer iterations in
+                diagnostics workflows. I am ready to learn and adopt your Docker/Kubernetes workflows quickly.</p>
+            <p>API-first backend development (5+ years in Node.js/REST); frontend integration with React/Next.js for
+                cohesive end-to-end delivery (5+ and 3+ years); data modeling with MongoDB (4+ years) with readiness to
+                adapt to PostgreSQL/MySQL; CI with Jenkins; clear, concise communication and strong motivation for
+                healthcare AI.
+                I would welcome the chance to discuss how I can contribute to Mindpeak's mission. I operate in UTC+1 and
+                can start within 14 days. Thank you for your time and consideration.</p>
+            <p>Sincerely,</p>
+            <p>Ole K&ouml;ster</p>
+        </main>
+    </article>
+</body>
+
+</html>

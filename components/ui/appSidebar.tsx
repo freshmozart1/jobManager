@@ -3,7 +3,7 @@ import { Home, Search, Settings, User } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export function AppSidebar() {
-    return (
+    return (<div className="print:display-none">
         <Sidebar>
             <SidebarHeader>
                 <Avatar>
@@ -71,5 +71,6 @@ export function AppSidebar() {
                 </SidebarGroup>
             </SidebarContent>
         </Sidebar>
+    </div>
     )
 }

@@ -125,3 +125,20 @@
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+    overflow: hidden;
+    box-shadow: none;
+  }
+
+  .print\:display-none {
+    display: none;
+  }
+
+  .print\:visible,
+  .print\:visible * {
+    visibility: visible;
+  }
+}

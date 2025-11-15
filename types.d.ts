@@ -1,5 +1,14 @@
 import { ObjectId } from "mongodb";
 
+type PostalAddress = {
+    type?: 'PostalAddress' | string | null;
+    streetAddress?: string | null;
+    addressLocality?: string | null;
+    addressRegion?: string | null;
+    postalCode?: string | null;
+    addressCountry?: string | null;
+};
+
 export type ScrapedJob = {
     id: string;
     trackingId: string;
@@ -44,8 +53,6 @@ export type Job = ScrapedJob & {
     filteredAt: Date;
     filterResult: boolean | { error: string };
     filteredBy: ObjectId;
-    generation: ObjectId[] | [];
-    appliedAt?: Date;
 };
 
 export type ScrapeUrlDocument = {

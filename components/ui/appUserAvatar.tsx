@@ -11,7 +11,7 @@ export function AppUserAvatar() {
     }
 
     return (
-        <Avatar onClick={handleClick} style={{ cursor: "pointer" }}>
+        <Avatar onClick={handleClick} className="cursor-pointer">
             <AvatarImage src="https://github.com/shadcn.png" alt="User Avatar" />
             <AvatarFallback>CN</AvatarFallback>
         </Avatar>

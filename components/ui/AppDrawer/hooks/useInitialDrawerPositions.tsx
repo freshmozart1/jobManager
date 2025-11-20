@@ -1,9 +1,6 @@
 'use client';
 
 import {
-    COLLAPSED_LEFT_VISIBLE_WIDTH,
-    COLLAPSED_RIGHT_VISIBLE_WIDTH,
-    COLLAPSED_BOTTOM_VISIBLE_HEIGHT,
     type DrawerChildElement,
     type DrawerPosition
 } from '@/components/ui/AppDrawer/appDrawer';
@@ -14,14 +11,17 @@ export default function useInitialDrawerPositions(
     bottomChild: DrawerChildElement | undefined,
     rightChild: DrawerChildElement | undefined,
     leftDrawerWidth: number,
+    collapsedLeftDrawerWidth: number,
     bottomDrawerHeight: number,
-    rightDrawerWidth: number
+    collapsedBottomDrawerHeight: number,
+    rightDrawerWidth: number,
+    collapsedRightDrawerWidth: number
 ) {
     return useMemo(
         () => ([
-            [leftChild, COLLAPSED_LEFT_VISIBLE_WIDTH, leftDrawerWidth],
-            [bottomChild, COLLAPSED_BOTTOM_VISIBLE_HEIGHT, bottomDrawerHeight],
-            [rightChild, COLLAPSED_RIGHT_VISIBLE_WIDTH, rightDrawerWidth]
+            [leftChild, collapsedLeftDrawerWidth, leftDrawerWidth],
+            [bottomChild, collapsedBottomDrawerHeight, bottomDrawerHeight],
+            [rightChild, collapsedRightDrawerWidth, rightDrawerWidth]
         ] as Array<[DrawerChildElement | undefined, number, number]>).reduce(
             (acc, [child, collapsedSpace, space]) => {
                 acc[(child?.props['data-position'] ?? 'left')] = child ? collapsedSpace - space : -space - 1;
@@ -29,6 +29,6 @@ export default function useInitialDrawerPositions(
             },
             {} as Record<DrawerPosition, number>
         ),
-        [leftChild, bottomChild, rightChild, bottomDrawerHeight, leftDrawerWidth, rightDrawerWidth]
+        [leftChild, bottomChild, rightChild, bottomDrawerHeight, collapsedBottomDrawerHeight, leftDrawerWidth, collapsedLeftDrawerWidth, rightDrawerWidth, collapsedRightDrawerWidth]
     );
 }

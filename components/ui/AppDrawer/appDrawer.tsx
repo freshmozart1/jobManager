@@ -23,15 +23,32 @@ export function px(value: number): string {
 export const VIEWPORT_WIDTH =
     typeof window === "undefined"
         ? 0
-        : window.innerWidth,
-    COLLAPSE_BAR_HEIGHT = 5,
-    COLLAPSE_BAR_BLOCK_MARGIN = 10,
-    COLLAPSED_LEFT_VISIBLE_WIDTH = 48,
+        : window.innerWidth;
+export const COLLAPSE_BAR_HEIGHT = 5,
+    COLLAPSE_BAR_BLOCK_MARGIN = 10;
+const COLLAPSED_LEFT_VISIBLE_WIDTH = 48,
     COLLAPSED_RIGHT_VISIBLE_WIDTH = 48,
-    COLLAPSED_BOTTOM_VISIBLE_HEIGHT = COLLAPSE_BAR_HEIGHT + 2 * COLLAPSE_BAR_BLOCK_MARGIN,
-    SVG_SIZE = 48;
+    COLLAPSED_BOTTOM_VISIBLE_HEIGHT = COLLAPSE_BAR_HEIGHT + 2 * COLLAPSE_BAR_BLOCK_MARGIN;
 
-export default function AppDrawer({ children }: { children: DrawerChildElement | DrawerChildElement[] }) {
+export default function AppDrawer(
+    {
+        collapsedSize: {
+            leftWidth: collapsedLeftDrawerWidth,
+            bottomHeight: collapsedBottomDrawerHeight,
+            rightWidth: collapsedRightDrawerWidth
+        } = {
+            leftWidth: COLLAPSED_LEFT_VISIBLE_WIDTH,
+            bottomHeight: COLLAPSED_BOTTOM_VISIBLE_HEIGHT,
+            rightWidth: COLLAPSED_RIGHT_VISIBLE_WIDTH
+        },
+        cornerRadius = 48,
+        children
+    }: {
+        collapsedSize?: { leftWidth: number, bottomHeight: number, rightWidth: number },
+        cornerRadius?: number,
+        children: DrawerChildElement | DrawerChildElement[]
+    }
+) {
     const [
         bottomDrawerRef,
         leftDrawerRef,
@@ -57,8 +74,11 @@ export default function AppDrawer({ children }: { children: DrawerChildElement |
         collapsedRight
     ] = useCollapsed(
         bottomDrawerHeight,
+        collapsedBottomDrawerHeight,
         leftDrawerWidth,
-        rightDrawerWidth
+        collapsedLeftDrawerWidth,
+        rightDrawerWidth,
+        collapsedRightDrawerWidth
     );
 
     const initialDrawerPositions = useInitialDrawerPositions(
@@ -66,8 +86,11 @@ export default function AppDrawer({ children }: { children: DrawerChildElement |
         bottomChild,
         rightChild,
         leftDrawerWidth,
+        collapsedLeftDrawerWidth,
         bottomDrawerHeight,
-        rightDrawerWidth
+        collapsedBottomDrawerHeight,
+        rightDrawerWidth,
+        collapsedRightDrawerWidth
     );
 
     const [
@@ -78,12 +101,15 @@ export default function AppDrawer({ children }: { children: DrawerChildElement |
         bottomChild,
         bottom,
         bottomDrawerHeight,
+        collapsedBottomDrawerHeight,
         leftChild,
         left,
         leftDrawerWidth,
+        collapsedLeftDrawerWidth,
         rightChild,
         right,
-        rightDrawerWidth
+        rightDrawerWidth,
+        collapsedRightDrawerWidth
     );
     const [
         svgStyle,
@@ -94,12 +120,16 @@ export default function AppDrawer({ children }: { children: DrawerChildElement |
     ] = useStyles(
         transitionEnabled,
         dynamicLeft,
+        collapsedLeftDrawerWidth,
         dynamicBottom,
+        collapsedBottomDrawerHeight,
         dynamicRight,
+        collapsedRightDrawerWidth,
         bottom,
         left,
         right,
         bottomDrawerHeight,
+        cornerRadius,
         leftChild,
         bottomChild,
         rightChild
@@ -126,6 +156,7 @@ export default function AppDrawer({ children }: { children: DrawerChildElement |
         collapsedRight,
         leftDrawerWidth,
         rightDrawerWidth,
+        cornerRadius,
         svgStyle
     );
 

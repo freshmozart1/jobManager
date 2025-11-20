@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from "react";
-import { DrawerChildElement, COLLAPSED_BOTTOM_VISIBLE_HEIGHT, COLLAPSED_LEFT_VISIBLE_WIDTH, VIEWPORT_WIDTH, COLLAPSED_RIGHT_VISIBLE_WIDTH } from "@/components/ui/AppDrawer/appDrawer";
+import { DrawerChildElement, VIEWPORT_WIDTH } from "@/components/ui/AppDrawer/appDrawer";
 
 const VIEWPORT_HEIGHT = typeof window === "undefined" ? 0 : window.innerHeight;
 
@@ -25,24 +25,27 @@ export default function useDynamic(
     bottomChild: DrawerChildElement | undefined,
     bottom: number,
     bottomDrawerHeight: number,
+    collapsedBottomDrawerHeight: number,
     leftChild: DrawerChildElement | undefined,
     left: number,
     leftDrawerWidth: number,
+    collapsedLeftDrawerWidth: number,
     rightChild: DrawerChildElement | undefined,
     right: number,
-    rightDrawerWidth: number) {
+    rightDrawerWidth: number,
+    collapsedRightDrawerWidth: number) {
     return [
         useMemo(
-            () => calcDynamicOffset(bottomChild, bottom, COLLAPSED_BOTTOM_VISIBLE_HEIGHT, bottomDrawerHeight, VIEWPORT_HEIGHT),
-            [bottomChild, bottom, bottomDrawerHeight]
+            () => calcDynamicOffset(bottomChild, bottom, collapsedBottomDrawerHeight, bottomDrawerHeight, VIEWPORT_HEIGHT),
+            [bottomChild, bottom, bottomDrawerHeight, collapsedBottomDrawerHeight]
         ),
         useMemo(
-            () => calcDynamicOffset(leftChild, left, COLLAPSED_LEFT_VISIBLE_WIDTH, leftDrawerWidth, VIEWPORT_WIDTH),
-            [leftChild, left, leftDrawerWidth]
+            () => calcDynamicOffset(leftChild, left, collapsedLeftDrawerWidth, leftDrawerWidth, VIEWPORT_WIDTH),
+            [leftChild, left, leftDrawerWidth, collapsedLeftDrawerWidth]
         ),
         useMemo(
-            () => calcDynamicOffset(rightChild, right, COLLAPSED_RIGHT_VISIBLE_WIDTH, rightDrawerWidth, VIEWPORT_WIDTH),
-            [rightChild, right, rightDrawerWidth]
+            () => calcDynamicOffset(rightChild, right, collapsedRightDrawerWidth, rightDrawerWidth, VIEWPORT_WIDTH),
+            [rightChild, right, rightDrawerWidth, collapsedRightDrawerWidth]
         )
     ];
 }

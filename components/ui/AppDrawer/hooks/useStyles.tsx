@@ -1,6 +1,6 @@
 'use client';
 
-import { COLLAPSE_BAR_HEIGHT, COLLAPSE_BAR_BLOCK_MARGIN, COLLAPSED_BOTTOM_VISIBLE_HEIGHT, COLLAPSED_LEFT_VISIBLE_WIDTH, COLLAPSED_RIGHT_VISIBLE_WIDTH, px, SVG_SIZE, type DrawerChildElement } from "@/components/ui/AppDrawer/appDrawer";
+import { COLLAPSE_BAR_HEIGHT, COLLAPSE_BAR_BLOCK_MARGIN, px, type DrawerChildElement } from "@/components/ui/AppDrawer/appDrawer";
 import { useCallback, useMemo, type CSSProperties } from "react";
 
 const TRANSITION = '0.3s ease-in-out',
@@ -12,12 +12,16 @@ const TRANSITION = '0.3s ease-in-out',
 export default function useStyles(
     transitionEnabled: boolean,
     dynamicLeft: number,
+    collapsedLeftDrawerWidth: number,
     dynamicBottom: number,
+    collapsedBottomDrawerHeight: number,
     dynamicRight: number,
+    collapsedRightDrawerWidth: number,
     bottom: number,
     left: number,
     right: number,
     bottomDrawerHeight: number,
+    cornerRadius: number,
     leftChild: DrawerChildElement | undefined,
     bottomChild: DrawerChildElement | undefined,
     rightChild: DrawerChildElement | undefined
@@ -50,11 +54,11 @@ export default function useStyles(
                 '--right': px(dynamicRight),
                 '--bgColor': anyDrawerOpen ? 'rgba(0, 0, 0, 0.3)' : 'transparent',
                 '--transition': transitionEnabled ? OVERLAY_TRANSITION : 'none',
-                '--borderLeftRadius': px(leftChild && bottomChild ? SVG_SIZE : 0),
-                '--borderRightRadius': px(rightChild && bottomChild ? SVG_SIZE : 0),
+                '--borderLeftRadius': px(leftChild && bottomChild ? cornerRadius : 0),
+                '--borderRightRadius': px(rightChild && bottomChild ? cornerRadius : 0),
                 '--pEvents': anyDrawerOpen ? 'all' : 'none',
             }) as CSSProperties,
-            [dynamicLeft, dynamicBottom, dynamicRight, anyDrawerOpen, transitionEnabled, leftChild, bottomChild, rightChild]
+            [dynamicLeft, dynamicBottom, dynamicRight, anyDrawerOpen, transitionEnabled, leftChild, bottomChild, rightChild, cornerRadius]
         ),
         useMemo(
             () => bottomChild
@@ -63,12 +67,12 @@ export default function useStyles(
                     '--left': px(dynamicLeft),
                     '--right': px(dynamicRight),
                     '--transition': transitionEnabled ? BOTTOM_TRANSITION : 'none',
-                    '--padding': px(COLLAPSED_BOTTOM_VISIBLE_HEIGHT),
-                    '--rightSvgSize': px(rightChild ? SVG_SIZE : 0),
-                    '--leftSvgSize': px(leftChild ? SVG_SIZE : 0),
+                    '--padding': px(collapsedBottomDrawerHeight),
+                    '--rightSvgSize': px(rightChild ? cornerRadius : 0),
+                    '--leftSvgSize': px(leftChild ? cornerRadius : 0),
                 } as CSSProperties
                 : undefined,
-            [bottom, dynamicLeft, dynamicRight, transitionEnabled, bottomChild, leftChild, rightChild]
+            [bottom, dynamicLeft, dynamicRight, transitionEnabled, bottomChild, leftChild, rightChild, collapsedBottomDrawerHeight, cornerRadius]
         ),
         useCallback(
             (target: 'left' | 'right') => {
@@ -94,19 +98,19 @@ export default function useStyles(
                         bottomChild
                             ? (
                                 bottom < 0
-                                    ? COLLAPSED_BOTTOM_VISIBLE_HEIGHT
+                                    ? collapsedBottomDrawerHeight
                                     : bottomDrawerHeight
-                            ) + SVG_SIZE
+                            ) + cornerRadius
                             : 0
                     ),
                     '--minWidth': px(
                         target === 'left'
-                            ? COLLAPSED_LEFT_VISIBLE_WIDTH
-                            : COLLAPSED_RIGHT_VISIBLE_WIDTH
+                            ? collapsedLeftDrawerWidth
+                            : collapsedRightDrawerWidth
                     ),
                 } as CSSProperties;
             },
-            [bottom, left, right, bottomDrawerHeight, transitionEnabled, bottomChild]
+            [bottom, left, right, bottomDrawerHeight, transitionEnabled, bottomChild, collapsedLeftDrawerWidth, collapsedRightDrawerWidth, collapsedBottomDrawerHeight, cornerRadius]
         ),
         useMemo(() => ({
             width: px(40),

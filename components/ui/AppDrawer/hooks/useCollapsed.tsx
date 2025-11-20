@@ -1,18 +1,24 @@
 'use client';
 
 import { useMemo } from "react";
-import { COLLAPSED_BOTTOM_VISIBLE_HEIGHT, COLLAPSED_LEFT_VISIBLE_WIDTH, COLLAPSED_RIGHT_VISIBLE_WIDTH } from "@/components/ui/AppDrawer/appDrawer";
 
-export default function useCollapsed(bottomDrawerHeight: number, leftDrawerWidth: number, rightDrawerWidth: number) {
+export default function useCollapsed(
+    bottomDrawerHeight: number,
+    collapsedBottomDrawerHeight: number,
+    leftDrawerWidth: number,
+    collapsedLeftDrawerWidth: number,
+    rightDrawerWidth: number,
+    collapsedRightDrawerWidth: number
+) {
     return [useMemo(
-        () => COLLAPSED_BOTTOM_VISIBLE_HEIGHT - bottomDrawerHeight,
-        [bottomDrawerHeight]
+        () => collapsedBottomDrawerHeight - bottomDrawerHeight,
+        [bottomDrawerHeight, collapsedBottomDrawerHeight]
     ), useMemo(
-        () => COLLAPSED_LEFT_VISIBLE_WIDTH - leftDrawerWidth,
-        [leftDrawerWidth]
+        () => collapsedLeftDrawerWidth - leftDrawerWidth,
+        [leftDrawerWidth, collapsedLeftDrawerWidth]
     ),
     useMemo(
-        () => COLLAPSED_RIGHT_VISIBLE_WIDTH - rightDrawerWidth,
-        [rightDrawerWidth]
+        () => collapsedRightDrawerWidth - rightDrawerWidth,
+        [rightDrawerWidth, collapsedRightDrawerWidth]
     )];
 }

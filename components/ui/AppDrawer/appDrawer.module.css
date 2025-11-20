@@ -1,0 +1,94 @@
+@keyframes borderShift {
+    from {
+        border-image: linear-gradient(to top,
+                transparent 0,
+                transparent var(--gradientStop1),
+                var(--border) var(--gradientStop1),
+                var(--border) 100%) 1;
+    }
+
+    to {
+        border-image: linear-gradient(to top,
+                transparent 0,
+                transparent var(--gradientStop2),
+                var(--border) var(--gradientStop2),
+                var(--border) 100%) 1;
+    }
+}
+
+.leftDrawer,
+.rightDrawer {
+    position: fixed;
+    bottom: 0;
+    top: 0;
+    height: 100svh;
+    background-color: transparent;
+    transition: var(--transition);
+    min-width: var(--minWidth);
+}
+
+.leftDrawer {
+    left: var(--left);
+}
+
+.rightDrawer {
+    right: var(--right);
+}
+
+.rightDrawer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -1px;
+    width: 1px;
+    height: calc(100% - var(--borderOffset));
+    background-color: var(--border);
+    transition: height 0.3s ease-in-out;
+}
+
+.leftDrawer::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -0.5px;
+    width: 1px;
+    height: calc(100% - var(--borderOffset));
+    background-color: var(--border);
+    transition: height 0.3s ease-in-out;
+}
+
+.bottomDrawer {
+    position: fixed;
+    bottom: var(--bottom);
+    left: var(--left);
+    right: var(--right);
+    transition: var(--transition);
+    display: flex;
+    justify-content: center;
+    padding: var(--padding);
+    align-items: start;
+    background-color: transparent;
+}
+
+.bottomDrawer::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: var(--leftSvgSize);
+    right: var(--rightSvgSize);
+    height: 1px;
+    background-color: var(--border);
+}
+
+.overlay {
+    position: fixed;
+    left: var(--left);
+    bottom: var(--bottom);
+    top: 0;
+    right: var(--right);
+    background-color: var(--bgColor);
+    transition: var(--transition);
+    border-bottom-left-radius: var(--borderLeftRadius);
+    border-bottom-right-radius: var(--borderRightRadius);
+    pointer-events: var(--pEvents);
+}

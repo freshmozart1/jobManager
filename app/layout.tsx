@@ -4,6 +4,7 @@ import "./globals.css";
 import AppDrawer from "@/components/ui/AppDrawer/appDrawer";
 import { AppUserAvatar } from "@/components/ui/appUserAvatar";
 import AppSearch from "@/components/ui/appSearch";
+import AppHome from "@/components/ui/appHome";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,6 +35,7 @@ export default async function RootLayout({
         <AppDrawer>
           <div data-position="left" className="p-2 flex flex-col gap-2 justify-center items-center">
             <AppUserAvatar />
+            <AppHome />
             <AppSearch />
           </div>
         </AppDrawer>

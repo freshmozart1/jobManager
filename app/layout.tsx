@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import "./globals.css";
-import { AppSidebar } from "@/components/ui/appSidebar";
+import AppDrawer from "@/components/ui/AppDrawer/appDrawer";
+import { AppUserAvatar } from "@/components/ui/appUserAvatar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,20 +24,17 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieStore = await cookies();
-  const defaultOpen = cookieStore.get('sidebar_state')?.value === 'true';
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SidebarProvider defaultOpen={defaultOpen}>
-          <AppSidebar />
-          <main className="h-full w-full">
-            <SidebarTrigger />
-            {children}
-          </main>
-        </SidebarProvider>
+        {children}
+        <AppDrawer>
+          <div data-position="left">
+            <AppUserAvatar />
+          </div>
+        </AppDrawer>
       </body>
     </html>
   );

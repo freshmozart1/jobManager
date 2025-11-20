@@ -16,9 +16,15 @@ export default function useSVGCorner(
     return useCallback(
         (target: 'bottom_left' | 'bottom_right') =>
             <svg
+                xmlns="http://www.w3.org/2000/svg"
                 width={cornerRadius}
                 height={cornerRadius}
                 viewBox={`0 0 ${cornerRadius} ${cornerRadius}`}
+                shapeRendering='geometricPrecision'
+                clipPath={target === 'bottom_left'
+                    ? `path('M 0 0 L 0 ${cornerRadius} L ${cornerRadius} ${cornerRadius} L ${cornerRadius} ${cornerRadius - 1} A ${cornerRadius - 1} ${cornerRadius - 1} 0 0 1 1 0 Z')`
+                    : `path('M ${cornerRadius} 0 L ${cornerRadius} ${cornerRadius} L 0 ${cornerRadius} L 0 ${cornerRadius - 1} A ${cornerRadius - 1} ${cornerRadius - 1} 0 0 0 ${cornerRadius - 1} 0 Z')`}
+
                 style={{
                     ...svgStyle,
                     left: target === 'bottom_left'
@@ -35,16 +41,17 @@ export default function useSVGCorner(
                                 ? rightDrawerWidth
                                 : 0
                         : 'auto',
+                    backdropFilter: 'blur(3px)',
+                    backgroundColor: 'oklch(from var(--background) l c h / 0.35)',
                 }}
             >
-                <mask id={`circle-mask-${target}`}>
-                    <rect width={cornerRadius} height={cornerRadius} fill="black" />
-                    <circle cx={target === 'bottom_left' ? cornerRadius : 0} cy="0" r={cornerRadius} fill="white" />
-                    <circle cx={target === 'bottom_left' ? cornerRadius : 0} cy="0" r={cornerRadius - 1} fill="black" />
-                </mask>
-                <rect x="0" y="0" width={cornerRadius} height={cornerRadius} style={{
-                    fill: 'var(--border)'
-                }} mask={`url(#circle-mask-${target})`} />
+                <path
+                    d={target === 'bottom_left'
+                        ? `M 0 0 A ${cornerRadius} ${cornerRadius} 0 0 0 ${cornerRadius} ${cornerRadius} L ${cornerRadius} ${cornerRadius - 1} A ${cornerRadius - 1} ${cornerRadius - 1} 0 0 1 1 0 Z`
+                        : `M ${cornerRadius} 0 A ${cornerRadius} ${cornerRadius} 0 0 1 0 ${cornerRadius} L 0 ${cornerRadius - 1} A ${cornerRadius - 1} ${cornerRadius - 1} 0 0 0 ${cornerRadius - 1} 0 Z`
+                    }
+                    fill="var(--border)"
+                />
             </svg>,
         [collapsedLeft, collapsedRight, left, leftDrawerWidth, right, rightDrawerWidth, svgStyle, cornerRadius]
     )

@@ -22,9 +22,10 @@
     bottom: 0;
     top: 0;
     height: 100svh;
-    background-color: transparent;
+    background-color: oklch(from var(--background) l c h / 0.35);
     transition: var(--transition);
     min-width: var(--minWidth);
+    backdrop-filter: blur(3px);
 }
 
 .leftDrawer {
@@ -50,7 +51,7 @@
     content: '';
     position: absolute;
     top: 0;
-    right: -0.5px;
+    right: -1px;
     width: 1px;
     height: calc(100% - var(--borderOffset));
     background-color: var(--border);
@@ -67,7 +68,8 @@
     justify-content: center;
     padding: var(--padding);
     align-items: start;
-    background-color: transparent;
+    background-color: oklch(from var(--background) l c h / 0.35);
+    backdrop-filter: blur(3px);
 }
 
 .bottomDrawer::before {

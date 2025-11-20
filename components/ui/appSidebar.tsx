@@ -1,15 +1,12 @@
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
 import { Home, Search, Settings, User } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { AppUserAvatar } from "@/components/ui/appUserAvatar"
 
 export function AppSidebar() {
     return (<div className="print:display-none">
         <Sidebar>
             <SidebarHeader>
-                <Avatar>
-                    <AvatarImage src="https://github.com/shadcn.png" alt="User Avatar" />
-                    <AvatarFallback>CN</AvatarFallback>
-                </Avatar>
+                <AppUserAvatar />
             </SidebarHeader>
             <SidebarContent>
                 <SidebarGroup>

@@ -24,7 +24,13 @@ export default function useInitialDrawerPositions(
             [rightChild, collapsedRightDrawerWidth, rightDrawerWidth]
         ] as Array<[DrawerChildElement | undefined, number, number]>).reduce(
             (acc, [child, collapsedSpace, space]) => {
-                acc[(child?.props['data-position'] ?? 'left')] = child ? collapsedSpace - space : -space - 1;
+                if (!child) {
+                    return acc;
+                }
+                acc[child.props['data-position'] ?? 'left'] = collapsedSpace === space
+                    ? 0
+                    : collapsedSpace - space;
+                if (child === bottomChild) console.log(acc, 'collapsedSpace', collapsedSpace, 'space', space);
                 return acc;
             },
             {} as Record<DrawerPosition, number>

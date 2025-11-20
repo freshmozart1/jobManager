@@ -20,7 +20,9 @@ export default function useStyles(
     bottom: number,
     left: number,
     right: number,
+    leftDrawerWidth: number,
     bottomDrawerHeight: number,
+    rightDrawerWidth: number,
     cornerRadius: number,
     leftChild: DrawerChildElement | undefined,
     bottomChild: DrawerChildElement | undefined,
@@ -33,8 +35,8 @@ export default function useStyles(
         CSSProperties
     ] {
     const anyDrawerOpen = useMemo(
-        () => left === 0 || bottom === 0 || right === 0,
-        [left, bottom, right]
+        () => leftDrawerWidth !== collapsedLeftDrawerWidth && left === 0 || bottomDrawerHeight !== collapsedBottomDrawerHeight && bottom === 0 || rightDrawerWidth !== collapsedRightDrawerWidth && right === 0,
+        [left, bottom, right, leftDrawerWidth, collapsedLeftDrawerWidth, bottomDrawerHeight, collapsedBottomDrawerHeight, rightDrawerWidth, collapsedRightDrawerWidth]
     );
     return [
         useMemo(
@@ -67,12 +69,12 @@ export default function useStyles(
                     '--left': px(dynamicLeft),
                     '--right': px(dynamicRight),
                     '--transition': transitionEnabled ? BOTTOM_TRANSITION : 'none',
-                    '--padding': px(collapsedBottomDrawerHeight),
+                    '--padding': px(COLLAPSE_BAR_HEIGHT + 2 * COLLAPSE_BAR_BLOCK_MARGIN),
                     '--rightSvgSize': px(rightChild ? cornerRadius : 0),
                     '--leftSvgSize': px(leftChild ? cornerRadius : 0),
                 } as CSSProperties
                 : undefined,
-            [bottom, dynamicLeft, dynamicRight, transitionEnabled, bottomChild, leftChild, rightChild, collapsedBottomDrawerHeight, cornerRadius]
+            [bottom, dynamicLeft, dynamicRight, transitionEnabled, bottomChild, leftChild, rightChild, cornerRadius]
         ),
         useCallback(
             (target: 'left' | 'right') => {

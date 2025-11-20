@@ -15,9 +15,9 @@ export default function useStates(): [
         useState<number>(0),
         useState<number>(0),
         useState<number>(0),
-        useState<number>(0),
-        useState<number>(0),
-        useState<number>(0),
+        useState<number>(-Number.MAX_VALUE),
+        useState<number>(-Number.MAX_VALUE),
+        useState<number>(-Number.MAX_VALUE),
         useState<boolean>(false)
     ];
 }

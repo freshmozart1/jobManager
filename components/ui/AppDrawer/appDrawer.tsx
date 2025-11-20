@@ -33,9 +33,9 @@ const COLLAPSED_LEFT_VISIBLE_WIDTH = 48,
 export default function AppDrawer(
     {
         collapsedSize: {
-            leftWidth: collapsedLeftDrawerWidth,
-            bottomHeight: collapsedBottomDrawerHeight,
-            rightWidth: collapsedRightDrawerWidth
+            leftWidth: collapsedLeftDrawerWidth = COLLAPSED_LEFT_VISIBLE_WIDTH,
+            bottomHeight: collapsedBottomDrawerHeight = COLLAPSED_BOTTOM_VISIBLE_HEIGHT,
+            rightWidth: collapsedRightDrawerWidth = COLLAPSED_RIGHT_VISIBLE_WIDTH
         } = {
             leftWidth: COLLAPSED_LEFT_VISIBLE_WIDTH,
             bottomHeight: COLLAPSED_BOTTOM_VISIBLE_HEIGHT,
@@ -44,7 +44,7 @@ export default function AppDrawer(
         cornerRadius = 48,
         children
     }: {
-        collapsedSize?: { leftWidth: number, bottomHeight: number, rightWidth: number },
+        collapsedSize?: { leftWidth?: number, bottomHeight?: number, rightWidth?: number },
         cornerRadius?: number,
         children: DrawerChildElement | DrawerChildElement[]
     }
@@ -128,7 +128,9 @@ export default function AppDrawer(
         bottom,
         left,
         right,
+        leftDrawerWidth,
         bottomDrawerHeight,
+        rightDrawerWidth,
         cornerRadius,
         leftChild,
         bottomChild,
@@ -177,9 +179,9 @@ export default function AppDrawer(
             <style>
                 {`
                     :has(> #appDrawerHost) {
-                        padding-left: ${leftChild ? px(COLLAPSED_LEFT_VISIBLE_WIDTH) : '0'};
-                        padding-right: ${rightChild ? px(COLLAPSED_RIGHT_VISIBLE_WIDTH) : '0'};
-                        padding-bottom: ${bottomChild ? px(COLLAPSED_BOTTOM_VISIBLE_HEIGHT) : '0'};
+                        padding-left: ${leftChild ? px(collapsedLeftDrawerWidth) : '0'};
+                        padding-right: ${rightChild ? px(collapsedRightDrawerWidth) : '0'};
+                        padding-bottom: ${bottomChild ? px(collapsedBottomDrawerHeight) : '0'};
                     }
                 `}
             </style>

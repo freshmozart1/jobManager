@@ -23,14 +23,14 @@ export default function useSVGCorner(
                     ...svgStyle,
                     left: target === 'bottom_left'
                         ? left < 0
-                            ? collapsedLeft + leftDrawerWidth
+                            ? left === -Number.MAX_VALUE ? -cornerRadius : collapsedLeft + leftDrawerWidth
                             : leftDrawerWidth < VIEWPORT_WIDTH
                                 ? leftDrawerWidth
                                 : 0
                         : 'auto',
                     right: target === 'bottom_right'
                         ? right < 0
-                            ? collapsedRight + rightDrawerWidth
+                            ? right === -Number.MAX_VALUE ? -cornerRadius : collapsedRight + rightDrawerWidth
                             : rightDrawerWidth < VIEWPORT_WIDTH
                                 ? rightDrawerWidth
                                 : 0

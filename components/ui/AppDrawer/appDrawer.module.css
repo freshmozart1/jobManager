@@ -1,96 +1,103 @@
-@keyframes borderShift {
-    from {
-        border-image: linear-gradient(to top,
-                transparent 0,
-                transparent var(--gradientStop1),
-                var(--border) var(--gradientStop1),
-                var(--border) 100%) 1;
-    }
+@property --borderWidth {
+    syntax: '<length>';
+    initial-value: 1px;
+    inherits: false;
+}
 
-    to {
-        border-image: linear-gradient(to top,
-                transparent 0,
-                transparent var(--gradientStop2),
-                var(--border) var(--gradientStop2),
-                var(--border) 100%) 1;
-    }
+.leftDrawer,
+.rightDrawer,
+.bottomDrawer,
+.corner {
+    position: fixed;
+    background-color: oklch(from var(--background) l c h / 0.35);
+    backdrop-filter: blur(3px);
+    transition: var(--transition);
 }
 
 .leftDrawer,
 .rightDrawer {
-    position: fixed;
     bottom: 0;
     top: 0;
     height: 100svh;
-    background-color: oklch(from var(--background) l c h / 0.35);
-    transition: var(--transition);
     min-width: var(--minWidth);
-    backdrop-filter: blur(3px);
 }
 
-.leftDrawer {
-    left: var(--left);
-}
-
-.rightDrawer {
-    right: var(--right);
-}
-
+.leftDrawer::after,
 .rightDrawer::before {
     content: '';
     position: absolute;
     top: 0;
-    left: -1px;
-    width: 1px;
-    height: calc(100% - var(--borderOffset));
+    width: var(--borderWidth);
+    height: calc(100svh - var(--borderOffset));
     background-color: var(--border);
-    transition: height 0.3s ease-in-out;
+    transition: var(--transition);
 }
 
-.leftDrawer::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: -1px;
-    width: 1px;
-    height: calc(100% - var(--borderOffset));
-    background-color: var(--border);
-    transition: height 0.3s ease-in-out;
+.leftDrawer {
+    left: var(--left);
+
+    &::after {
+        right: calc(-1 * var(--borderWidth));
+    }
+}
+
+.rightDrawer {
+    right: var(--right);
+
+    &::before {
+        left: calc(-1 * var(--borderWidth));
+    }
+}
+
+.bottomDrawer,
+.corner {
+    bottom: var(--bottom);
+
+    >path {
+        fill: var(--border);
+    }
 }
 
 .bottomDrawer {
-    position: fixed;
-    bottom: var(--bottom);
+    display: flex;
     left: var(--left);
     right: var(--right);
-    transition: var(--transition);
-    display: flex;
     justify-content: center;
-    padding: var(--padding);
     align-items: start;
-    background-color: oklch(from var(--background) l c h / 0.35);
-    backdrop-filter: blur(3px);
-}
+    flex-direction: column;
 
-.bottomDrawer::before {
-    content: '';
-    position: absolute;
-    top: -1px;
-    left: var(--leftSvgSize);
-    right: var(--rightSvgSize);
-    height: 1px;
-    background-color: var(--border);
+    >div {
+        width: 100%;
+    }
+
+    >.collapseBar {
+        margin: 10px auto;
+        height: 5px;
+        width: 40px;
+        background-color: var(--border);
+        border-radius: 2.5px;
+    }
+
+    &::before {
+        content: '';
+        position: absolute;
+        top: calc(-1 * var(--borderWidth));
+        left: var(--leftSvgSize);
+        right: var(--rightSvgSize);
+        height: var(--borderWidth);
+        background-color: var(--border);
+    }
 }
 
 .overlay {
     position: fixed;
-    left: var(--left);
-    bottom: var(--bottom);
+    left: calc(var(--left) + var(--borderWidth));
+    bottom: calc(var(--bottom) + var(--borderWidth));
     top: 0;
-    right: var(--right);
+    right: calc(var(--right) + var(--borderWidth));
     background-color: var(--bgColor);
     transition: var(--transition);
-    border-bottom-left-radius: var(--borderLeftRadius);
-    border-bottom-right-radius: var(--borderRightRadius);
+    border-radius: 0 0 var(--borderRadius) var(--borderRadius);
     pointer-events: var(--pEvents);
+    z-index: 1;
 }

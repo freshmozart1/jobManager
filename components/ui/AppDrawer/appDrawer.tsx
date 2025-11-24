@@ -53,13 +53,17 @@ export default function AppDrawer(
         rightChild
     ] = useChildren(children);
 
-    const { setDrawer } = useAppDrawer();
+    const { setDrawer, left, right, bottom } = useAppDrawer();
 
     useEffect(() => {
-        setDrawer('left', leftChild);
-        setDrawer('bottom', bottomChild);
-        setDrawer('right', rightChild);
-    }, [leftChild, bottomChild, rightChild, setDrawer]);
+        if (!left) setDrawer('left', leftChild);
+        if (!bottom) setDrawer('bottom', bottomChild);
+        if (!right) setDrawer('right', rightChild);
+    }, [leftChild, bottomChild, rightChild, setDrawer, left, bottom, right]);
+
+    const contentLeft = left || leftChild;
+    const contentBottom = bottom || bottomChild;
+    const contentRight = right || rightChild;
 
     useEffect(
         () => {
@@ -69,23 +73,33 @@ export default function AppDrawer(
                 [rightDrawerRef.current?.offsetWidth, setRightDrawerWidth]
             ] as [number | undefined, React.Dispatch<React.SetStateAction<number>>][]) if (current) setter(current);
         },
-        [bottomDrawerRef, leftDrawerRef, rightDrawerRef, setBottomDrawerHeight, setLeftDrawerWidth, setRightDrawerWidth]
+        [bottomDrawerRef, leftDrawerRef, rightDrawerRef, setBottomDrawerHeight, setLeftDrawerWidth, setRightDrawerWidth, contentLeft, contentBottom, contentRight]
     );
-    const [positions, openDrawer] = useDrawerPositions([leftChild, bottomChild, rightChild].reduce<UseDrawerPositionsProps>(
-        (acc, child) => {
-            if (!child) return acc;
-            const position = child.props['data-position'] as DrawerPosition | undefined;
-            const cmp = (l: number, r: number, b: number) => position === 'right' ? r : position === 'bottom' ? b : l;
-            acc[position || 'left'] = {
-                collapsedWidth: cmp(collapsedLeftDrawerWidth, collapsedRightDrawerWidth, collapsedLeftDrawerWidth),
-                width: cmp(leftDrawerWidth, rightDrawerWidth, leftDrawerWidth),
-                collapsedHeight: cmp(0, 0, collapsedBottomDrawerHeight),
-                height: cmp(0, 0, bottomDrawerHeight),
+
+    const drawerConfig = useMemo(() => {
+        const config: UseDrawerPositionsProps = {};
+        if (contentLeft) {
+            config.left = {
+                collapsedWidth: collapsedLeftDrawerWidth,
+                width: leftDrawerWidth,
             };
-            return acc;
-        },
-        {}
-    ));
+        }
+        if (contentRight) {
+            config.right = {
+                collapsedWidth: collapsedRightDrawerWidth,
+                width: rightDrawerWidth,
+            };
+        }
+        if (contentBottom) {
+            config.bottom = {
+                collapsedHeight: collapsedBottomDrawerHeight,
+                height: bottomDrawerHeight,
+            };
+        }
+        return config;
+    }, [contentLeft, contentRight, contentBottom, collapsedLeftDrawerWidth, leftDrawerWidth, collapsedRightDrawerWidth, rightDrawerWidth, collapsedBottomDrawerHeight, bottomDrawerHeight]);
+
+    const [positions, openDrawer] = useDrawerPositions(drawerConfig);
 
     const px = useCallback((value: number) => `${value}px`, []);
 
@@ -142,15 +156,19 @@ export default function AppDrawer(
         const clrb = (childExists: boolean, position: number, w: number, cw: number) => pxIf(childExists, position === 0 ? w : cw);
         const cpEbG = (positions.left === 0 || positions.right === 0 || positions.bottom === 0);
         return {
-            '--left': clrb(!!leftChild, positions.left, leftDrawerWidth, collapsedLeftDrawerWidth),
-            '--right': clrb(!!rightChild, positions.right, rightDrawerWidth, collapsedRightDrawerWidth),
-            '--bottom': clrb(!!bottomChild, positions.bottom, bottomDrawerHeight, collapsedBottomDrawerHeight),
+            '--left': clrb(!!contentLeft, positions.left, leftDrawerWidth, collapsedLeftDrawerWidth),
+            '--right': clrb(!!contentRight, positions.right, rightDrawerWidth, collapsedRightDrawerWidth),
+            '--bottom': clrb(!!contentBottom, positions.bottom, bottomDrawerHeight, collapsedBottomDrawerHeight),
             '--transition': transitionEnabled ?? 'none',
             '--pEvents': cpEbG ? 'auto' : 'none',
             '--bgColor': cpEbG ? 'rgba(0, 0, 0, 0.35)' : 'transparent',
-            '--borderRadius': px(bottomChild ? cornerRadius : 0)
+            '--borderLeftRadius': pxIf(!!contentBottom && !!contentLeft, cornerRadius),
+            '--borderRightRadius': pxIf(!!contentBottom && !!contentRight, cornerRadius),
+            '--borderLeftWidth': pxIf(!!contentLeft, 1),
+            '--borderRightWidth': pxIf(!!contentRight, 1),
+            '--borderBottomWidth': pxIf(!!contentBottom, 1),
         } as CSSProperties;
-    }, [bottomChild, leftChild, rightChild, leftDrawerWidth, bottomDrawerHeight, rightDrawerWidth, transitionEnabled, collapsedLeftDrawerWidth, collapsedBottomDrawerHeight, collapsedRightDrawerWidth, cornerRadius, positions, pxIf, px]);
+    }, [contentBottom, contentLeft, contentRight, leftDrawerWidth, bottomDrawerHeight, rightDrawerWidth, transitionEnabled, collapsedLeftDrawerWidth, collapsedBottomDrawerHeight, collapsedRightDrawerWidth, cornerRadius, positions, pxIf]);
     const drawerFactory = useCallback(
         (target: DrawerPosition) => {
             const clr = (childExists: boolean, position: number, width: number) => pxIf(childExists, position + (target === 'bottom' ? width : 0));
@@ -158,15 +176,15 @@ export default function AppDrawer(
                 className={styles[`${target}Drawer`] + ' print:display-none'}
                 ref={{ left: leftDrawerRef, bottom: bottomDrawerRef, right: rightDrawerRef }[target]}
                 style={{
-                    '--left': clr(!!leftChild, positions.left, leftDrawerWidth),
+                    '--left': clr(!!contentLeft, positions.left, leftDrawerWidth),
                     '--bottom': px(positions.bottom),
-                    '--right': clr(!!rightChild, positions.right, rightDrawerWidth),
+                    '--right': clr(!!contentRight, positions.right, rightDrawerWidth),
                     '--transition': transitionEnabled ?? 'none',
-                    '--borderOffset': pxIf(!!bottomChild, positions.bottom < 0 ? collapsedBottomDrawerHeight + cornerRadius : bottomDrawerHeight + cornerRadius),
+                    '--borderOffset': pxIf(!!contentBottom, positions.bottom < 0 ? collapsedBottomDrawerHeight + cornerRadius : bottomDrawerHeight + cornerRadius),
                     '--minWidth': px(target === 'left' ? collapsedLeftDrawerWidth : target === 'right' ? collapsedRightDrawerWidth : 0),
                     '--paddingTop': px(collapsedBottomDrawerHeight),
-                    '--rightSvgSize': pxIf(!!rightChild, cornerRadius),
-                    '--leftSvgSize': pxIf(!!leftChild, cornerRadius),
+                    '--rightSvgSize': pxIf(!!contentRight, cornerRadius),
+                    '--leftSvgSize': pxIf(!!contentLeft, cornerRadius),
                 } as CSSProperties}
                 onClick={handleDrawerClick}
                 data-target={target}
@@ -176,14 +194,14 @@ export default function AppDrawer(
                 }
                 {
                     {
-                        left: leftChild,
-                        bottom: bottomChild,
-                        right: rightChild
+                        left: contentLeft,
+                        bottom: contentBottom,
+                        right: contentRight
                     }[target]
                 }
             </div>;
         },
-        [leftChild, bottomChild, rightChild, leftDrawerRef, bottomDrawerRef, rightDrawerRef, positions, leftDrawerWidth, rightDrawerWidth, bottomDrawerHeight, collapsedLeftDrawerWidth, collapsedBottomDrawerHeight, collapsedRightDrawerWidth, cornerRadius, transitionEnabled, handleDrawerClick, px, pxIf]
+        [contentLeft, contentBottom, contentRight, leftDrawerRef, bottomDrawerRef, rightDrawerRef, positions, leftDrawerWidth, rightDrawerWidth, bottomDrawerHeight, collapsedLeftDrawerWidth, collapsedBottomDrawerHeight, collapsedRightDrawerWidth, cornerRadius, transitionEnabled, handleDrawerClick, px, pxIf]
     );
 
     return (
@@ -191,9 +209,9 @@ export default function AppDrawer(
             <style>
                 {`
                     :has(> #appDrawerHost) {
-                        padding-left: calc(${pxIf(!!leftChild, collapsedLeftDrawerWidth)} + var(--borderWidth));
-                        padding-right: calc(${pxIf(!!rightChild, collapsedRightDrawerWidth)} + var(--borderWidth));
-                        padding-bottom: calc(${pxIf(!!bottomChild, collapsedBottomDrawerHeight)} + var(--borderWidth));
+                        padding-left: calc(${pxIf(!!contentLeft, collapsedLeftDrawerWidth)} + var(--borderWidth));
+                        padding-right: calc(${pxIf(!!contentRight, collapsedRightDrawerWidth)} + var(--borderWidth));
+                        padding-bottom: calc(${pxIf(!!contentBottom, collapsedBottomDrawerHeight)} + var(--borderWidth));
                     }
                 `}
             </style>
@@ -203,11 +221,11 @@ export default function AppDrawer(
                 data-target="initial"
                 style={overlayStyleFacory}
             ></div>
-            {leftChild && drawerFactory('left')}
-            {bottomChild && drawerFactory('bottom')}
-            {rightChild && drawerFactory('right')}
-            {leftChild && bottomChild && SVGCorner('left')}
-            {rightChild && bottomChild && SVGCorner('right')}
+            {contentLeft && drawerFactory('left')}
+            {contentBottom && drawerFactory('bottom')}
+            {contentRight && drawerFactory('right')}
+            {contentLeft && contentBottom && SVGCorner('left')}
+            {contentRight && contentBottom && SVGCorner('right')}
         </div>
     );
 }

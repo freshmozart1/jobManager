@@ -33,7 +33,7 @@ export default function useDrawerPositions({ left, bottom, right }: UseDrawerPos
 
     useEffect(
         () => openDrawer('initial'),
-        [openDrawer]
+        [openDrawer, initial]
     );
 
     return [position, openDrawer];

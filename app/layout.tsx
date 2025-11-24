@@ -33,7 +33,6 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AppDrawerProvider>
-          {children}
           <AppDrawer>
             <div data-position="left" className="p-2 flex flex-col gap-2 justify-center items-center" style={{ width: 100 }}>
               <AppUserAvatar />
@@ -43,6 +42,7 @@ export default async function RootLayout({
             <div data-position="bottom" className="p-2 flex flex-col gap-2 justify-center items-center">Bottom</div>
             <div data-position="right" className="p-2 flex flex-col gap-2 justify-center items-center">Right</div>
           </AppDrawer>
+          {children}
         </AppDrawerProvider>
       </body>
     </html>

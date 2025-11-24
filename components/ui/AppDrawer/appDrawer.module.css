@@ -91,13 +91,13 @@
 
 .overlay {
     position: fixed;
-    left: calc(var(--left) + var(--borderWidth));
-    bottom: calc(var(--bottom) + var(--borderWidth));
+    left: calc(var(--left) + var(--borderLeftWidth));
+    bottom: calc(var(--bottom) + var(--borderBottomWidth));
     top: 0;
-    right: calc(var(--right) + var(--borderWidth));
+    right: calc(var(--right) + var(--borderRightWidth));
     background-color: var(--bgColor);
     transition: var(--transition);
-    border-radius: 0 0 var(--borderRadius) var(--borderRadius);
+    border-radius: 0 0 var(--borderRightRadius) var(--borderLeftRadius);
     pointer-events: var(--pEvents);
     z-index: 1;
 }

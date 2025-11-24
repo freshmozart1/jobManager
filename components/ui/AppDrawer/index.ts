@@ -4,8 +4,12 @@ import {
     useDrawerRefs,
     useStates,
     useChildren,
-    useDrawerPositions
+    useDrawerPositions,
+    useAppDrawer,
+    useDrawerSlot
 } from "./hooks";
+
+import { AppDrawerProvider, AppDrawerContext } from "./appDrawerProvider";
 
 type DrawerPosition = 'left' | 'bottom' | 'right';
 type DrawerChildElement = ReactElement<{ 'data-position'?: DrawerPosition }>;
@@ -45,5 +49,9 @@ export {
     useDrawerRefs,
     useStates,
     useChildren,
-    useDrawerPositions
+    useDrawerPositions,
+    useAppDrawer,
+    useDrawerSlot,
+    AppDrawerProvider,
+    AppDrawerContext
 };

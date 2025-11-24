@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback, useEffect, useMemo, useReducer } from "react";
 import type { DrawerPosition, DrawerPositions, OpenDrawerProps, UseDrawerPositionsProps } from "..";
 

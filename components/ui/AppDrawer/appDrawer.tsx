@@ -7,7 +7,8 @@ import {
     useDrawerRefs,
     useStates,
     useChildren,
-    useDrawerPositions
+    useDrawerPositions,
+    useAppDrawer
 } from ".";
 import type {
     AppDrawerProps,
@@ -51,6 +52,12 @@ export default function AppDrawer(
         bottomChild,
         rightChild
     ] = useChildren(children);
+
+    const { getSlot } = useAppDrawer();
+    const leftContent = getSlot('left') ?? leftChild;
+    const bottomContent = getSlot('bottom') ?? bottomChild;
+    const rightContent = getSlot('right') ?? rightChild;
+
 
     useEffect(
         () => {
@@ -167,14 +174,14 @@ export default function AppDrawer(
                 }
                 {
                     {
-                        left: leftChild,
-                        bottom: bottomChild,
-                        right: rightChild
+                        left: leftContent,
+                        bottom: bottomContent,
+                        right: rightContent
                     }[target]
                 }
             </div>;
         },
-        [leftChild, bottomChild, rightChild, leftDrawerRef, bottomDrawerRef, rightDrawerRef, positions, leftDrawerWidth, rightDrawerWidth, bottomDrawerHeight, collapsedLeftDrawerWidth, collapsedBottomDrawerHeight, collapsedRightDrawerWidth, cornerRadius, transitionEnabled, handleDrawerClick, px, pxIf]
+        [leftChild, bottomChild, rightChild, leftContent, bottomContent, rightContent, leftDrawerRef, bottomDrawerRef, rightDrawerRef, positions, leftDrawerWidth, rightDrawerWidth, bottomDrawerHeight, collapsedLeftDrawerWidth, collapsedBottomDrawerHeight, collapsedRightDrawerWidth, cornerRadius, transitionEnabled, handleDrawerClick, px, pxIf]
     );
 
     return (

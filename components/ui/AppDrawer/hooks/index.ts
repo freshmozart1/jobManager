@@ -2,10 +2,14 @@ import useDrawerRefs from "./useDrawerRefs";
 import useStates from "./useStates";
 import useChildren from "./useChildren";
 import useDrawerPositions from "./useDrawerPositions";
+import useAppDrawer from "./useAppDrawer";
+import useDrawerSlot from "./useDrawerSlot";
 
 export {
     useDrawerRefs,
     useStates,
     useChildren,
-    useDrawerPositions
+    useDrawerPositions,
+    useAppDrawer,
+    useDrawerSlot
 }

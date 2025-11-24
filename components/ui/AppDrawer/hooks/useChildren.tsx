@@ -1,6 +1,6 @@
 'use client';
 
-import { DrawerChildElement, DrawerPosition } from "@/components/ui/AppDrawer/appDrawer";
+import type { DrawerChildElement, DrawerPosition } from "..";
 import { useMemo } from "react";
 
 export default function useChildren(children: DrawerChildElement | DrawerChildElement[]) {

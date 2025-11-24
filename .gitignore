@@ -46,3 +46,4 @@ next-env.d.ts
 !.github/PULL_REQUEST_TEMPLATE.md
 
 test-results
+app/playground/page.tsx

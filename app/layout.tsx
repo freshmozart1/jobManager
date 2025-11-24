@@ -40,8 +40,8 @@ export default async function RootLayout({
               <AppHome />
               <AppSearch />
             </div>
-            {/* <div data-position="bottom" className="p-2 flex flex-col gap-2 justify-center items-center">Bottom</div> */}
-            {/* <div data-position="right" className="p-2 flex flex-col gap-2 justify-center items-center">Right</div> */}
+            <div data-position="bottom" className="p-2 flex flex-col gap-2 justify-center items-center">Bottom</div>
+            <div data-position="right" className="p-2 flex flex-col gap-2 justify-center items-center">Right</div>
           </AppDrawer>
         </AppDrawerProvider>
       </body>

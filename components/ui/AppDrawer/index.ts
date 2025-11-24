@@ -5,8 +5,7 @@ import {
     useStates,
     useChildren,
     useDrawerPositions,
-    useAppDrawer,
-    useDrawerSlot
+    useAppDrawer
 } from "./hooks";
 
 import { AppDrawerProvider, AppDrawerContext } from "./appDrawerProvider";
@@ -51,7 +50,6 @@ export {
     useChildren,
     useDrawerPositions,
     useAppDrawer,
-    useDrawerSlot,
     AppDrawerProvider,
     AppDrawerContext
 };

@@ -53,11 +53,13 @@ export default function AppDrawer(
         rightChild
     ] = useChildren(children);
 
-    const { getSlot } = useAppDrawer();
-    const leftContent = getSlot('left') ?? leftChild;
-    const bottomContent = getSlot('bottom') ?? bottomChild;
-    const rightContent = getSlot('right') ?? rightChild;
+    const { setDrawer } = useAppDrawer();
 
+    useEffect(() => {
+        setDrawer('left', leftChild);
+        setDrawer('bottom', bottomChild);
+        setDrawer('right', rightChild);
+    }, [leftChild, bottomChild, rightChild, setDrawer]);
 
     useEffect(
         () => {
@@ -174,14 +176,14 @@ export default function AppDrawer(
                 }
                 {
                     {
-                        left: leftContent,
-                        bottom: bottomContent,
-                        right: rightContent
+                        left: leftChild,
+                        bottom: bottomChild,
+                        right: rightChild
                     }[target]
                 }
             </div>;
         },
-        [leftChild, bottomChild, rightChild, leftContent, bottomContent, rightContent, leftDrawerRef, bottomDrawerRef, rightDrawerRef, positions, leftDrawerWidth, rightDrawerWidth, bottomDrawerHeight, collapsedLeftDrawerWidth, collapsedBottomDrawerHeight, collapsedRightDrawerWidth, cornerRadius, transitionEnabled, handleDrawerClick, px, pxIf]
+        [leftChild, bottomChild, rightChild, leftDrawerRef, bottomDrawerRef, rightDrawerRef, positions, leftDrawerWidth, rightDrawerWidth, bottomDrawerHeight, collapsedLeftDrawerWidth, collapsedBottomDrawerHeight, collapsedRightDrawerWidth, cornerRadius, transitionEnabled, handleDrawerClick, px, pxIf]
     );
 
     return (

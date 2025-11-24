@@ -1,30 +1,37 @@
 "use client";
 
-import { createContext, useState, useMemo, ReactNode } from "react";
+import { createContext, useState, useMemo, useCallback, ReactNode } from "react";
 
 export type DrawerPosition = "left" | "right" | "bottom";
 
 type AppDrawerContextValue = {
-    setSlot: (pos: DrawerPosition, node: ReactNode | null) => void;
-    getSlot: (pos: DrawerPosition) => ReactNode | null;
+    left: ReactNode | null;
+    right: ReactNode | null;
+    bottom: ReactNode | null;
+    setDrawer: (pos: DrawerPosition, node: ReactNode | null) => void;
 };
 
 export const AppDrawerContext = createContext<AppDrawerContextValue | null>(null);
 
 export function AppDrawerProvider({ children }: { children: ReactNode }) {
-    const [slots, setSlots] = useState<Record<DrawerPosition, ReactNode | null>>({
+    const [drawers, setDrawers] = useState<Record<DrawerPosition, ReactNode | null>>({
         left: null,
         right: null,
         bottom: null,
     });
 
+    const setDrawer = useCallback((pos: DrawerPosition, node: ReactNode | null) => {
+        setDrawers((prev) => ({ ...prev, [pos]: node }));
+    }, []);
+
     const value = useMemo<AppDrawerContextValue>(
         () => ({
-            setSlot: (pos, node) =>
-                setSlots((prev) => ({ ...prev, [pos]: node })),
-            getSlot: (pos) => slots[pos],
+            left: drawers.left,
+            right: drawers.right,
+            bottom: drawers.bottom,
+            setDrawer,
         }),
-        [slots]
+        [drawers, setDrawer]
     );
 
     return (

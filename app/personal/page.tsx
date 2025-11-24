@@ -17,7 +17,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdownMenu";
 import BadgeInput from "@/components/ui/badgeInput";
-import AppSkillsEditor from "@/components/ui/appSkillsEditor";
+import { AppSkillsEditor } from "@/components/ui/appSkillsEditor";
 import AppExperienceEditor from "@/components/ui/appExperienceEditor";
 import { normaliseExperienceItems, serializeExperienceItems } from "@/lib/experience";
 import usePersonal from "@/hooks/usePersonal";

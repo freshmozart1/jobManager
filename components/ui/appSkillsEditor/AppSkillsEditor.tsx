@@ -7,10 +7,12 @@ import { PersonalInformationSkill } from "@/types";
 import { useCategoryFilter } from "./hooks/useCategoryFilter";
 import { useSkillsPagination } from "./hooks/useSkillsPagination";
 import { useUndoBanner } from "./hooks/useUndoBanner";
+import useSkillRows from "./hooks/useSkillRows";
 import { normaliseName } from "./shared";
 import { AppSkillsFilters } from "./AppSkillsFilters";
 import { AppSkillsTable } from "./AppSkillsTable";
 import { AppSkillsUndoBanner } from "./AppSkillsUndoBanner";
+import AppSkillsFooter from "./AppSkillsFooter";
 import { AppSkillsSheet } from "./AppSkillsSheet";
 
 type SkillDraft = {
@@ -220,58 +222,12 @@ export default function AppSkillsEditor({ skills, onChange, onPersist, onRegiste
         return () => observer.disconnect();
     }, []);
 
-    const skillRows = useMemo(() => {
-        return internalSkills.map((skill, index) => ({ skill, index }));
-    }, [internalSkills]);
-
-    const filteredRows = useMemo(() => {
-        if (categoryOptions.length === 0) {
-            return skillRows.filter(({ skill }) => {
-                if (!debouncedSearch) return true;
-                const value = debouncedSearch;
-                const haystack = [
-                    skill.name,
-                    skill.category,
-                    skill.level,
-                    skill.years != null ? String(skill.years) : null,
-                    ...skill.aliases,
-                ]
-                    .filter((part): part is string => typeof part === "string" && part.length > 0)
-                    .map((part) => part.toLowerCase());
-                return haystack.some((part) => part.includes(value));
-            });
-        }
-
-        if (selectedCategories.size === 0) {
-            return [];
-        }
-
-        const allCategoriesSelected = selectedCategories.size === categoryOptions.length;
-
-        return skillRows.filter(({ skill }) => {
-            const trimmedCategory = skill.category.trim();
-            if (trimmedCategory.length === 0) {
-                if (!allCategoriesSelected) {
-                    return false;
-                }
-            } else if (!selectedCategories.has(trimmedCategory)) {
-                return false;
-            }
-
-            if (!debouncedSearch) return true;
-            const value = debouncedSearch;
-            const haystack = [
-                skill.name,
-                skill.category,
-                skill.level,
-                skill.years != null ? String(skill.years) : null,
-                ...skill.aliases,
-            ]
-                .filter((part): part is string => typeof part === "string" && part.length > 0)
-                .map((part) => part.toLowerCase());
-            return haystack.some((part) => part.includes(value));
-        });
-    }, [skillRows, selectedCategories, debouncedSearch, categoryOptions]);
+    const [skillRows, filteredRows] = useSkillRows(
+        internalSkills,
+        selectedCategories,
+        debouncedSearch,
+        categoryOptions
+    );
 
     const {
         pageIndex,
@@ -580,7 +536,7 @@ export default function AppSkillsEditor({ skills, onChange, onPersist, onRegiste
                 NAME_TRUNCATE_AT={NAME_TRUNCATE_AT}
             />
 
-            <AppSkillsSheet
+            {/* <AppSkillsSheet
                 sheetOpen={sheetOpen}
                 setSheetOpen={setSheetOpen}
                 sheetMode={sheetMode}
@@ -594,7 +550,7 @@ export default function AppSkillsEditor({ skills, onChange, onPersist, onRegiste
                 MAX_CATEGORY_LENGTH={MAX_CATEGORY_LENGTH}
                 disableSheetSave={disableSheetSave}
                 upsertSkill={upsertSkill}
-            />
+            /> */}
 
             <AppSkillsFooter
                 debouncedSearch={debouncedSearch}
@@ -608,89 +564,6 @@ export default function AppSkillsEditor({ skills, onChange, onPersist, onRegiste
                 isFirstPage={isFirstPage}
                 isLastPage={isLastPage}
             />
-        </div>
-    );
-}
-
-type AppSkillsFooterProps = {
-    debouncedSearch: string;
-    allCategoriesSelected: boolean;
-    categoryOptions: string[];
-    filteredRowsCount: number;
-    skillRowsCount: number;
-    totalPages: number;
-    pageIndex: number;
-    setPageIndex: (page: number | ((prev: number) => number)) => void;
-    isFirstPage: boolean;
-    isLastPage: boolean;
-};
-
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
-
-function AppSkillsFooter({
-    debouncedSearch,
-    allCategoriesSelected,
-    categoryOptions,
-    filteredRowsCount,
-    skillRowsCount,
-    totalPages,
-    pageIndex,
-    setPageIndex,
-    isFirstPage,
-    isLastPage,
-}: AppSkillsFooterProps) {
-    return (
-        <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                    {debouncedSearch || (!allCategoriesSelected && categoryOptions.length > 0)
-                        ? `${filteredRowsCount}/${skillRowsCount}\u00A0skills`
-                        : `${filteredRowsCount}\u00A0skills`}
-                </span>
-                {totalPages > 1 && (
-                    <Pagination>
-                        <PaginationContent>
-                            <PaginationItem>
-                                <PaginationPrevious
-                                    href="#"
-                                    onClick={(event) => {
-                                        event.preventDefault();
-                                        setPageIndex((prev) => Math.max(0, prev - 1));
-                                    }}
-                                    aria-disabled={isFirstPage}
-                                    className={isFirstPage ? "pointer-events-none opacity-50" : ""}
-                                />
-                            </PaginationItem>
-                            {Array.from({ length: totalPages }).map((_, page) => (
-                                <PaginationItem key={page}>
-                                    <PaginationLink
-                                        href="#"
-                                        isActive={page === pageIndex}
-                                        onClick={(event) => {
-                                            event.preventDefault();
-                                            setPageIndex(page);
-                                        }}
-                                    >
-                                        {page + 1}
-                                    </PaginationLink>
-                                </PaginationItem>
-                            ))}
-                            {!isLastPage && (
-                                <PaginationItem>
-                                    <PaginationNext
-                                        href="#"
-                                        onClick={(event) => {
-                                            event.preventDefault();
-                                            setPageIndex((prev) => Math.min(totalPages - 1, prev + 1));
-                                        }}
-                                    />
-                                </PaginationItem>
-                            )}
-                        </PaginationContent>
-                    </Pagination>
-                )}
-                <div className="flex items-center gap-2" />
-            </div>
         </div>
     );
 }

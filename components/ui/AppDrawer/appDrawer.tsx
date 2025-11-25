@@ -186,7 +186,11 @@ export default function AppDrawer(
                     '--rightSvgSize': pxIf(!!contentRight, cornerRadius),
                     '--leftSvgSize': pxIf(!!contentLeft, cornerRadius),
                 } as CSSProperties}
-                onClick={handleDrawerClick}
+                onClick={e => {
+                    if (target === 'left' && leftDrawerWidth > collapsedLeftDrawerWidth) handleDrawerClick(e);
+                    if (target === 'bottom' && bottomDrawerHeight > collapsedBottomDrawerHeight) handleDrawerClick(e);
+                    if (target === 'right' && rightDrawerWidth > collapsedRightDrawerWidth) handleDrawerClick(e);
+                }}
                 data-target={target}
             >
                 {

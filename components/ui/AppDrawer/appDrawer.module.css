@@ -12,6 +12,7 @@
     background-color: oklch(from var(--background) l c h / 0.35);
     backdrop-filter: blur(3px);
     transition: var(--transition);
+    z-index: 1;
 }
 
 .leftDrawer,

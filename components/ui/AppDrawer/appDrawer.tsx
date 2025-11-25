@@ -154,7 +154,7 @@ export default function AppDrawer(
 
     const overlayStyleFacory = useMemo(() => {
         const clrb = (childExists: boolean, position: number, w: number, cw: number) => pxIf(childExists, position === 0 ? w : cw);
-        const cpEbG = (positions.left === 0 || positions.right === 0 || positions.bottom === 0);
+        const cpEbG = (positions.left === 0 && leftDrawerWidth > collapsedLeftDrawerWidth || positions.right === 0 && rightDrawerWidth > collapsedRightDrawerWidth || positions.bottom === 0 && bottomDrawerHeight > collapsedBottomDrawerHeight);
         return {
             '--left': clrb(!!contentLeft, positions.left, leftDrawerWidth, collapsedLeftDrawerWidth),
             '--right': clrb(!!contentRight, positions.right, rightDrawerWidth, collapsedRightDrawerWidth),

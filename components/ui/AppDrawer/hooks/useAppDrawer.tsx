@@ -1,10 +1,17 @@
 "use client";
 import { useContext } from "react";
-import { AppDrawerContext } from "..";
+import { APP_DRAWER_CONTEXT as context } from "..";
+import type { AppDrawerContext } from "..";
 
 
-export default function useAppDrawer() {
-    const ctx = useContext(AppDrawerContext);
+/**
+ * Hook to access the AppDrawer context.
+ *
+ * @returns The AppDrawer context value.
+ * @throws Error if used outside of an AppDrawerProvider.
+ */
+export default function useAppDrawer(): AppDrawerContext {
+    const ctx: AppDrawerContext | null = useContext<AppDrawerContext | null>(context);
     if (!ctx) {
         throw new Error("useAppDrawer must be used within AppDrawerProvider");
     }

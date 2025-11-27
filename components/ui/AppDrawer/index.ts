@@ -1,55 +1,64 @@
-import { ReactElement } from "react";
 import styles from "./appDrawer.module.css";
-import {
-    useDrawerRefs,
-    useStates,
-    useChildren,
-    useDrawerPositions,
-    useAppDrawer
-} from "./hooks";
+import useAppDrawer from "./hooks/useAppDrawer";
 
-import { AppDrawerProvider, AppDrawerContext } from "./appDrawerProvider";
+import { AppDrawer, APP_DRAWER_CONTEXT } from "./appDrawer";
+import type {
+    Dispatch,
+    ReactElement,
+    SetStateAction
+} from "react";
 
-type DrawerPosition = 'left' | 'bottom' | 'right';
+/**
+ * Represents the action to update the state of a drawer's content.
+ * It accepts either the new content (ReactElement or null) or a state updater function.
+ */
+type SetDrawerStateAction = SetStateAction<DrawerChildElement | null>;
+
+/**
+ * A dispatch function for updating the state of a drawer.
+ */
+type DispatchDrawer = Dispatch<SetDrawerStateAction>;
+
+/**
+ * Defines the possible positions for the drawer: left, right, or bottom.
+ */
+type DrawerPosition = "left" | "right" | "bottom";
+
+/**
+ * Represents a child element of the drawer, which may have a 'data-position' prop.
+ */
 type DrawerChildElement = ReactElement<{ 'data-position'?: DrawerPosition }>;
-type UseDrawerPositionsProps = {
-    left?: {
-        collapsedWidth: number;
-        width: number;
-    },
-    bottom?: {
-        collapsedHeight: number;
-        height: number;
-    },
-    right?: {
-        collapsedWidth: number;
-        width: number;
-    }
-};
-type AppDrawerProps = {
-    collapsedSize?: { leftWidth?: number, bottomHeight?: number, rightWidth?: number },
-    cornerRadius?: number,
-    children: DrawerChildElement | DrawerChildElement[]
-}
-type DrawerPositions = Record<DrawerPosition, number>;
+
+/**
+ * Arguments for opening a drawer. Can be a specific position or 'initial' to reset.
+ */
 type OpenDrawerProps = DrawerPosition | 'initial';
 
-export type {
-    DrawerPosition,
-    DrawerChildElement,
-    UseDrawerPositionsProps,
-    AppDrawerProps,
-    DrawerPositions,
-    OpenDrawerProps
-}
+/**
+ * Context provided by the AppDrawer to control drawer state.
+ */
+type AppDrawerContext = {
+    /** Sets the content of the left drawer. */
+    setLeftDrawer: DispatchDrawer;
+    /** Sets the content of the right drawer. */
+    setRightDrawer: DispatchDrawer;
+    /** Sets the content of the bottom drawer. */
+    setBottomDrawer: DispatchDrawer;
+    /** Opens a specific drawer, optionally setting its content. */
+    openDrawer: (target: OpenDrawerProps, content?: DrawerChildElement | null) => void;
+};
 
 export {
     styles,
-    useDrawerRefs,
-    useStates,
-    useChildren,
-    useDrawerPositions,
     useAppDrawer,
-    AppDrawerProvider,
-    AppDrawerContext
+    AppDrawer,
+    APP_DRAWER_CONTEXT
 };
+
+export type {
+    AppDrawerContext,
+    SetDrawerStateAction,
+    OpenDrawerProps,
+    DrawerPosition,
+    DrawerChildElement
+}

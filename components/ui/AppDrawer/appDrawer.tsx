@@ -1,235 +1,425 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useMemo } from "react";
-import type { CSSProperties, MouseEvent } from "react";
 import {
-    styles,
-    useDrawerRefs,
-    useStates,
-    useChildren,
-    useDrawerPositions,
-    useAppDrawer
-} from ".";
+    createContext,
+    useState,
+    useMemo,
+    useEffect,
+    useRef,
+    useCallback,
+    Children,
+    useReducer
+} from "react";
+import { styles } from ".";
 import type {
-    AppDrawerProps,
-    DrawerPosition,
+    CSSProperties,
+    MouseEvent,
+    RefObject,
+    ActionDispatch,
+    JSX,
+    Dispatch,
+    SetStateAction,
+    ReactNode,
+} from "react";
+import type {
+    AppDrawerContext,
+    SetDrawerStateAction,
     OpenDrawerProps,
-    UseDrawerPositionsProps,
+    DrawerPosition,
+    DrawerChildElement
 } from ".";
+
+type DrawerPositionsMap = Record<DrawerPosition, number>;
+type DrawerSizeMap = DrawerPositionsMap;
+type DrawerRef = HTMLDivElement | null;
+type DrawerRefMap = Record<DrawerPosition, RefObject<DrawerRef>>;
+type DrawerMap = Record<DrawerPosition, DrawerChildElement | null>;
+type DispatchDrawerSize = Dispatch<SetStateAction<DrawerSizeMap>>;
+type DispatchOpenDrawer = ActionDispatch<[target: OpenDrawerProps]>;
+
+/**
+ * Props for the AppDrawer component.
+ */
+type AppDrawerProps = {
+    /**
+     * Custom collapsed sizes for each drawer position.
+     * Defaults to 48px for left/right and 25px for bottom.
+     */
+    collapsedSize?: DrawerSizeMap,
+    /**
+     * Corner radius for the drawer overlay and panels.
+     * Defaults to 48px.
+     */
+    cornerRadius?: number,
+    /**
+     * The main content of the application, and optionally drawer contents.
+     */
+    children: ReactNode;
+};
 
 const DEFAULT_VISIBLE_WIDTH = 48,
-    DEFAULT_VISIBLE_HEIGHT = 25;
+    DEFAULT_CORNER_RADIUS = 48,
+    DEFAULT_VISIBLE_HEIGHT = 25,
+    TRANSITION = 'bottom 0.3s ease-in-out, left 0.3s ease-in-out, right 0.3s ease-in-out, background-color 0.3s ease-in-out, height 0.3s ease-in-out';
 
-export default function AppDrawer(
+/**
+ * Context for accessing AppDrawer functionality.
+ */
+export const APP_DRAWER_CONTEXT = createContext<AppDrawerContext | null>(null);
+
+/**
+ * AppDrawer Component
+ * 
+ * A layout component that provides collapsible drawers on the left, right, and bottom sides.
+ * It manages the state and transitions of these drawers and provides a context for controlling them.
+ * 
+ * @param props - The {@link AppDrawerProps} for the component.
+ * @returns The AppDrawer component with context provider and layout.
+ */
+export function AppDrawer(
     {
-        collapsedSize: {
-            leftWidth: collapsedLeftDrawerWidth = DEFAULT_VISIBLE_WIDTH,
-            bottomHeight: collapsedBottomDrawerHeight = DEFAULT_VISIBLE_HEIGHT,
-            rightWidth: collapsedRightDrawerWidth = DEFAULT_VISIBLE_WIDTH
-        } = {
-            leftWidth: DEFAULT_VISIBLE_WIDTH,
-            bottomHeight: DEFAULT_VISIBLE_HEIGHT,
-            rightWidth: DEFAULT_VISIBLE_WIDTH
-        },
-        cornerRadius = 48,
+        collapsedSize: collapsedSizeProp,
+        cornerRadius = DEFAULT_CORNER_RADIUS,
         children
     }: AppDrawerProps
-) {
-    const [
-        bottomDrawerRef,
-        leftDrawerRef,
-        rightDrawerRef
-    ] = useDrawerRefs();
-    const [
-        [bottomDrawerHeight, setBottomDrawerHeight],
-        [leftDrawerWidth, setLeftDrawerWidth],
-        [rightDrawerWidth, setRightDrawerWidth],
-        [transitionEnabled, setTransitionEnabled]
-    ] = useStates();
+): JSX.Element {
+    const [transition, setTransition]: [string, Dispatch<SetStateAction<string>>] = useState<string>('none');
+    const pendingOpen = useRef<OpenDrawerProps | null>(null);
 
-    const [
-        leftChild,
-        bottomChild,
-        rightChild
-    ] = useChildren(children);
+    // Filter children to find those meant for drawers based on 'data-position' prop
+    const childrenArray: DrawerChildElement[] = useMemo<DrawerChildElement[]>(
+        () => Children.toArray(children) as DrawerChildElement[],
+        [children]
+    );
 
-    const { setDrawer, left, right, bottom } = useAppDrawer();
+    /**
+     * Helper to find the initial content for a specific drawer position from children.
+     */
+    const init: (target: DrawerPosition) => DrawerChildElement | null = useCallback<(target: DrawerPosition) => DrawerChildElement | null>(
+        (target: DrawerPosition) => childrenArray.find((child) => child.props['data-position'] === target) || null,
+        [childrenArray]
+    );
+    const [drawers, setDrawers]: [DrawerMap, Dispatch<SetStateAction<DrawerMap>>] = useState<DrawerMap>({
+        left: init('left'),
+        right: init('right'),
+        bottom: init('bottom')
+    });
 
-    useEffect(() => {
-        if (!left) setDrawer('left', leftChild);
-        if (!bottom) setDrawer('bottom', bottomChild);
-        if (!right) setDrawer('right', rightChild);
-    }, [leftChild, bottomChild, rightChild, setDrawer, left, bottom, right]);
+    const leftRef: RefObject<DrawerRef> = useRef<DrawerRef>(null);
+    const rightRef: RefObject<DrawerRef> = useRef<DrawerRef>(null);
+    const bottomRef: RefObject<DrawerRef> = useRef<DrawerRef>(null);
 
-    const contentLeft = left || leftChild;
-    const contentBottom = bottom || bottomChild;
-    const contentRight = right || rightChild;
+    /**
+     * Calculate the collapsed sizes, falling back to defaults if not provided.
+     */
+    const collapsedSizes: DrawerSizeMap = useMemo<DrawerSizeMap>(
+        () => ({
+            left: collapsedSizeProp?.left ?? DEFAULT_VISIBLE_WIDTH,
+            right: collapsedSizeProp?.right ?? DEFAULT_VISIBLE_WIDTH,
+            bottom: collapsedSizeProp?.bottom ?? DEFAULT_VISIBLE_HEIGHT
+        }),
+        [collapsedSizeProp]
+    );
 
+    // State to hold the actual measured sizes of the drawer elements
+    const [sizes, setSizes]: [DrawerSizeMap, DispatchDrawerSize] = useState<DrawerSizeMap>({
+        left: 0,
+        right: 0,
+        bottom: 0
+    });
+
+    // Measure drawer sizes when content changes
+    useEffect(
+        () => setSizes({
+            left: leftRef.current?.getBoundingClientRect().width ?? 0,
+            right: rightRef.current?.getBoundingClientRect().width ?? 0,
+            bottom: bottomRef.current?.getBoundingClientRect().height ?? 0
+        }),
+        [drawers]
+    );
+
+    /**
+     * Calculate initial positions (closed state) based on collapsed sizes and actual sizes.
+     * A negative value hides the drawer content, leaving only the collapsed strip visible.
+     */
+    const initialPositions: DrawerPositionsMap = useMemo<DrawerPositionsMap>(
+        () => ([
+            'left',
+            'bottom',
+            'right'
+        ] as DrawerPosition[]).reduce<DrawerPositionsMap>(
+            (
+                acc: DrawerPositionsMap,
+                pos: DrawerPosition
+            ) => {
+                acc[pos] = drawers[pos]
+                    ? collapsedSizes[pos] - sizes[pos]
+                    : -Number.MAX_VALUE;
+                return acc;
+            },
+            {} as DrawerPositionsMap
+        ),
+        [
+            drawers,
+            sizes,
+            collapsedSizes
+        ]
+    );
+
+    /**
+     * Reducer to handle opening/closing drawers.
+     * Toggles the position between 0 (open) and initialPosition (closed).
+     */
+    const [positions, openDrawer]: [DrawerPositionsMap, DispatchOpenDrawer] = useReducer<DrawerPositionsMap, [target: OpenDrawerProps]>(
+        (
+            cur: DrawerPositionsMap,
+            target: OpenDrawerProps
+        ): DrawerPositionsMap => target === 'initial'
+                ? { ...initialPositions }
+                : {
+                    ...initialPositions,
+                    [target]: cur[target] === 0
+                        ? initialPositions[target]
+                        : 0
+                },
+        initialPositions
+    );
+
+    // Reset positions when initial configuration changes
     useEffect(
         () => {
-            for (const [current, setter] of [
-                [leftDrawerRef.current?.offsetWidth, setLeftDrawerWidth],
-                [bottomDrawerRef.current?.offsetHeight, setBottomDrawerHeight],
-                [rightDrawerRef.current?.offsetWidth, setRightDrawerWidth]
-            ] as [number | undefined, React.Dispatch<React.SetStateAction<number>>][]) if (current) setter(current);
+            openDrawer('initial');
+            if (pendingOpen.current) {
+                const target: OpenDrawerProps = pendingOpen.current;
+                pendingOpen.current = null;
+                setTimeout(() => openDrawer(target), 50);
+            }
         },
-        [bottomDrawerRef, leftDrawerRef, rightDrawerRef, setBottomDrawerHeight, setLeftDrawerWidth, setRightDrawerWidth, contentLeft, contentBottom, contentRight]
+        [initialPositions]
     );
 
-    const drawerConfig = useMemo(() => {
-        const config: UseDrawerPositionsProps = {};
-        if (contentLeft) {
-            config.left = {
-                collapsedWidth: collapsedLeftDrawerWidth,
-                width: leftDrawerWidth,
-            };
-        }
-        if (contentRight) {
-            config.right = {
-                collapsedWidth: collapsedRightDrawerWidth,
-                width: rightDrawerWidth,
-            };
-        }
-        if (contentBottom) {
-            config.bottom = {
-                collapsedHeight: collapsedBottomDrawerHeight,
-                height: bottomDrawerHeight,
-            };
-        }
-        return config;
-    }, [contentLeft, contentRight, contentBottom, collapsedLeftDrawerWidth, leftDrawerWidth, collapsedRightDrawerWidth, rightDrawerWidth, collapsedBottomDrawerHeight, bottomDrawerHeight]);
-
-    const [positions, openDrawer] = useDrawerPositions(drawerConfig);
-
-    const px = useCallback((value: number) => `${value}px`, []);
-
-    const SVGCorner = useCallback(
-        (target: Omit<DrawerPosition, 'bottom'>) => {
-            const clr = (p: 'left' | 'right', cw: number, w: number) => target === p
-                ? positions[p] < 0
-                    ? positions[p] === -Number.MAX_VALUE
-                        ? -cornerRadius
-                        : cw
-                    : w
-                : 'auto';
-            return <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className={styles.corner}
-                width={cornerRadius}
-                height={cornerRadius}
-                viewBox={`0 0 ${cornerRadius} ${cornerRadius}`}
-                shapeRendering='geometricPrecision'
-                clipPath={target === 'left'
-                    ? `path('M 0 0 L 0 ${cornerRadius} L ${cornerRadius} ${cornerRadius} L ${cornerRadius} ${cornerRadius - 1} A ${cornerRadius - 1} ${cornerRadius - 1} 0 0 1 1 0 Z')`
-                    : `path('M ${cornerRadius} 0 L ${cornerRadius} ${cornerRadius} L 0 ${cornerRadius} L 0 ${cornerRadius - 1} A ${cornerRadius - 1} ${cornerRadius - 1} 0 0 0 ${cornerRadius - 1} 0 Z')`}
-                style={{
-                    '--transition': transitionEnabled ?? 'none',
-                    '--bottom': px(positions.bottom < 0 ? collapsedBottomDrawerHeight : bottomDrawerHeight),
-                    left: clr('left', collapsedLeftDrawerWidth, leftDrawerWidth),
-                    right: clr('right', collapsedRightDrawerWidth, rightDrawerWidth),
-                } as CSSProperties}
-            >
-                <path
-                    d={target === 'left'
-                        ? `M 0 0 A ${cornerRadius} ${cornerRadius} 0 0 0 ${cornerRadius} ${cornerRadius} L ${cornerRadius} ${cornerRadius - 1} A ${cornerRadius - 1} ${cornerRadius - 1} 0 0 1 1 0 Z`
-                        : `M ${cornerRadius} 0 A ${cornerRadius} ${cornerRadius} 0 0 1 0 ${cornerRadius} L 0 ${cornerRadius - 1} A ${cornerRadius - 1} ${cornerRadius - 1} 0 0 0 ${cornerRadius - 1} 0 Z`
-                    }
-                />
-            </svg>;
-        },
-        [cornerRadius, positions, bottomDrawerHeight, collapsedBottomDrawerHeight, leftDrawerWidth, collapsedLeftDrawerWidth, rightDrawerWidth, collapsedRightDrawerWidth, transitionEnabled, px]
+    const px: (v: number) => string = useCallback<(v: number) => string>(
+        (v: number) => `${v}px`,
+        []
     );
-
-    const handleDrawerClick = useCallback((e: MouseEvent<HTMLDivElement>) => {
-        e.preventDefault();
-        setTransitionEnabled('bottom 0.3s ease-in-out, left 0.3s ease-in-out, right 0.3s ease-in-out, background-color 0.3s ease-in-out, height 0.3s ease-in-out');
-        const target = e.currentTarget.getAttribute('data-target') as OpenDrawerProps;
-        openDrawer(target);
-    }, [openDrawer, setTransitionEnabled]);
-
-    const pxIf = useCallback(
-        (childExists: boolean, value: number) => px(childExists ? value : 0),
+    const pxIf: (exists: boolean, v: number) => string = useCallback<(exists: boolean, v: number) => string>(
+        (
+            exists: boolean,
+            v: number
+        ) => px(
+            exists
+                ? v
+                : 0
+        ),
         [px]
     );
 
-    const overlayStyleFacory = useMemo(() => {
-        const clrb = (childExists: boolean, position: number, w: number, cw: number) => pxIf(childExists, position === 0 ? w : cw);
-        const cpEbG = (positions.left === 0 && leftDrawerWidth > collapsedLeftDrawerWidth || positions.right === 0 && rightDrawerWidth > collapsedRightDrawerWidth || positions.bottom === 0 && bottomDrawerHeight > collapsedBottomDrawerHeight);
-        return {
-            '--left': clrb(!!contentLeft, positions.left, leftDrawerWidth, collapsedLeftDrawerWidth),
-            '--right': clrb(!!contentRight, positions.right, rightDrawerWidth, collapsedRightDrawerWidth),
-            '--bottom': clrb(!!contentBottom, positions.bottom, bottomDrawerHeight, collapsedBottomDrawerHeight),
-            '--transition': transitionEnabled ?? 'none',
-            '--pEvents': cpEbG ? 'auto' : 'none',
-            '--bgColor': cpEbG ? 'rgba(0, 0, 0, 0.35)' : 'transparent',
-            '--borderLeftRadius': pxIf(!!contentBottom && !!contentLeft, cornerRadius),
-            '--borderRightRadius': pxIf(!!contentBottom && !!contentRight, cornerRadius),
-            '--borderLeftWidth': pxIf(!!contentLeft, 1),
-            '--borderRightWidth': pxIf(!!contentRight, 1),
-            '--borderBottomWidth': pxIf(!!contentBottom, 1),
-        } as CSSProperties;
-    }, [contentBottom, contentLeft, contentRight, leftDrawerWidth, bottomDrawerHeight, rightDrawerWidth, transitionEnabled, collapsedLeftDrawerWidth, collapsedBottomDrawerHeight, collapsedRightDrawerWidth, cornerRadius, positions, pxIf]);
-    const drawerFactory = useCallback(
-        (target: DrawerPosition) => {
-            const clr = (childExists: boolean, position: number, width: number) => pxIf(childExists, position + (target === 'bottom' ? width : 0));
-            return <div
-                className={styles[`${target}Drawer`] + ' print:display-none'}
-                ref={{ left: leftDrawerRef, bottom: bottomDrawerRef, right: rightDrawerRef }[target]}
-                style={{
-                    '--left': clr(!!contentLeft, positions.left, leftDrawerWidth),
-                    '--bottom': px(positions.bottom),
-                    '--right': clr(!!contentRight, positions.right, rightDrawerWidth),
-                    '--transition': transitionEnabled ?? 'none',
-                    '--borderOffset': pxIf(!!contentBottom, positions.bottom < 0 ? collapsedBottomDrawerHeight + cornerRadius : bottomDrawerHeight + cornerRadius),
-                    '--minWidth': px(target === 'left' ? collapsedLeftDrawerWidth : target === 'right' ? collapsedRightDrawerWidth : 0),
-                    '--paddingTop': px(collapsedBottomDrawerHeight),
-                    '--rightSvgSize': pxIf(!!contentRight, cornerRadius),
-                    '--leftSvgSize': pxIf(!!contentLeft, cornerRadius),
-                } as CSSProperties}
-                onClick={e => {
-                    if (target === 'left' && leftDrawerWidth > collapsedLeftDrawerWidth) handleDrawerClick(e);
-                    if (target === 'bottom' && bottomDrawerHeight > collapsedBottomDrawerHeight) handleDrawerClick(e);
-                    if (target === 'right' && rightDrawerWidth > collapsedRightDrawerWidth) handleDrawerClick(e);
-                }}
-                data-target={target}
-            >
-                {
-                    target === 'bottom' && <div className={styles.collapseBar}></div>
-                }
-                {
-                    {
-                        left: contentLeft,
-                        bottom: contentBottom,
-                        right: contentRight
-                    }[target]
-                }
-            </div>;
+    /**
+     * Handle clicks on drawer tabs or overlay to toggle drawer state.
+     */
+    const handleClick: (
+        e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>,
+        target: OpenDrawerProps
+    ) => void = useCallback<(
+        e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>,
+        target: OpenDrawerProps
+    ) => void>(
+        (
+            e: MouseEvent<HTMLDivElement>,
+            target: OpenDrawerProps
+        ) => {
+            e.preventDefault();
+            setTransition(TRANSITION);
+            openDrawer(target);
         },
-        [contentLeft, contentBottom, contentRight, leftDrawerRef, bottomDrawerRef, rightDrawerRef, positions, leftDrawerWidth, rightDrawerWidth, bottomDrawerHeight, collapsedLeftDrawerWidth, collapsedBottomDrawerHeight, collapsedRightDrawerWidth, cornerRadius, transitionEnabled, handleDrawerClick, px, pxIf]
+        []
+    );
+
+    /**
+     * Check if a specific drawer is currently open.
+     */
+    const isOpen: (pos: DrawerPosition) => boolean = useCallback<(pos: DrawerPosition) => boolean>(
+        (pos: DrawerPosition) => positions[pos] === 0 && sizes[pos] > collapsedSizes[pos],
+        [positions, sizes, collapsedSizes]
+    );
+    const anyOpen: boolean = isOpen('left') || isOpen('right') || isOpen('bottom');
+
+    /**
+     * The overlay element that dims the background when a drawer is open.
+     * It also handles closing drawers when clicked.
+     */
+    const overlay: JSX.Element = useMemo<JSX.Element>(
+        () => {
+            const calc: (
+                p: DrawerPosition,
+                b?: boolean
+            ) => string = (
+                p: DrawerPosition,
+                b: boolean = false
+            ) => pxIf(
+                !!(
+                    b
+                        ? drawers.bottom && drawers[p]
+                        : drawers[p]
+                ),
+                b
+                    ? cornerRadius
+                    : isOpen(p)
+                        ? sizes[p]
+                        : collapsedSizes[p]
+            );
+            return <div
+                className={styles.overlay + ' print:display-none'}
+                onClick={e => handleClick(e, 'initial')}
+                style={{
+                    '--left': calc('left'),
+                    '--right': calc('right'),
+                    '--bottom': calc('bottom'),
+                    '--transition': transition,
+                    '--pEvents': anyOpen
+                        ? 'auto'
+                        : 'none',
+                    '--bgColor': anyOpen
+                        ? 'rgba(0, 0, 0, 0.35)'
+                        : 'transparent',
+                    '--borderLeftRadius': calc('left', true),
+                    '--borderRightRadius': calc('right', true),
+                } as CSSProperties}
+            />;
+        },
+        [
+            transition,
+            anyOpen,
+            cornerRadius,
+            collapsedSizes,
+            drawers,
+            sizes,
+            handleClick,
+            isOpen,
+            pxIf
+        ]
+    );
+
+    const refs = useMemo<DrawerRefMap>(
+        () => ({
+            left: leftRef,
+            right: rightRef,
+            bottom: bottomRef
+        }),
+        [
+            leftRef,
+            rightRef,
+            bottomRef
+        ]
+    );
+
+    type RenderDrawer = (target: DrawerPosition) => JSX.Element;
+
+    /**
+     * Renders a specific drawer (left, right, or bottom).
+     */
+    const renderDrawer: RenderDrawer = useCallback<RenderDrawer>(
+        (target: DrawerPosition) => {
+            const getOffset: (side: DrawerPosition) => string = (side: DrawerPosition) => pxIf(
+                !!drawers[side],
+                side === 'bottom'
+                    ? (
+                        positions[side] < 0
+                            ? collapsedSizes[side]
+                            : sizes[side]
+                    ) + cornerRadius
+                    : positions[side] + (
+                        target === 'bottom'
+                            ? sizes[side]
+                            : 0
+                    )
+            );
+            return <div
+                ref={refs[target]}
+                className={styles[`${target}Drawer`] + ' print:display-none'}
+                style={{
+                    '--left': getOffset('left'),
+                    '--bottom': px(positions.bottom),
+                    '--right': getOffset('right'),
+                    '--transition': transition,
+                    '--borderOffset': getOffset('bottom'),
+                    '--minWidth': px(target === 'bottom' ? 0 : collapsedSizes[target]),
+                    '--paddingTop': px(collapsedSizes.bottom),
+                } as CSSProperties}
+                onClick={e => handleClick(e, target)}
+            >
+                {target === 'bottom' && <div className={styles.collapseBar} />}
+                {drawers[target]}
+            </div>
+        },
+        [
+            cornerRadius,
+            collapsedSizes,
+            refs,
+            drawers,
+            positions,
+            sizes,
+            transition,
+            handleClick,
+            px,
+            pxIf
+        ]
+    );
+
+    const setDrawer = useCallback(
+        (
+            v: SetDrawerStateAction,
+            t: DrawerPosition
+        ) => setDrawers((d: DrawerMap) => ({
+            ...d,
+            [t]: typeof v === 'function'
+                ? v(d[t])
+                : v
+        })),
+        []
+    );
+
+    /**
+     * Context value exposed to consumers.
+     */
+    const context = useMemo<AppDrawerContext>(
+        () => ({
+            setLeftDrawer: (v: SetDrawerStateAction) => setDrawer(v, 'left'),
+            setRightDrawer: (v: SetDrawerStateAction) => setDrawer(v, 'right'),
+            setBottomDrawer: (v: SetDrawerStateAction) => setDrawer(v, 'bottom'),
+            openDrawer: (t: OpenDrawerProps, c?: DrawerChildElement | null) => {
+                setTransition(TRANSITION);
+                if (c !== undefined && t !== 'initial') {
+                    setDrawer(c, t);
+                    pendingOpen.current = t;
+                } else openDrawer(t);
+            }
+        }),
+        [setDrawer]
+    );
+
+    const mainChildren: DrawerChildElement[] = useMemo<DrawerChildElement[]>(
+        () => childrenArray.filter(c => !c.props['data-position']),
+        [childrenArray]
     );
 
     return (
-        <div id="appDrawerHost" style={{ width: '100%' }}>
-            <style>
-                {`
-                    :has(> #appDrawerHost) {
-                        padding-left: calc(${pxIf(!!contentLeft, collapsedLeftDrawerWidth)} + var(--borderWidth));
-                        padding-right: calc(${pxIf(!!contentRight, collapsedRightDrawerWidth)} + var(--borderWidth));
-                        padding-bottom: calc(${pxIf(!!contentBottom, collapsedBottomDrawerHeight)} + var(--borderWidth));
-                    }
-                `}
-            </style>
-            <div
-                className={styles.overlay}
-                onClick={handleDrawerClick}
-                data-target="initial"
-                style={overlayStyleFacory}
-            ></div>
-            {contentLeft && drawerFactory('left')}
-            {contentBottom && drawerFactory('bottom')}
-            {contentRight && drawerFactory('right')}
-            {contentLeft && contentBottom && SVGCorner('left')}
-            {contentRight && contentBottom && SVGCorner('right')}
+        <div id="appDrawerHost">
+            {/* Inject dynamic styles for padding based on drawer presence and size */}
+            <style>{`
+                :has(> #appDrawerHost) {
+                    padding-left: ${pxIf(!!drawers.left, collapsedSizes.left)};
+                    padding-right: ${pxIf(!!drawers.right, collapsedSizes.right)};
+                    padding-bottom: ${pxIf(!!drawers.bottom, collapsedSizes.bottom)};
+                }
+            `}</style>
+            <APP_DRAWER_CONTEXT.Provider value={context}>
+                {overlay}
+                {drawers.left && renderDrawer('left')}
+                {drawers.right && renderDrawer('right')}
+                {drawers.bottom && renderDrawer('bottom')}
+                {mainChildren}
+            </APP_DRAWER_CONTEXT.Provider>
         </div>
     );
 }

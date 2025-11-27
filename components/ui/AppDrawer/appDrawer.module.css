@@ -1,13 +1,6 @@
-@property --borderWidth {
-    syntax: '<length>';
-    initial-value: 1px;
-    inherits: false;
-}
-
 .leftDrawer,
 .rightDrawer,
-.bottomDrawer,
-.corner {
+.bottomDrawer {
     position: fixed;
     background-color: oklch(from var(--background) l c h / 0.35);
     backdrop-filter: blur(3px);
@@ -20,49 +13,23 @@
     bottom: 0;
     top: 0;
     height: 100svh;
+    width: fit-content;
     min-width: var(--minWidth);
-}
-
-.leftDrawer::after,
-.rightDrawer::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    width: var(--borderWidth);
-    height: calc(100svh - var(--borderOffset));
-    background-color: var(--border);
-    transition: var(--transition);
 }
 
 .leftDrawer {
     left: var(--left);
-
-    &::after {
-        right: calc(-1 * var(--borderWidth));
-    }
 }
 
 .rightDrawer {
     right: var(--right);
-
-    &::before {
-        left: calc(-1 * var(--borderWidth));
-    }
-}
-
-.bottomDrawer,
-.corner {
-    bottom: var(--bottom);
-
-    >path {
-        fill: var(--border);
-    }
 }
 
 .bottomDrawer {
     display: flex;
     left: var(--left);
     right: var(--right);
+    bottom: var(--bottom);
     justify-content: center;
     align-items: start;
     flex-direction: column;
@@ -78,27 +45,21 @@
         background-color: var(--border);
         border-radius: 2.5px;
     }
-
-    &::before {
-        content: '';
-        position: absolute;
-        top: calc(-1 * var(--borderWidth));
-        left: var(--leftSvgSize);
-        right: var(--rightSvgSize);
-        height: var(--borderWidth);
-        background-color: var(--border);
-    }
 }
 
 .overlay {
     position: fixed;
-    left: calc(var(--left) + var(--borderLeftWidth));
-    bottom: calc(var(--bottom) + var(--borderBottomWidth));
+    left: var(--left);
+    bottom: var(--bottom);
     top: 0;
-    right: calc(var(--right) + var(--borderRightWidth));
+    right: var(--right);
     background-color: var(--bgColor);
     transition: var(--transition);
     border-radius: 0 0 var(--borderRightRadius) var(--borderLeftRadius);
     pointer-events: var(--pEvents);
     z-index: 1;
+    border-top: 0;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    border-left: 1px solid var(--border);
 }

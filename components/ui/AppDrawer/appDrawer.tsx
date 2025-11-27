@@ -112,14 +112,20 @@ export function AppDrawer(
     /**
      * Calculate the collapsed sizes, falling back to defaults if not provided.
      */
-    const collapsedSizes: DrawerSizeMap = useMemo<DrawerSizeMap>(
+    const [collapsedSizes, setCollapsedSizes]: [DrawerSizeMap, DispatchDrawerSize] = useState<DrawerSizeMap>(
         () => ({
             left: collapsedSizeProp?.left ?? DEFAULT_VISIBLE_WIDTH,
             right: collapsedSizeProp?.right ?? DEFAULT_VISIBLE_WIDTH,
             bottom: collapsedSizeProp?.bottom ?? DEFAULT_VISIBLE_HEIGHT
-        }),
-        [collapsedSizeProp]
+        })
     );
+    useEffect(() => {
+        setCollapsedSizes({
+            left: collapsedSizeProp?.left ?? DEFAULT_VISIBLE_WIDTH,
+            right: collapsedSizeProp?.right ?? DEFAULT_VISIBLE_WIDTH,
+            bottom: collapsedSizeProp?.bottom ?? DEFAULT_VISIBLE_HEIGHT
+        });
+    }, [collapsedSizeProp]);
 
     // State to hold the actual measured sizes of the drawer elements
     const [sizes, setSizes]: [DrawerSizeMap, DispatchDrawerSize] = useState<DrawerSizeMap>({
@@ -387,12 +393,22 @@ export function AppDrawer(
             setLeftDrawer: (v: SetDrawerStateAction) => setDrawer(v, 'left'),
             setRightDrawer: (v: SetDrawerStateAction) => setDrawer(v, 'right'),
             setBottomDrawer: (v: SetDrawerStateAction) => setDrawer(v, 'bottom'),
-            openDrawer: (t: OpenDrawerProps, c?: DrawerChildElement | null) => {
+            openDrawer: (t: OpenDrawerProps, c?: DrawerChildElement | null, size?: number) => {
                 setTransition(TRANSITION);
+                let configChanged: boolean = false;
+                if (size !== undefined && t !== 'initial') {
+                    setCollapsedSizes((prev: DrawerSizeMap) => ({
+                        ...prev,
+                        [t]: size
+                    }));
+                    configChanged = true;
+                }
                 if (c !== undefined && t !== 'initial') {
                     setDrawer(c, t);
-                    pendingOpen.current = t;
-                } else openDrawer(t);
+                    configChanged = true;
+                }
+                if (configChanged) pendingOpen.current = t;
+                else openDrawer(t);
             }
         }),
         [setDrawer]

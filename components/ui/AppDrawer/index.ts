@@ -44,8 +44,8 @@ type AppDrawerContext = {
     setRightDrawer: DispatchDrawer;
     /** Sets the content of the bottom drawer. */
     setBottomDrawer: DispatchDrawer;
-    /** Opens a specific drawer, optionally setting its content. */
-    openDrawer: (target: OpenDrawerProps, content?: DrawerChildElement | null) => void;
+    /** Opens a specific drawer, optionally setting its content and its collapsed size (width or height). */
+    openDrawer: (target: OpenDrawerProps, content?: DrawerChildElement | null, size?: number) => void;
 };
 
 export {

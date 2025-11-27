@@ -24,7 +24,7 @@ import type {
 import type {
     AppDrawerContext,
     SetDrawerStateAction,
-    OpenDrawerProps,
+    ToggleDrawerProps,
     DrawerPosition,
     DrawerChildElement
 } from ".";
@@ -35,7 +35,7 @@ type DrawerRef = HTMLDivElement | null;
 type DrawerRefMap = Record<DrawerPosition, RefObject<DrawerRef>>;
 type DrawerMap = Record<DrawerPosition, DrawerChildElement | null>;
 type DispatchDrawerSize = Dispatch<SetStateAction<DrawerSizeMap>>;
-type DispatchOpenDrawer = ActionDispatch<[target: OpenDrawerProps]>;
+type DispatchToggleDrawer = ActionDispatch<[target: ToggleDrawerProps]>;
 
 /**
  * Props for the AppDrawer component.
@@ -84,7 +84,7 @@ export function AppDrawer(
     }: AppDrawerProps
 ): JSX.Element {
     const [transition, setTransition]: [string, Dispatch<SetStateAction<string>>] = useState<string>('none');
-    const pendingOpen = useRef<OpenDrawerProps | null>(null);
+    const pendingToggle = useRef<ToggleDrawerProps | null>(null);
 
     // Filter children to find those meant for drawers based on 'data-position' prop
     const childrenArray: DrawerChildElement[] = useMemo<DrawerChildElement[]>(
@@ -176,10 +176,10 @@ export function AppDrawer(
      * Reducer to handle opening/closing drawers.
      * Toggles the position between 0 (open) and initialPosition (closed).
      */
-    const [positions, openDrawer]: [DrawerPositionsMap, DispatchOpenDrawer] = useReducer<DrawerPositionsMap, [target: OpenDrawerProps]>(
+    const [positions, toggleDrawer]: [DrawerPositionsMap, DispatchToggleDrawer] = useReducer<DrawerPositionsMap, [target: ToggleDrawerProps]>(
         (
             cur: DrawerPositionsMap,
-            target: OpenDrawerProps
+            target: ToggleDrawerProps
         ): DrawerPositionsMap => target === 'initial'
                 ? { ...initialPositions }
                 : {
@@ -194,11 +194,15 @@ export function AppDrawer(
     // Reset positions when initial configuration changes
     useEffect(
         () => {
-            openDrawer('initial');
-            if (pendingOpen.current) {
-                const target: OpenDrawerProps = pendingOpen.current;
-                pendingOpen.current = null;
-                setTimeout(() => openDrawer(target), 50);
+            toggleDrawer('initial');
+            if (pendingToggle.current) {
+                const target: ToggleDrawerProps = pendingToggle.current;
+                pendingToggle.current = null;
+                // Use double rAF to ensure the "closed" position is painted without transition
+                requestAnimationFrame(() => {
+                    setTransition(TRANSITION);
+                    toggleDrawer(target);
+                });
             }
         },
         [initialPositions]
@@ -225,18 +229,18 @@ export function AppDrawer(
      */
     const handleClick: (
         e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>,
-        target: OpenDrawerProps
+        target: ToggleDrawerProps
     ) => void = useCallback<(
         e: MouseEvent<HTMLDivElement, globalThis.MouseEvent>,
-        target: OpenDrawerProps
+        target: ToggleDrawerProps
     ) => void>(
         (
             e: MouseEvent<HTMLDivElement>,
-            target: OpenDrawerProps
+            target: ToggleDrawerProps
         ) => {
             e.preventDefault();
             setTransition(TRANSITION);
-            openDrawer(target);
+            toggleDrawer(target);
         },
         []
     );
@@ -393,8 +397,7 @@ export function AppDrawer(
             setLeftDrawer: (v: SetDrawerStateAction) => setDrawer(v, 'left'),
             setRightDrawer: (v: SetDrawerStateAction) => setDrawer(v, 'right'),
             setBottomDrawer: (v: SetDrawerStateAction) => setDrawer(v, 'bottom'),
-            openDrawer: (t: OpenDrawerProps, c?: DrawerChildElement | null, size?: number) => {
-                setTransition(TRANSITION);
+            toggleDrawer: (t: ToggleDrawerProps, c?: DrawerChildElement | null, size?: number) => {
                 let configChanged: boolean = false;
                 if (size !== undefined && t !== 'initial') {
                     setCollapsedSizes((prev: DrawerSizeMap) => ({
@@ -407,8 +410,8 @@ export function AppDrawer(
                     setDrawer(c, t);
                     configChanged = true;
                 }
-                if (configChanged) pendingOpen.current = t;
-                else openDrawer(t);
+                if (configChanged) pendingToggle.current = t;
+                else toggleDrawer(t);
             }
         }),
         [setDrawer]

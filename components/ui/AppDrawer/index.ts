@@ -30,9 +30,9 @@ type DrawerPosition = "left" | "right" | "bottom";
 type DrawerChildElement = ReactElement<{ 'data-position'?: DrawerPosition }>;
 
 /**
- * Arguments for opening a drawer. Can be a specific position or 'initial' to reset.
+ * Arguments for toggling a drawer. Can be a specific position or 'initial' to reset.
  */
-type OpenDrawerProps = DrawerPosition | 'initial';
+type ToggleDrawerProps = DrawerPosition | 'initial';
 
 /**
  * Context provided by the AppDrawer to control drawer state.
@@ -44,8 +44,8 @@ type AppDrawerContext = {
     setRightDrawer: DispatchDrawer;
     /** Sets the content of the bottom drawer. */
     setBottomDrawer: DispatchDrawer;
-    /** Opens a specific drawer, optionally setting its content and its collapsed size (width or height). */
-    openDrawer: (target: OpenDrawerProps, content?: DrawerChildElement | null, size?: number) => void;
+    /** Toggles a specific drawer, optionally setting its content and its collapsed size (width or height). */
+    toggleDrawer: (target: ToggleDrawerProps, content?: DrawerChildElement | null, size?: number) => void;
 };
 
 export {
@@ -58,7 +58,7 @@ export {
 export type {
     AppDrawerContext,
     SetDrawerStateAction,
-    OpenDrawerProps,
+    ToggleDrawerProps,
     DrawerPosition,
     DrawerChildElement
 }

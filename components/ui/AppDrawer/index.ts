@@ -45,7 +45,7 @@ type AppDrawerContext = {
     /** Sets the content of the bottom drawer. */
     setBottomDrawer: DispatchDrawer;
     /** Toggles a specific drawer, optionally setting its content and its collapsed size (width or height). */
-    toggleDrawer: (target: ToggleDrawerProps, content?: DrawerChildElement | null, size?: number) => void;
+    toggleDrawer: (target: ToggleDrawerProps, content?: DrawerChildElement | null, size?: number, disabledOnClick?: boolean) => void;
 };
 
 export {

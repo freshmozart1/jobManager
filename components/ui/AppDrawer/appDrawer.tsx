@@ -105,6 +105,12 @@ export function AppDrawer(
         bottom: init('bottom')
     });
 
+    const [disabledOnClick, setDisabledOnClick]: [Record<DrawerPosition, boolean>, Dispatch<SetStateAction<Record<DrawerPosition, boolean>>>] = useState<Record<DrawerPosition, boolean>>({
+        left: false,
+        right: false,
+        bottom: false
+    });
+
     const leftRef: RefObject<DrawerRef> = useRef<DrawerRef>(null);
     const rightRef: RefObject<DrawerRef> = useRef<DrawerRef>(null);
     const bottomRef: RefObject<DrawerRef> = useRef<DrawerRef>(null);
@@ -239,10 +245,11 @@ export function AppDrawer(
             target: ToggleDrawerProps
         ) => {
             e.preventDefault();
+            if (target !== 'initial' && disabledOnClick[target]) return;
             setTransition(TRANSITION);
             toggleDrawer(target);
         },
-        []
+        [disabledOnClick]
     );
 
     /**
@@ -397,7 +404,7 @@ export function AppDrawer(
             setLeftDrawer: (v: SetDrawerStateAction) => setDrawer(v, 'left'),
             setRightDrawer: (v: SetDrawerStateAction) => setDrawer(v, 'right'),
             setBottomDrawer: (v: SetDrawerStateAction) => setDrawer(v, 'bottom'),
-            toggleDrawer: (t: ToggleDrawerProps, c?: DrawerChildElement | null, size?: number) => {
+            toggleDrawer: (t: ToggleDrawerProps, c?: DrawerChildElement | null, size?: number, disabledOnClick?: boolean) => {
                 let configChanged: boolean = false;
                 if (size !== undefined && t !== 'initial') {
                     setCollapsedSizes((prev: DrawerSizeMap) => ({
@@ -410,6 +417,10 @@ export function AppDrawer(
                     setDrawer(c, t);
                     configChanged = true;
                 }
+                if (disabledOnClick !== undefined && t !== 'initial') setDisabledOnClick((prev: Record<DrawerPosition, boolean>) => ({
+                    ...prev,
+                    [t]: disabledOnClick
+                }));
                 if (configChanged) pendingToggle.current = t;
                 else toggleDrawer(t);
             }

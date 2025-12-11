@@ -206,8 +206,10 @@ export function AppDrawer(
                 pendingToggle.current = null;
                 // Use double rAF to ensure the "closed" position is painted without transition
                 requestAnimationFrame(() => {
-                    setTransition(TRANSITION);
-                    toggleDrawer(target);
+                    requestAnimationFrame(() => {
+                        setTransition(TRANSITION);
+                        toggleDrawer(target);
+                    });
                 });
             }
         },

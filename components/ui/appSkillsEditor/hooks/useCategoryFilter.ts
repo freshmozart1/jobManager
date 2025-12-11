@@ -131,6 +131,26 @@ export function useCategoryFilter(internalSkills: PersonalInformationSkill[]) {
         });
     };
 
+    const selectedCategoryArray = useMemo(() => {
+        return Array.from(selectedCategories).sort((a, b) => a.localeCompare(b));
+    }, [selectedCategories]);
+
+    const selectedCategoryCount = useMemo(() => selectedCategoryArray.length, [selectedCategoryArray]);
+
+    const categoryNamesLabel = useMemo(() => selectedCategoryArray.join(", "), [selectedCategoryArray]);
+
+    const hasCategorySelection = useMemo(() => selectedCategoryCount > 0, [selectedCategoryCount]);
+
+    const allCategoriesSelected = useMemo(() => hasCategorySelection && selectedCategoryCount === categoryOptions.length && categoryOptions.length > 0, [hasCategorySelection, selectedCategoryCount, categoryOptions]);
+
+    const triggerAriaLabel = useMemo(
+        () => (hasCategorySelection
+            ? `Filter categories: ${categoryNamesLabel || `${selectedCategoryCount} selected`}`
+            : categoryOptions.length === 0
+                ? "Filter categories: none available"
+                : "Filter categories: none selected"),
+        [hasCategorySelection, categoryNamesLabel, selectedCategoryCount, categoryOptions.length]
+    );
     return {
         categoryOptions,
         selectedCategories,
@@ -139,5 +159,10 @@ export function useCategoryFilter(internalSkills: PersonalInformationSkill[]) {
         toggleCategory,
         selectAllCategories,
         deselectAllCategories,
+        selectedCategoryCount,
+        categoryNamesLabel,
+        hasCategorySelection,
+        allCategoriesSelected,
+        triggerAriaLabel,
     } as const;
 }

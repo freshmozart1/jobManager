@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { Dispatch, RefObject, SetStateAction, useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 
 import { PersonalInformationSkill } from "@/types";
 
@@ -14,6 +14,8 @@ import { AppSkillsTable } from "./AppSkillsTable";
 import { AppSkillsUndoBanner } from "./AppSkillsUndoBanner";
 import AppSkillsFooter from "./AppSkillsFooter";
 import { AppSkillsSheet } from "./AppSkillsSheet";
+import { useAppDrawer } from "@/components/ui/AppDrawer";
+import { SkillRow } from ".";
 
 type SkillDraft = {
     name: string;
@@ -34,13 +36,6 @@ type AppSkillsEditorProps = {
     onRegisterAddSkill?: (handler: (() => void) | null) => void;
 };
 
-function sortByPrimaryFirst(skills: PersonalInformationSkill[]): PersonalInformationSkill[] {
-    return [...skills].sort((a, b) => {
-        if (a.primary === b.primary) return 0;
-        return a.primary ? -1 : 1;
-    });
-}
-
 function cloneSkills(skills: PersonalInformationSkill[]): PersonalInformationSkill[] {
     return skills.map((skill) => ({
         ...skill,
@@ -54,17 +49,6 @@ const MAX_ALIAS_COUNT = 5;
 const MAX_ALIAS_LENGTH = 10;
 const MAX_CATEGORY_LENGTH = 30;
 
-function toDraft(skill: PersonalInformationSkill): SkillDraft {
-    return {
-        name: skill.name,
-        category: skill.category,
-        level: skill.level,
-        years: String(skill.years ?? ""),
-        last_used: skill.last_used ?? "",
-        aliases: skill.aliases ?? [],
-        primary: Boolean(skill.primary),
-    };
-}
 
 function validateSkillDraft(
     draft: SkillDraft,
@@ -72,52 +56,33 @@ function validateSkillDraft(
     originalName?: string
 ): ValidationErrors {
     const errors: ValidationErrors = {};
-
-    const trimmedName = draft.name.trim();
-    if (!trimmedName) {
-        errors.name = "Name is required.";
-    } else {
-        const normalized = normaliseName(trimmedName);
-        const clashes = existing.some((skill) => {
-            if (originalName && normaliseName(originalName) === normalized) {
-                return false;
-            }
-            return normaliseName(skill.name) === normalized;
-        });
-        if (clashes) {
-            errors.name = "Name must be unique.";
-        }
-    }
-
-    const trimmedCategory = draft.category.trim();
-    if (!trimmedCategory) {
-        errors.category = "Category is required.";
-    } else if (trimmedCategory.length > MAX_CATEGORY_LENGTH) {
-        errors.category = "Category must be 30 characters or less.";
-    }
-
-    const yearsNumber = Number(draft.years);
-    if (Number.isNaN(yearsNumber) || yearsNumber < 0) {
-        errors.years = "Years must be a non-negative number.";
-    }
-
-    if (!/^\d{4}-\d{2}$/.test(draft.last_used)) {
-        errors.last_used = "Use YYYY-MM format.";
-    } else {
-        const [, monthString] = draft.last_used.split("-");
-        const month = Number(monthString);
-        if (month < 1 || month > 12) {
-            errors.last_used = "Month must be between 01 and 12.";
-        }
-    }
-
-    if (draft.aliases.length > MAX_ALIAS_COUNT) {
-        errors.aliases = "Up to 5 aliases allowed.";
-    }
-
+    const { name, category, years: dYears, last_used, aliases } = draft;
+    const trimmedName = name.trim();
+    const trimmedCategory = category.trim();
+    const years = Number(dYears);
     const aliasSet = new Set<string>();
-    const nameKey = normaliseName(draft.name);
-    for (const alias of draft.aliases) {
+
+    if (!trimmedName) errors.name = "Name is required.";
+    else {
+        const normalized = normaliseName(trimmedName);
+        if (existing.some(
+            skill => (originalName && normaliseName(originalName) === normalized)
+                ? false
+                : normaliseName(skill.name) === normalized
+        )) errors.name = "Name must be unique.";
+    }
+    if (!trimmedCategory) errors.category = "Category is required.";
+    else if (trimmedCategory.length > MAX_CATEGORY_LENGTH) errors.category = "Category must be 30 characters or less.";
+    if (Number.isNaN(years) || years < 0) errors.years = "Years must be a non-negative number.";
+    if (!/^\d{4}-\d{2}$/.test(last_used)) errors.last_used = "Use YYYY-MM format.";
+    else {
+        const month = Number(last_used.split("-")[1]);
+        if (month < 1 || month > 12) errors.last_used = "Month must be between 01 and 12.";
+    }
+    if (aliases.length > MAX_ALIAS_COUNT) errors.aliases = "Up to 5 aliases allowed.";
+
+    const nameKey = normaliseName(name);
+    for (const alias of aliases) {
         const aliasTrimmed = alias.trim();
         const aliasKey = normaliseName(aliasTrimmed);
         if (aliasTrimmed.length === 0) {
@@ -142,13 +107,25 @@ function validateSkillDraft(
     return errors;
 }
 
-export default function AppSkillsEditor({ skills, onChange, onPersist, onRegisterAddSkill }: AppSkillsEditorProps) {
-    const initialisedRef = useRef(false);
-    const previousSkillsRef = useRef<PersonalInformationSkill[]>(cloneSkills(skills));
-
-    const [internalSkills, setInternalSkills] = useState<PersonalInformationSkill[]>(() => sortByPrimaryFirst(skills));
-    const [search, setSearch] = useState("");
-    const [debouncedSearch, setDebouncedSearch] = useState("");
+export default function AppSkillsEditor({
+    skills: skillsProp,
+    onChange,
+    onPersist,
+    onRegisterAddSkill
+}: AppSkillsEditorProps) {
+    const initialisedRef: RefObject<boolean> = useRef<boolean>(false);
+    const previousSkillsRef: RefObject<PersonalInformationSkill[]> = useRef<PersonalInformationSkill[]>(cloneSkills(skillsProp));
+    const [internalSkills, setInternalSkills]: [PersonalInformationSkill[], Dispatch<SetStateAction<PersonalInformationSkill[]>>] = useState<PersonalInformationSkill[]>(
+        () => [...skillsProp].sort(
+            (a, b) => a.primary === b.primary
+                ? 0
+                : a.primary
+                    ? -1
+                    : 1
+        )
+    );
+    const [search, setSearch]: [string, Dispatch<SetStateAction<string>>] = useState<string>("");
+    const [debouncedSearch, setDebouncedSearch]: [string, Dispatch<SetStateAction<string>>] = useState<string>("");
     const [anchorIndex, setAnchorIndex] = useState<number | null>(null);
     const [targetIndex, setTargetIndex] = useState<number | null>(null);
     const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
@@ -174,55 +151,97 @@ export default function AppSkillsEditor({ skills, onChange, onPersist, onRegiste
     const [namesLabelWidth, setNamesLabelWidth] = useState(0);
     const lastShowBulkDeleteRef = useRef(false);
 
-    const { categoryOptions, selectedCategories, popoverOpen, setPopoverOpen, toggleCategory, selectAllCategories, deselectAllCategories } =
-        useCategoryFilter(internalSkills);
+    const {
+        categoryOptions,
+        selectedCategories,
+        popoverOpen,
+        setPopoverOpen,
+        toggleCategory,
+        selectAllCategories,
+        deselectAllCategories,
+        selectedCategoryCount,
+        categoryNamesLabel: namesLabel,
+        hasCategorySelection,
+        allCategoriesSelected,
+        triggerAriaLabel,
+    }: {
+        categoryOptions: string[];
+        selectedCategories: Set<string>;
+        popoverOpen: boolean;
+        setPopoverOpen: Dispatch<SetStateAction<boolean>>;
+        toggleCategory: (category: string) => void;
+        selectAllCategories: () => void;
+        deselectAllCategories: () => void;
+        selectedCategoryCount: number;
+        categoryNamesLabel: string;
+        hasCategorySelection: boolean;
+        allCategoriesSelected: boolean;
+        triggerAriaLabel: string;
+    } = useCategoryFilter(internalSkills);
 
-    const { undoState, setUndoState, pauseUndoTimer, resumeUndoTimer, clearUndo } = useUndoBanner();
+    type UndoState = {
+        names: string[];
+        mergedCount: number;
+        snapshot: PersonalInformationSkill[]
+    } | null;
+    const {
+        undoState,
+        setUndoState,
+        pauseUndoTimer,
+        resumeUndoTimer,
+        clearUndo
+    }: {
+        undoState: UndoState;
+        setUndoState: Dispatch<SetStateAction<UndoState>>;
+        pauseUndoTimer: () => void;
+        resumeUndoTimer: () => void;
+        clearUndo: () => void;
+    } = useUndoBanner();
 
-    useEffect(() => {
-        if (!initialisedRef.current) {
-            initialisedRef.current = true;
-            previousSkillsRef.current = cloneSkills(skills);
-            return;
-        }
-        setInternalSkills(skills);
-        previousSkillsRef.current = cloneSkills(skills);
-    }, [skills]);
+    useEffect(
+        () => {
+            if (!initialisedRef.current) {
+                initialisedRef.current = true;
+                previousSkillsRef.current = cloneSkills(skillsProp);
+                return;
+            }
+            setInternalSkills(skillsProp);
+            previousSkillsRef.current = cloneSkills(skillsProp);
+        },
+        [skillsProp]
+    );
 
-    useEffect(() => {
-        const handle = window.setTimeout(() => setDebouncedSearch(search.trim().toLowerCase()), SEARCH_DEBOUNCE_MS);
-        return () => window.clearTimeout(handle);
-    }, [search]);
+    useEffect(
+        () => {
+            const handle: number = window.setTimeout(() => setDebouncedSearch(search.trim().toLowerCase()), SEARCH_DEBOUNCE_MS);
+            return () => window.clearTimeout(handle);
+        },
+        [search]
+    );
 
-    useEffect(() => {
-        if (typeof window === "undefined") {
-            return;
-        }
-        const element = triggerRef.current;
-        if (!element || typeof window.ResizeObserver === "undefined") {
-            return;
-        }
-
-        const updateWidth = () => {
-            const style = window.getComputedStyle(element);
-            const paddingLeft = parseFloat(style.paddingLeft || "0");
-            const paddingRight = parseFloat(style.paddingRight || "0");
-            const width = element.getBoundingClientRect().width - (paddingLeft + paddingRight);
-            setTriggerContentWidth(Math.max(0, width));
-        };
-
-        updateWidth();
-
-        const observer = new ResizeObserver(() => {
+    useEffect(
+        () => {
+            const element: HTMLButtonElement | null = triggerRef.current;
+            if (typeof window === "undefined" || !element || typeof window.ResizeObserver === "undefined") return;
+            const {
+                paddingLeft,
+                paddingRight
+            }: {
+                paddingLeft: string;
+                paddingRight: string
+            } = window.getComputedStyle(element);
+            const updateWidth: () => void = () => setTriggerContentWidth(Math.max(0, element.getBoundingClientRect().width - (parseFloat(paddingLeft || "0") + parseFloat(paddingRight || "0"))));
             updateWidth();
-        });
+            const observer: ResizeObserver = new ResizeObserver(() => {
+                updateWidth();
+            });
+            observer.observe(element);
+            return () => observer.disconnect();
+        },
+        []
+    );
 
-        observer.observe(element);
-
-        return () => observer.disconnect();
-    }, []);
-
-    const [skillRows, filteredRows] = useSkillRows(
+    const [skillRows, filteredRows]: SkillRow[][] = useSkillRows(
         internalSkills,
         selectedCategories,
         debouncedSearch,
@@ -236,251 +255,366 @@ export default function AppSkillsEditor({ skills, onChange, onPersist, onRegiste
         totalPages,
         isFirstPage,
         isLastPage,
+    }: {
+        pageIndex: number;
+        setPageIndex: Dispatch<SetStateAction<number>>;
+        pagedRows: SkillRow[];
+        totalPages: number;
+        isFirstPage: boolean;
+        isLastPage: boolean;
     } = useSkillsPagination(filteredRows);
 
-    const resetSelection = () => {
-        setSelectedIndices(new Set());
-        setTargetIndex(null);
-        setAnchorIndex(null);
-    };
+    const resetSelection: () => void = useCallback<() => void>(
+        () => {
+            setSelectedIndices(new Set());
+            setTargetIndex(null);
+            setAnchorIndex(null);
+        },
+        []
+    );
 
-    const openCreateSheet = useCallback(() => {
-        setSheetMode("create");
-        setDraft({
-            name: "",
-            category: "",
-            level: "",
-            years: "",
-            last_used: "",
-            aliases: [],
-            primary: false,
-        });
-        setOriginalName(undefined);
-        setDraftErrors({});
-        setSheetOpen(true);
-    }, []);
+    const openCreateSheet: () => void = useCallback<() => void>(
+        () => {
+            setSheetMode("create");
+            setDraft({
+                name: "",
+                category: "",
+                level: "",
+                years: "",
+                last_used: "",
+                aliases: [],
+                primary: false,
+            });
+            setOriginalName(undefined);
+            setDraftErrors({});
+            setSheetOpen(true);
+        },
+        []
+    );
 
-    useEffect(() => {
-        if (!onRegisterAddSkill) {
-            return;
-        }
-        onRegisterAddSkill(openCreateSheet);
-        return () => {
-            onRegisterAddSkill(null);
-        };
-    }, [onRegisterAddSkill, openCreateSheet]);
+    useEffect(
+        () => {
+            if (!onRegisterAddSkill) return;
+            onRegisterAddSkill(openCreateSheet);
+            return () => onRegisterAddSkill(null);
+        },
+        [onRegisterAddSkill, openCreateSheet]
+    );
 
-    const openEditSheet = (skill: PersonalInformationSkill) => {
-        setSheetMode("edit");
-        setDraft(toDraft(skill));
-        setOriginalName(skill.name);
-        setDraftErrors({});
-        setSheetOpen(true);
-    };
+    const openEditSheet: (skill: PersonalInformationSkill) => void = useCallback<(skill: PersonalInformationSkill) => void>(
+        (skill: PersonalInformationSkill) => {
+            setSheetMode("edit");
+            setDraft({
+                name: skill.name,
+                category: skill.category,
+                level: skill.level,
+                years: String(skill.years ?? ""),
+                last_used: skill.last_used ?? "",
+                aliases: skill.aliases ?? [],
+                primary: Boolean(skill.primary),
+            });
+            setOriginalName(skill.name);
+            setDraftErrors({});
+            setSheetOpen(true);
+        },
+        []
+    );
 
-    const updateDraft = (updates: Partial<SkillDraft>) => {
-        setDraft((prev) => {
-            const next = { ...prev, ...updates };
-            setDraftErrors(validateSkillDraft(next, internalSkills, originalName));
-            return next;
-        });
-    };
+    const updateDraft: (updates: Partial<SkillDraft>) => void = useCallback<(updates: Partial<SkillDraft>) => void>(
+        (updates: Partial<SkillDraft>) => {
+            setDraft((prev: SkillDraft) => {
+                const next: SkillDraft = { ...prev, ...updates };
+                setDraftErrors(validateSkillDraft(next, internalSkills, originalName));
+                return next;
+            });
+        },
+        [internalSkills, originalName]
+    );
 
-    const handleAliasesChange = (aliases: string[]) => {
-        const sanitized = aliases.map((alias) => alias.trim()).filter(Boolean);
-        if (sanitized.length > MAX_ALIAS_COUNT) {
-            setDraftErrors((prev) => ({ ...prev, aliases: "Up to 5 aliases allowed." }));
-            return;
-        }
-        if (sanitized.some((alias) => alias.length > MAX_ALIAS_LENGTH)) {
-            setDraftErrors((prev) => ({ ...prev, aliases: "Aliases must be 10 characters or less." }));
-            return;
-        }
-        updateDraft({ aliases: sanitized });
-    };
+    const handleAliasesChange: (aliases: string[]) => void = useCallback<(aliases: string[]) => void>(
+        (aliases: string[]) => {
+            const sanitized: string[] = aliases.map<string>((alias: string) => alias.trim()).filter(Boolean);
+            const setError = (msg: string) => setDraftErrors((prev: ValidationErrors) => ({
+                ...prev,
+                aliases: msg
+            }));
+            if (sanitized.length > MAX_ALIAS_COUNT) return setError(`Up to ${MAX_ALIAS_COUNT} aliases allowed.`);
+            if (sanitized.some((alias) => alias.length > MAX_ALIAS_LENGTH)) return setError(`Aliases must be ${MAX_ALIAS_LENGTH} characters or less.`);
+            updateDraft({ aliases: sanitized });
+        },
+        [updateDraft]
+    );
 
-    const persistSkills = async (nextSkills: PersonalInformationSkill[]) => {
-        setIsPersisting(true);
-        setPersistError(null);
-        try {
-            await onPersist(nextSkills);
-            previousSkillsRef.current = cloneSkills(nextSkills);
-        } catch (error) {
-            console.error("Failed to persist skills", error);
-            setPersistError("Save failed. Reverted.");
-            setInternalSkills(previousSkillsRef.current);
-            onChange(previousSkillsRef.current);
-        } finally {
-            setIsPersisting(false);
-        }
-    };
+    const persistSkills: (nextSkills: PersonalInformationSkill[]) => Promise<void> = useCallback<(nextSkills: PersonalInformationSkill[]) => Promise<void>>(
+        async (nextSkills: PersonalInformationSkill[]) => {
+            setIsPersisting(true);
+            setPersistError(null);
+            try {
+                await onPersist(nextSkills);
+                previousSkillsRef.current = cloneSkills(nextSkills);
+            } catch (error) {
+                console.error("Failed to persist skills", error);
+                setPersistError("Save failed. Reverted.");
+                setInternalSkills(previousSkillsRef.current);
+                onChange(previousSkillsRef.current);
+            } finally {
+                setIsPersisting(false);
+            }
+        },
+        [onPersist, onChange]
+    );
 
-    const upsertSkill = async () => {
-        const errors = validateSkillDraft(draft, internalSkills, originalName);
-        setDraftErrors(errors);
-        if (Object.keys(errors).length > 0) {
-            return;
-        }
-        const skill: PersonalInformationSkill = {
-            name: draft.name.trim(),
-            category: draft.category.trim(),
-            level: draft.level.trim(),
-            years: Number(draft.years),
-            last_used: draft.last_used,
-            aliases: draft.aliases.map((alias) => alias.trim()),
-            primary: draft.primary,
-        };
+    const upsertSkill = useCallback(
+        async () => {
+            const errors = validateSkillDraft(draft, internalSkills, originalName);
+            setDraftErrors(errors);
+            if (Object.keys(errors).length > 0) return;
+            const skill: PersonalInformationSkill = {
+                name: draft.name.trim(),
+                category: draft.category.trim(),
+                level: draft.level.trim(),
+                years: Number(draft.years),
+                last_used: draft.last_used,
+                aliases: draft.aliases.map((alias) => alias.trim()),
+                primary: draft.primary,
+            };
 
-        let nextSkills: PersonalInformationSkill[];
-        if (sheetMode === "create") {
-            nextSkills = [...internalSkills, skill];
-        } else {
-            nextSkills = internalSkills.map((existing) =>
-                normaliseName(existing.name) === normaliseName(originalName ?? "") ? skill : existing
-            );
-        }
+            let nextSkills: PersonalInformationSkill[];
+            if (sheetMode === "create") {
+                nextSkills = [...internalSkills, skill];
+            } else {
+                nextSkills = internalSkills.map((existing) =>
+                    normaliseName(existing.name) === normaliseName(originalName ?? "") ? skill : existing
+                );
+            }
 
-        setInternalSkills(nextSkills);
-        onChange(nextSkills);
-        setSheetOpen(false);
-        resetSelection();
-        await persistSkills(nextSkills);
-    };
+            setInternalSkills(nextSkills);
+            onChange(nextSkills);
+            setSheetOpen(false);
+            resetSelection();
+            return persistSkills(nextSkills);
+        },
+        [
+            draft,
+            internalSkills,
+            originalName,
+            sheetMode,
+            onChange,
+            persistSkills,
+            resetSelection,
+            setSheetOpen
+        ]
+    );
 
-    const handleDelete = async (indicesToRemove: number[]) => {
-        const uniqueIndices = Array.from(new Set(indicesToRemove)).sort((a, b) => a - b);
-        if (uniqueIndices.length === 0) return;
-        const snapshot = cloneSkills(internalSkills);
-        const remaining = internalSkills.filter((_, index) => !uniqueIndices.includes(index));
-        const removedNames = uniqueIndices.map((index) => internalSkills[index]?.name).filter(Boolean) as string[];
+    const handleDelete: (indicesToRemove: number[]) => Promise<void> = useCallback<(indicesToRemove: number[]) => Promise<void>>(
+        async (indicesToRemove: number[]) => {
+            const uniqueIndices: number[] = Array.from<number>(new Set(indicesToRemove)).sort((a: number, b: number) => a - b);
+            if (uniqueIndices.length === 0) return;
+            const remaining: PersonalInformationSkill[] = internalSkills.filter((_, index: number) => !uniqueIndices.includes(index));
+            const removedNames: string[] = uniqueIndices.map((index: number) => internalSkills[index]?.name).filter(Boolean) as string[];
 
-        setInternalSkills(remaining);
-        onChange(remaining);
-        resetSelection();
+            setInternalSkills(remaining);
+            onChange(remaining);
+            resetSelection();
 
-        setUndoState((prev) => {
-            if (!prev) {
-                return {
+            setUndoState((prev: UndoState) => prev
+                ? {
+                    names: Array.from(new Set([...prev.names, ...removedNames])).sort((a, b) => a.localeCompare(b)),
+                    mergedCount: prev.mergedCount + 1,
+                    snapshot: prev.snapshot,
+                }
+                : {
                     names: removedNames,
                     mergedCount: 1,
-                    snapshot,
-                };
+                    snapshot: cloneSkills(internalSkills),
+                }
+            );
+
+            return persistSkills(remaining);
+        },
+        [
+            internalSkills,
+            onChange,
+            persistSkills,
+            resetSelection,
+            setUndoState
+        ]
+    );
+
+    const handleUndo: () => Promise<void> = useCallback<() => Promise<void>>(
+        async () => {
+            if (!undoState) return;
+            const restored: PersonalInformationSkill[] = cloneSkills(undoState.snapshot);
+            setInternalSkills(restored);
+            onChange(restored);
+            clearUndo();
+            return persistSkills(restored);
+        },
+        [
+            undoState,
+            persistSkills,
+            clearUndo,
+            onChange
+        ]
+    );
+
+    const handleRowClick: (
+        rowIndex: number,
+        event: MouseEvent<HTMLTableRowElement, globalThis.MouseEvent>
+    ) => void = useCallback<(
+        rowIndex: number,
+        event: MouseEvent<HTMLTableRowElement, globalThis.MouseEvent>
+    ) => void>(
+        (
+            rowIndex: number,
+            event: MouseEvent<HTMLTableRowElement>
+        ) => {
+            if (event.shiftKey && anchorIndex !== null) {
+                const filteredIndices: number[] = filteredRows.map<number>(({ index }: { index: number }) => index);
+                const anchorPosition: number = filteredIndices.indexOf(anchorIndex);
+                const targetPosition: number = filteredIndices.indexOf(rowIndex);
+                if (anchorPosition !== -1 && targetPosition !== -1) {
+                    setTargetIndex(rowIndex);
+                    const [start, end]: [number, number] = anchorPosition < targetPosition
+                        ? [anchorPosition, targetPosition]
+                        : [targetPosition, anchorPosition];
+                    setSelectedIndices(new Set(filteredIndices.slice(start, end + 1)));
+                    return;
+                }
             }
-            const uniqueNames = Array.from(new Set([...prev.names, ...removedNames])).sort((a, b) => a.localeCompare(b));
-            return {
-                names: uniqueNames,
-                mergedCount: prev.mergedCount + 1,
-                snapshot: prev.snapshot,
-            };
-        });
 
-        await persistSkills(remaining);
-    };
+            setAnchorIndex(rowIndex);
+            setTargetIndex(null);
+            setSelectedIndices(new Set());
+        },
+        [anchorIndex, filteredRows]
+    );
 
-    const handleUndo = async () => {
-        if (!undoState) return;
-        const restored = cloneSkills(undoState.snapshot);
-        setInternalSkills(restored);
-        onChange(restored);
-        clearUndo();
-        await persistSkills(restored);
-    };
-
-    const handleRowClick = (rowIndex: number, event: MouseEvent<HTMLTableRowElement>) => {
-        if (event.shiftKey && anchorIndex !== null) {
-            const filteredIndices = filteredRows.map(({ index }) => index);
-            const anchorPosition = filteredIndices.indexOf(anchorIndex);
-            const targetPosition = filteredIndices.indexOf(rowIndex);
-            if (anchorPosition !== -1 && targetPosition !== -1) {
-                setTargetIndex(rowIndex);
-                const [start, end] = anchorPosition < targetPosition ? [anchorPosition, targetPosition] : [targetPosition, anchorPosition];
-                const selected = filteredIndices.slice(start, end + 1);
-                setSelectedIndices(new Set(selected));
-                return;
+    const clearFilters: () => void = useCallback<() => void>(
+        () => {
+            setSearch("");
+            setDebouncedSearch("");
+            setPageIndex(0);
+            resetSelection();
+            if (categoryOptions.length > 0) {
+                selectAllCategories();
             }
-        }
+        },
+        [
+            categoryOptions,
+            resetSelection,
+            selectAllCategories,
+            setPageIndex
+        ]
+    );
 
-        setAnchorIndex(rowIndex);
-        setTargetIndex(null);
-        setSelectedIndices(new Set());
-    };
+    useEffect(
+        () => {
+            if (typeof window === "undefined") return;
+            const frame: number = window.requestAnimationFrame(() => setNamesLabelWidth(
+                hiddenLabelRef.current
+                    ? hiddenLabelRef.current.getBoundingClientRect().width
+                    : 0
+            ));
+            return () => window.cancelAnimationFrame(frame);
+        },
+        [namesLabel]
+    );
 
-    const clearFilters = () => {
-        setSearch("");
-        setDebouncedSearch("");
-        setPageIndex(0);
-        resetSelection();
-        if (categoryOptions.length > 0) {
-            selectAllCategories();
-        }
-    };
+    const categoryDisplayLabel: string = useMemo<string>(
+        () => {
+            if (!hasCategorySelection) return categoryOptions.length === 0 ? "No categories available" : "No categories selected";
+            if (
+                triggerContentWidth >= 200
+                && namesLabelWidth > 0
+                && namesLabelWidth <= triggerContentWidth
+            ) return namesLabel;
+            if (allCategoriesSelected) return "All categories";
+            return `${selectedCategoryCount} selected`;
+        },
+        [
+            hasCategorySelection,
+            categoryOptions,
+            triggerContentWidth,
+            namesLabelWidth,
+            namesLabel,
+            allCategoriesSelected,
+            selectedCategoryCount
+        ]
+    );
 
-    const selectedCategoryArray = useMemo(() => {
-        return Array.from(selectedCategories).sort((a, b) => a.localeCompare(b));
-    }, [selectedCategories]);
-
-    const selectedCategoryCount = selectedCategoryArray.length;
-    const hasCategorySelection = selectedCategoryCount > 0;
-    const namesLabel = selectedCategoryArray.join(", ");
-    const allCategoriesSelected =
-        hasCategorySelection && selectedCategoryCount === categoryOptions.length && categoryOptions.length > 0;
-
-    useEffect(() => {
-        if (typeof window === "undefined") {
-            return;
-        }
-        const frame = window.requestAnimationFrame(() => {
-            if (!hiddenLabelRef.current) {
-                setNamesLabelWidth(0);
-                return;
-            }
-            const width = hiddenLabelRef.current.getBoundingClientRect().width;
-            setNamesLabelWidth(width);
-        });
-        return () => window.cancelAnimationFrame(frame);
-    }, [namesLabel]);
-
-    const shouldShowNames =
-        hasCategorySelection && triggerContentWidth >= 200 && namesLabelWidth > 0 && namesLabelWidth <= triggerContentWidth;
-
-    let categoryDisplayLabel: string;
-    if (!hasCategorySelection) {
-        categoryDisplayLabel = categoryOptions.length === 0 ? "No categories available" : "No categories selected";
-    } else if (shouldShowNames) {
-        categoryDisplayLabel = namesLabel;
-    } else if (allCategoriesSelected) {
-        categoryDisplayLabel = "All categories";
-    } else {
-        categoryDisplayLabel = `${selectedCategoryCount} selected`;
-    }
-
-    const triggerAriaLabel = hasCategorySelection
-        ? `Filter categories: ${namesLabel || `${selectedCategoryCount} selected`}`
-        : categoryOptions.length === 0
-            ? "Filter categories: none available"
-            : "Filter categories: none selected";
-
-    const selectAllDisabled =
-        categoryOptions.length === 0 || (hasCategorySelection && selectedCategoryCount === categoryOptions.length);
+    const selectAllDisabled = categoryOptions.length === 0 || (hasCategorySelection && selectedCategoryCount === categoryOptions.length);
     const deselectAllDisabled = selectedCategoryCount === 0;
 
-    const selectedIndicesArray = useMemo(
-        () => Array.from(selectedIndices).sort((a, b) => a - b),
+    const selectedIndicesArray: number[] = useMemo<number[]>(
+        () => Array.from<number>(selectedIndices).sort((a: number, b: number) => a - b),
         [selectedIndices]
     );
-    const showBulkDelete = selectedIndicesArray.length > 1;
-    const bulkDeleteDisabled = isPersisting;
-    const disableSheetSave = isPersisting || Object.keys(draftErrors).length > 0;
+    const showBulkDelete: boolean = selectedIndicesArray.length > 1;
+    const bulkDeleteDisabled: boolean = isPersisting;
+    const disableSheetSave: boolean = isPersisting || Object.keys(draftErrors).length > 0;
 
-    useEffect(() => {
-        if (!showBulkDelete && lastShowBulkDeleteRef.current) {
-            if (document.activeElement === bulkDeleteRef.current) {
-                const searchInput = document.getElementById("skills-search") as HTMLInputElement | null;
-                searchInput?.focus();
+    useEffect(
+        () => {
+            if (
+                !showBulkDelete
+                && lastShowBulkDeleteRef.current
+                && document.activeElement === bulkDeleteRef.current
+            ) document.getElementById("skills-search")?.focus();
+            lastShowBulkDeleteRef.current = showBulkDelete;
+        },
+        [showBulkDelete]
+    );
+
+    const { toggleDrawer } = useAppDrawer();
+
+    const drawerContent = useMemo(
+        () => <AppSkillsSheet
+            setSheetOpen={setSheetOpen}
+            sheetMode={sheetMode}
+            originalName={originalName}
+            draft={draft}
+            draftErrors={draftErrors}
+            updateDraft={updateDraft}
+            handleAliasesChange={handleAliasesChange}
+            categoryOptions={categoryOptions}
+            isPersisting={isPersisting}
+            MAX_CATEGORY_LENGTH={MAX_CATEGORY_LENGTH}
+            disableSheetSave={disableSheetSave}
+            upsertSkill={upsertSkill}
+        />,
+        [
+            sheetMode,
+            originalName,
+            draft,
+            draftErrors,
+            categoryOptions,
+            isPersisting,
+            disableSheetSave,
+            setSheetOpen,
+            updateDraft,
+            handleAliasesChange,
+            upsertSkill
+        ]
+    );
+
+    const prevSheetOpen = useRef(sheetOpen);
+
+    useEffect(
+        () => {
+            if (sheetOpen) {
+                toggleDrawer("right", drawerContent, 0, true);
+            } else if (prevSheetOpen.current) {
+                toggleDrawer("right", undefined);
             }
-        }
-        lastShowBulkDeleteRef.current = showBulkDelete;
-    }, [showBulkDelete]);
+            prevSheetOpen.current = sheetOpen;
+        },
+        [
+            sheetOpen,
+            drawerContent,
+            toggleDrawer
+        ]
+    );
 
     return (
         <div className="space-y-4">
@@ -535,22 +669,6 @@ export default function AppSkillsEditor({ skills, onChange, onPersist, onRegiste
                 handleClearUndo={clearUndo}
                 NAME_TRUNCATE_AT={NAME_TRUNCATE_AT}
             />
-
-            {/* <AppSkillsSheet
-                sheetOpen={sheetOpen}
-                setSheetOpen={setSheetOpen}
-                sheetMode={sheetMode}
-                originalName={originalName}
-                draft={draft}
-                draftErrors={draftErrors}
-                updateDraft={updateDraft}
-                handleAliasesChange={handleAliasesChange}
-                categoryOptions={categoryOptions}
-                isPersisting={isPersisting}
-                MAX_CATEGORY_LENGTH={MAX_CATEGORY_LENGTH}
-                disableSheetSave={disableSheetSave}
-                upsertSkill={upsertSkill}
-            /> */}
 
             <AppSkillsFooter
                 debouncedSearch={debouncedSearch}

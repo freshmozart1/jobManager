@@ -57,7 +57,7 @@ export function AppSkillsFilters({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="flex-1 space-y-3">
                 <div>
-                    <InputGroup className="[--radius:0.5rem] min-w-[200px]">
+                    <InputGroup className="[--radius:0.5rem] min-w-[200px] static">
                         <InputGroupAddon align="inline-start" className="px-4 py-2">
                             <Search className="size-4 text-muted-foreground" />
                         </InputGroupAddon>
@@ -75,7 +75,7 @@ export function AppSkillsFilters({
                     </InputGroup>
                 </div>
                 <div className="flex items-center gap-2">
-                    <div className="relative flex-1">
+                    <div className="flex-1">
                         <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                             <PopoverTrigger asChild>
                                 <Button

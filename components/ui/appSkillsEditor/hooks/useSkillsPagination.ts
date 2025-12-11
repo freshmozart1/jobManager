@@ -2,14 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { PersonalInformationSkill } from "@/types";
+import { SkillRow } from "..";
 
 const PAGE_SIZE = 10;
-
-export type SkillRow = {
-    skill: PersonalInformationSkill;
-    index: number;
-};
 
 export function useSkillsPagination(filteredRows: SkillRow[]) {
     const [pageIndex, setPageIndex] = useState(0);

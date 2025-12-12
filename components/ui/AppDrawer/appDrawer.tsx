@@ -364,6 +364,9 @@ export function AppDrawer(
                     '--borderOffset': getOffset('bottom'),
                     '--minWidth': px(target === 'bottom' ? 0 : collapsedSizes[target]),
                     '--paddingTop': px(collapsedSizes.bottom),
+                    width: (target === 'left' || target === 'right')
+                        ? (sizes[target] ? px(sizes[target]) : 'fit-content')
+                        : undefined,
                 } as CSSProperties}
                 onClick={e => handleClick(e, target)}
             >
@@ -389,12 +392,15 @@ export function AppDrawer(
         (
             v: SetDrawerStateAction,
             t: DrawerPosition
-        ) => setDrawers((d: DrawerMap) => ({
-            ...d,
-            [t]: typeof v === 'function'
-                ? v(d[t])
-                : v
-        })),
+        ) => {
+            setSizes((prev) => ({ ...prev, [t]: 0 }));
+            setDrawers((d: DrawerMap) => ({
+                ...d,
+                [t]: typeof v === 'function'
+                    ? v(d[t])
+                    : v
+            }));
+        },
         []
     );
 

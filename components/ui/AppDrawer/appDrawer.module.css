@@ -15,6 +15,7 @@
     height: 100svh;
     width: fit-content;
     min-width: var(--minWidth);
+    max-width: 100vw;
 }
 
 .leftDrawer {

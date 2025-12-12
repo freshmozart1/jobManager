@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from "react";
-import { LoaderCircle, XIcon } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -104,6 +104,19 @@ function validateDraft(draft: ExperienceDraft): ExperienceDraftErrors {
     return errors;
 }
 
+function areDraftsEqual(a: ExperienceDraft, b: ExperienceDraft): boolean {
+    const getTime = (d?: Date) => d?.getTime();
+    return (
+        getTime(a.from) === getTime(b.from) &&
+        getTime(a.to) === getTime(b.to) &&
+        a.role === b.role &&
+        a.company === b.company &&
+        a.summary === b.summary &&
+        a.tags.length === b.tags.length &&
+        a.tags.every((tag, i) => tag === b.tags[i])
+    );
+}
+
 export default function AppExperienceItemForm({
     mode,
     initialValue,
@@ -125,6 +138,10 @@ export default function AppExperienceItemForm({
     }, [initialValue]);
 
     const disableActions = disabled || isSaving;
+
+    const isDirty = useMemo(() => {
+        return !areDraftsEqual(draft, toDraft(initialValue));
+    }, [draft, initialValue]);
 
     const handleSubmit = async () => {
         setHasSubmitted(true);
@@ -187,10 +204,6 @@ export default function AppExperienceItemForm({
                 <h2 className="text-lg font-semibold text-foreground">
                     {mode === "create" ? "Add experience" : `Edit ${initialValue?.role ?? "experience"}`}
                 </h2>
-                <Button variant="ghost" size="icon" onClick={onCancel} disabled={disableActions}>
-                    <XIcon className="h-4 w-4" />
-                    <span className="sr-only">Close</span>
-                </Button>
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-4 p-4" aria-live="polite">
@@ -346,7 +359,7 @@ export default function AppExperienceItemForm({
                 >
                     Cancel
                 </Button>
-                <Button type="button" onClick={() => void handleSubmit()} disabled={disableActions}>
+                <Button type="button" onClick={() => void handleSubmit()} disabled={disableActions || !isDirty}>
                     {isSaving && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
                     Save
                 </Button>

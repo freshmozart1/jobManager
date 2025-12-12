@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import AppDrawer from "@/components/ui/AppDrawer/appDrawer";
 import { AppUserAvatar } from "@/components/ui/appUserAvatar";
 import AppSearch from "@/components/ui/appSearch";
 import AppHome from "@/components/ui/appHome";
-import { AppDrawerProvider } from "@/components/ui/AppDrawer";
+import { AppDrawer } from "@/components/ui/AppDrawer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -25,25 +24,21 @@ export const metadata: Metadata = {
 export default async function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactElement;
 }>) {
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AppDrawerProvider>
-          <AppDrawer>
-            <div data-position="left" className="p-2 flex flex-col gap-2 justify-center items-center" style={{ width: 100 }}>
-              <AppUserAvatar />
-              <AppHome />
-              <AppSearch />
-            </div>
-            <div data-position="bottom" className="p-2 flex flex-col gap-2 justify-center items-center">Bottom</div>
-            <div data-position="right" className="p-2 flex flex-col gap-2 justify-center items-center">Right</div>
-          </AppDrawer>
+        <AppDrawer>
+          <div data-position="left" className="p-2 flex flex-col gap-2 justify-center items-center">
+            <AppUserAvatar />
+            <AppHome />
+            <AppSearch />
+          </div>
           {children}
-        </AppDrawerProvider>
+        </AppDrawer>
       </body>
     </html>
   );

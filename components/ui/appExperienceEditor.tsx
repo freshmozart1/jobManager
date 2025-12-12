@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Edit, Plus, RotateCcw, Trash } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import AppExperienceItemForm from "@/components/ui/appExperienceItemForm";
 import { PersonalInformationExperienceItem } from "@/types";
 import { cn, formatMonthYear } from "@/lib/utils";
 import { experienceItemsEqual, normaliseExperienceItems, sortExperienceItems } from "@/lib/experience";
+import { useAppDrawer } from "@/components/ui/AppDrawer";
 
 type AppExperienceEditorProps = {
     experience: PersonalInformationExperienceItem[];
@@ -45,13 +46,16 @@ function truncateSummary(summary: string): string {
 
 export default function AppExperienceEditor({ experience, onChange, onPersist }: AppExperienceEditorProps) {
     const [items, setItems] = useState<PersonalInformationExperienceItem[]>(() => sortExperienceItems(normaliseExperienceItems(experience)));
-    const [sheetOpen, setSheetOpen] = useState(false);
     const [sheetMode, setSheetMode] = useState<"create" | "edit">("create");
     const [sheetItemIndex, setSheetItemIndex] = useState<number | null>(null);
     const [pendingDelete, setPendingDelete] = useState<PendingDeleteState | null>(null);
     const [isPersisting, setIsPersisting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [sheetOpen, setSheetOpen] = useState(false);
+    const [formKey, setFormKey] = useState(0);
     const errorTimerRef = useRef<number | null>(null);
+
+    const { toggleDrawer } = useAppDrawer();
 
     useEffect(() => {
         return () => {
@@ -87,20 +91,6 @@ export default function AppExperienceEditor({ experience, onChange, onPersist }:
 
     const interactionsLocked = Boolean(pendingDelete) || isPersisting;
 
-    const handleOpenCreate = () => {
-        if (interactionsLocked) return;
-        setSheetMode("create");
-        setSheetItemIndex(null);
-        setSheetOpen(true);
-    };
-
-    const handleOpenEdit = (index: number) => {
-        if (interactionsLocked) return;
-        setSheetMode("edit");
-        setSheetItemIndex(index);
-        setSheetOpen(true);
-    };
-
     const refreshParent = useCallback((nextItems: PersonalInformationExperienceItem[]) => {
         setItems(nextItems);
         onChange(nextItems);
@@ -119,7 +109,7 @@ export default function AppExperienceEditor({ experience, onChange, onPersist }:
         }
     }, [onPersist, refreshParent, showError]);
 
-    const handleSubmit = async (item: PersonalInformationExperienceItem) => {
+    const handleSubmit = useCallback(async (item: PersonalInformationExperienceItem) => {
         const snapshot = items;
         let nextItems: PersonalInformationExperienceItem[];
         if (sheetMode === "create") {
@@ -130,7 +120,54 @@ export default function AppExperienceEditor({ experience, onChange, onPersist }:
             nextItems = items;
         }
         refreshParent(nextItems);
+        setSheetOpen(false);
         await persistChanges(nextItems, snapshot, "Failed to save experience. Reverted changes.");
+    }, [items, sheetMode, sheetItemIndex, refreshParent, persistChanges]);
+
+    const handleCancel = useCallback(() => {
+        setSheetItemIndex(null);
+        setSheetOpen(false);
+    }, []);
+
+    const drawerContent = useMemo(() => {
+        const initialValue = sheetItemIndex != null ? items[sheetItemIndex] : undefined;
+        return (
+            <AppExperienceItemForm
+                key={formKey}
+                mode={sheetMode}
+                initialValue={initialValue}
+                onSubmit={handleSubmit}
+                onCancel={handleCancel}
+                disabled={interactionsLocked}
+            />
+        );
+    }, [sheetMode, sheetItemIndex, items, handleSubmit, handleCancel, interactionsLocked, formKey]);
+
+    const prevSheetOpen = useRef(sheetOpen);
+
+    useEffect(() => {
+        if (sheetOpen) {
+            toggleDrawer('right', drawerContent, 0, true);
+        } else if (prevSheetOpen.current) {
+            toggleDrawer('right', undefined);
+        }
+        prevSheetOpen.current = sheetOpen;
+    }, [sheetOpen, drawerContent, toggleDrawer]);
+
+    const handleOpenCreate = () => {
+        if (interactionsLocked) return;
+        setSheetMode("create");
+        setSheetItemIndex(null);
+        setFormKey((prev) => prev + 1);
+        setSheetOpen(true);
+    };
+
+    const handleOpenEdit = (index: number) => {
+        if (interactionsLocked) return;
+        setSheetMode("edit");
+        setSheetItemIndex(index);
+        setFormKey((prev) => prev + 1);
+        setSheetOpen(true);
     };
 
     const finalizeDelete = useCallback(async (state: PendingDeleteState) => {
@@ -262,24 +299,6 @@ export default function AppExperienceEditor({ experience, onChange, onPersist }:
                     );
                 })}
             </div>
-            <AppExperienceItemForm
-                open={sheetOpen}
-                mode={sheetMode}
-                initialValue={sheetItemIndex != null ? items[sheetItemIndex] : undefined}
-                onOpenChange={(next) => {
-                    if (!next) {
-                        setSheetOpen(false);
-                        setSheetItemIndex(null);
-                    } else {
-                        setSheetOpen(true);
-                    }
-                }}
-                onSubmit={handleSubmit}
-                onCancel={() => {
-                    setSheetItemIndex(null);
-                }}
-                disabled={interactionsLocked}
-            />
         </div>
     );
 }

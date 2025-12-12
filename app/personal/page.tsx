@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import useToUrl from "@/hooks/useToUrl";
-import { type PersonalInformationSkill, type PersonalInformationExperienceItem } from "@/types";
+import { type PersonalInformationSkill, type PersonalInformationExperienceItem, type PersonalInformationEducation } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +19,9 @@ import {
 import BadgeInput from "@/components/ui/badgeInput";
 import { AppSkillsEditor } from "@/components/ui/appSkillsEditor";
 import AppExperienceEditor from "@/components/ui/appExperienceEditor";
+import AppEducationEditor from "@/components/ui/appEducationEditor";
 import { normaliseExperienceItems, serializeExperienceItems } from "@/lib/experience";
+import { normaliseEducationItems } from "@/lib/education";
 import usePersonal from "@/hooks/usePersonal";
 
 export default function PersonalPage() {
@@ -104,6 +106,46 @@ export default function PersonalPage() {
         } catch (error) {
             console.error('Error saving experience:', error);
             throw (error instanceof Error ? error : new Error('Failed to save experience.'));
+        } finally {
+            setSaving(false);
+            setEditedField(null);
+        }
+    };
+
+    const persistEducation = async (nextItems: PersonalInformationEducation[]) => {
+        setSaving(true);
+        setEditedField('education');
+        try {
+            const response = await fetch(toUrl('/api/personal'), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'education', value: nextItems })
+            });
+
+            if (!response.ok) {
+                let message = 'Failed to save education.';
+                try {
+                    const parsed = await response.json();
+                    if (parsed?.error) {
+                        message = parsed.error;
+                    }
+                } catch {
+                    try {
+                        const text = await response.text();
+                        if (text) message = text;
+                    } catch {
+                        // ignore
+                    }
+                }
+                throw new Error(message);
+            }
+
+            const updated = await response.json();
+            const normalizedEducation = normaliseEducationItems(updated.value);
+            setPersonalInfo(prev => prev ? { ...prev, education: normalizedEducation } : null);
+        } catch (error) {
+            console.error('Error saving education:', error);
+            throw (error instanceof Error ? error : new Error('Failed to save education.'));
         } finally {
             setSaving(false);
             setEditedField(null);
@@ -413,34 +455,12 @@ export default function PersonalPage() {
                     <CardTitle>Education</CardTitle>
                     <CardDescription>Your educational background</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    <div>
-                        <Label htmlFor="education-json">Education (JSON format)</Label>
-                        {personalInfo.education?.length === 0 ? (
-                            <div className="text-sm text-muted-foreground p-4 border rounded-md bg-muted/50">
-                                No education information added yet.
-                            </div>
-                        ) : <Textarea
-                            id="education-json"
-                            rows={6}
-                            value={JSON.stringify(personalInfo.education, null, 2)}
-                            onChange={(e) => {
-                                try {
-                                    const parsed = JSON.parse(e.target.value);
-                                    setPersonalInfo(prev => prev ? { ...prev, education: parsed } : null);
-                                } catch {
-                                    // Invalid JSON, don't update
-                                }
-                            }}
-                        />}
-                    </div>
-                    <Button
-                        onClick={() => handleSave('education', personalInfo.education)}
-                        disabled={saving && editedField === 'education'}
-                    >
-                        {saving && editedField === 'education' ? <LoaderCircle className="animate-spin" /> : <Save />}
-                        Save Education
-                    </Button>
+                <CardContent>
+                    <AppEducationEditor
+                        education={personalInfo.education}
+                        onChange={(items) => setPersonalInfo(prev => prev ? { ...prev, education: items } : prev)}
+                        onPersist={persistEducation}
+                    />
                 </CardContent>
             </Card>
 

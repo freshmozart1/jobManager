@@ -2,7 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 
-import type { UndoState } from "./hooks/useUndoBanner";
+export type UndoState = {
+    mergedCount: number;
+    names: string[];
+};
 
 type AppSkillsUndoBannerProps = {
     undoState: UndoState | null;

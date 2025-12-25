@@ -60,7 +60,6 @@ function validateSkillDraft(
     }
     if (aliases.length > maxAliasCount) errors.aliases = "Up to 5 aliases allowed.";
 
-    const nameKey = normaliseName(name);
     for (const alias of aliases) {
         const aliasTrimmed = alias.trim();
         const aliasKey = normaliseName(aliasTrimmed);
@@ -72,7 +71,7 @@ function validateSkillDraft(
             errors.aliases = "Aliases must be 10 characters or less.";
             break;
         }
-        if (aliasKey === nameKey) {
+        if (aliasKey === normaliseName(name)) {
             errors.aliases = "Aliases must differ from the name.";
             break;
         }
@@ -86,7 +85,7 @@ function validateSkillDraft(
     return errors;
 }
 
-export default function AppSkillsEditorInner({
+export default function AppSkillsEditorContainer({
     editor,
     nameTruncateAt = 12,
     searchDebounce = 150,
@@ -434,16 +433,12 @@ export default function AppSkillsEditorInner({
         ]
     );
 
-    const selectAllDisabled = categoryOptions.length === 0 || (hasCategorySelection && selectedCategoryCount === categoryOptions.length);
-    const deselectAllDisabled = selectedCategoryCount === 0;
 
     const selectedIndicesArray: number[] = useMemo<number[]>(
         () => Array.from<number>(selectedIndices).sort((a: number, b: number) => a - b),
         [selectedIndices]
     );
     const showBulkDelete: boolean = selectedIndicesArray.length > 1;
-    const bulkDeleteDisabled: boolean = editor.isPersisting;
-    const disableSheetSave: boolean = editor.isPersisting || Object.keys(draftErrors).length > 0;
 
     useEffect(
         () => {
@@ -471,7 +466,7 @@ export default function AppSkillsEditorInner({
             categoryOptions={categoryOptions}
             isPersisting={editor.isPersisting}
             MAX_CATEGORY_LENGTH={maxCategoryLength}
-            disableSheetSave={disableSheetSave}
+            disableSheetSave={editor.isPersisting || Object.keys(draftErrors).length > 0}
             upsertSkill={upsertSkill}
         />,
         [
@@ -481,7 +476,6 @@ export default function AppSkillsEditorInner({
             draftErrors,
             categoryOptions,
             editor.isPersisting,
-            disableSheetSave,
             maxCategoryLength,
             setSheetOpen,
             updateDraft,
@@ -524,8 +518,8 @@ export default function AppSkillsEditorInner({
                 namesLabel={namesLabel}
                 selectAllCategories={selectAllCategories}
                 deselectAllCategories={deselectAllCategories}
-                selectAllDisabled={selectAllDisabled}
-                deselectAllDisabled={deselectAllDisabled}
+                selectAllDisabled={categoryOptions.length === 0 || (hasCategorySelection && selectedCategoryCount === categoryOptions.length)}
+                deselectAllDisabled={selectedCategoryCount === 0}
                 categoryOptions={categoryOptions}
                 selectedCategories={selectedCategories}
                 toggleCategory={toggleCategory}
@@ -549,7 +543,7 @@ export default function AppSkillsEditorInner({
                 NAME_TRUNCATE_AT={nameTruncateAt}
                 bulkDeleteRef={bulkDeleteRef}
                 selectedIndicesArray={selectedIndicesArray}
-                bulkDeleteDisabled={bulkDeleteDisabled}
+                bulkDeleteDisabled={editor.isPersisting}
                 showBulkDelete={showBulkDelete}
             />
 

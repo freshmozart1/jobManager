@@ -1,4 +1,4 @@
-import { PersonalInformation, PersonalInformationDocument, PersonalInformationExperienceItem } from "@/types";
+import { PersonalInformation, PersonalInformationDocument, PersonalInformationExperienceItem, PersonalInformationSkill } from "@/types";
 import { Db } from "mongodb";
 import { NoPersonalInformationContactError, NoPersonalInformationEligibilityError, NoPersonalInformationConstraintsError, NoPersonalInformationPreferencesError, NoPersonalInformationSkillsError, NoPersonalInformationExperienceError, NoPersonalInformationEducationError, NoPersonalInformationCertificationsError, NoPersonalInformationLanguageSpokenError, NoPersonalInformationExclusionsError, NoPersonalInformationMotivationsError, NoPersonalInformationCareerGoalsError } from "./errors";
 import { makeUtcMonthYear, normaliseTags, formatMonthYear } from "./utils";
@@ -102,3 +102,36 @@ export function serializeExperienceItems(
         tags: normaliseTags(item.tags),
     }));
 }
+
+export function normaliseSkills(value: unknown): PersonalInformationSkill[] {
+    if (!Array.isArray(value)) return [];
+    return value
+        .map((entry) => {
+            if (typeof entry !== "object" || entry === null) return null;
+            const source = entry as Record<string, unknown>;
+            const name = typeof source.name === "string" ? source.name.trim() : "";
+            const category = typeof source.category === "string" ? source.category.trim() : "";
+            const level = typeof source.level === "string" ? source.level.trim() : "";
+            const years = typeof source.years === "number" ? source.years : Number(source.years);
+            const last_used = typeof source.last_used === "string" ? source.last_used : "";
+            const aliasesRaw = Array.isArray(source.aliases) ? source.aliases : [];
+            const aliases = aliasesRaw
+                .filter((a): a is string => typeof a === "string")
+                .map((a) => a.trim())
+                .filter(Boolean);
+            const primary = Boolean(source.primary);
+
+            if (!name) return null;
+            return {
+                name,
+                aliases,
+                category,
+                level,
+                years: Number.isFinite(years) ? years : 0,
+                last_used,
+                primary,
+            } satisfies PersonalInformationSkill;
+        })
+        .filter((item): item is PersonalInformationSkill => item !== null);
+}
+

@@ -1,7 +1,7 @@
 import { PersonalInformation } from "@/types";
 import { useEffect, useState, Dispatch, SetStateAction } from "react";
 import useToUrl from "./useToUrl";
-import { normaliseExperienceItems } from "@/lib/experience";
+import { normaliseExperienceItems } from "@/lib/personal";
 
 export default function usePersonal(): [PersonalInformation | null, Dispatch<SetStateAction<PersonalInformation | null>>, boolean] {
     const toUrl = useToUrl();

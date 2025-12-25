@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { PersonalInformationSkill } from "@/types";
 
-import { normaliseName } from "../shared";
+import { normaliseName } from "..";
 
 const CATEGORY_FILTER_STORAGE_KEY = "personal.skills.categoryFilter";
 

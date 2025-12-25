@@ -8,7 +8,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/in
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Search, ChevronsUpDown } from "lucide-react";
 
-import { normaliseName } from "./shared";
+import { normaliseName } from ".";
 
 type AppSkillsFiltersProps = {
     search: string;

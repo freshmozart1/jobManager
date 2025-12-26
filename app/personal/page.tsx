@@ -19,9 +19,9 @@ import {
 import BadgeInput from "@/components/ui/badgeInput";
 import { AppSkillsEditor } from "@/components/ui/appSkillsEditor";
 import { AppExperienceEditor } from "@/components/ui/appExperienceEditor";
-import AppEducationEditor from "@/components/ui/appEducationEditor";
+import AppEducationEditor from "@/components/ui/appEducationEditor/appEducationEditor";
 import { normaliseExperienceItems, serializeExperienceItems } from "@/lib/personal";
-import { normaliseEducationItems } from "@/lib/education";
+import { normaliseEducationItems } from "@/lib/personal";
 import usePersonal from "@/hooks/usePersonal";
 
 export default function PersonalPage() {

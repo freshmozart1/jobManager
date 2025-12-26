@@ -6,7 +6,7 @@ import AppExperienceItemForm from "./appExperienceItemForm";
 import { cn } from "@/lib/utils";
 import { AppItemUndoBanner } from "@/components/ui/appItemEditor/AppItemUndoBanner";
 import AppExperienceCard from "./appExperienceCard";
-import AppAddExperienceButton from "./appAddExperienceButton";
+import AppAddItemButton from "../appItemEditor/appAddItemButton";
 
 type AppExperienceEditorInnerProps = {
     editor: ItemEditorController<PersonalInformationExperienceItem>;
@@ -58,7 +58,7 @@ export default function AppExperienceCardContainer({ editor, summarySnippetLengt
             )}
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                <AppAddExperienceButton editor={editor} />
+                <AppAddItemButton editor={editor} label="Add experience" />
                 {
                     editor.items.map((item, index) => <AppExperienceCard key={index} item={item} editor={editor} experienceItemIndex={index} summarySnippetLength={summarySnippetLength} />)
                 }

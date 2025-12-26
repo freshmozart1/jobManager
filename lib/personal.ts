@@ -1,4 +1,4 @@
-import { PersonalInformation, PersonalInformationDocument, PersonalInformationExperienceItem, PersonalInformationSkill } from "@/types";
+import { PersonalInformation, PersonalInformationDocument, PersonalInformationEducation, PersonalInformationExperienceItem, PersonalInformationSkill } from "@/types";
 import { Db } from "mongodb";
 import { NoPersonalInformationContactError, NoPersonalInformationEligibilityError, NoPersonalInformationConstraintsError, NoPersonalInformationPreferencesError, NoPersonalInformationSkillsError, NoPersonalInformationExperienceError, NoPersonalInformationEducationError, NoPersonalInformationCertificationsError, NoPersonalInformationLanguageSpokenError, NoPersonalInformationExclusionsError, NoPersonalInformationMotivationsError, NoPersonalInformationCareerGoalsError } from "./errors";
 import { makeUtcMonthYear, normaliseTags, formatMonthYear } from "./utils";
@@ -133,5 +133,27 @@ export function normaliseSkills(value: unknown): PersonalInformationSkill[] {
             } satisfies PersonalInformationSkill;
         })
         .filter((item): item is PersonalInformationSkill => item !== null);
+}
+export function normaliseEducationItems(value: unknown): PersonalInformationEducation[] {
+    if (!Array.isArray(value)) return [];
+    return value
+        .map((entry) => {
+            if (typeof entry !== "object" || entry === null) return null;
+            const source = entry as Record<string, unknown>;
+            const degree = typeof source.degree === "string" ? source.degree.trim() : "";
+            const field = typeof source.field === "string" ? source.field.trim() : "";
+            const institution = typeof source.institution === "string" ? source.institution.trim() : "";
+            const graduation_year = Number(source.graduation_year);
+
+            if (!degree || !field || !institution || !Number.isFinite(graduation_year)) return null;
+
+            return {
+                degree,
+                field,
+                institution,
+                graduation_year,
+            };
+        })
+        .filter((item): item is PersonalInformationEducation => item !== null);
 }
 

@@ -2,7 +2,7 @@ import type { ItemEditorController } from "@/components/ui/appItemEditor/useItem
 import type { PersonalInformationExperienceItem } from "@/types";
 import { useAppDrawer } from "../AppDrawer";
 import { useEffect, useRef } from "react";
-import AppExperienceItemForm from "../appExperienceItemForm";
+import AppExperienceItemForm from "./appExperienceItemForm";
 import { cn } from "@/lib/utils";
 import { AppItemUndoBanner } from "@/components/ui/appItemEditor/AppItemUndoBanner";
 import AppExperienceCard from "./appExperienceCard";

@@ -36,39 +36,37 @@ function validateSkillDraft(
 ): ValidationErrors {
     const errors: ValidationErrors = {};
     const { name, category, years: dYears, last_used, aliases } = draft;
-    const trimmedName = name.trim();
+    const normalizedName = normaliseName(name);
     const trimmedCategory = category.trim();
     const years = Number(dYears);
+    const lastUsedMonth = Number(last_used.split("-")[1]);
     const aliasSet = new Set<string>();
 
-    if (!trimmedName) errors.name = "Name is required.";
-    else {
-        const normalized = normaliseName(trimmedName);
-        if (existing.some(
-            skill => (originalName && normaliseName(originalName) === normalized)
-                ? false
-                : normaliseName(skill.name) === normalized
-        )) errors.name = "Name must be unique.";
-    }
+    if (!normalizedName) errors.name = "Name is required.";
+    else if (existing.some(
+        skill => (originalName && normaliseName(originalName) === normalizedName)
+            ? false
+            : normaliseName(skill.name) === normalizedName
+    )) errors.name = "Name must be unique.";
+
     if (!trimmedCategory) errors.category = "Category is required.";
-    else if (trimmedCategory.length > maxCategoryLength) errors.category = "Category must be 30 characters or less.";
+    else if (trimmedCategory.length > maxCategoryLength) errors.category = `Category must be ${maxCategoryLength} characters or less.`;
+
     if (Number.isNaN(years) || years < 0) errors.years = "Years must be a non-negative number.";
+
     if (!/^\d{4}-\d{2}$/.test(last_used)) errors.last_used = "Use YYYY-MM format.";
-    else {
-        const month = Number(last_used.split("-")[1]);
-        if (month < 1 || month > 12) errors.last_used = "Month must be between 01 and 12.";
-    }
-    if (aliases.length > maxAliasCount) errors.aliases = "Up to 5 aliases allowed.";
+    else if (lastUsedMonth < 1 || lastUsedMonth > 12) errors.last_used = "Month must be between 01 and 12.";
+
+    if (aliases.length > maxAliasCount) errors.aliases = `Up to ${maxAliasCount} aliases allowed.`;
 
     for (const alias of aliases) {
-        const aliasTrimmed = alias.trim();
-        const aliasKey = normaliseName(aliasTrimmed);
-        if (aliasTrimmed.length === 0) {
+        const aliasKey = normaliseName(alias);
+        if (aliasKey.length === 0) {
             errors.aliases = "Aliases cannot be empty.";
             break;
         }
-        if (aliasTrimmed.length > maxAliasLength) {
-            errors.aliases = "Aliases must be 10 characters or less.";
+        if (aliasKey.length > maxAliasLength) {
+            errors.aliases = `Aliases must be ${maxAliasLength} characters or less.`;
             break;
         }
         if (aliasKey === normaliseName(name)) {
@@ -102,7 +100,7 @@ export default function AppSkillsEditorContainer({
     const [selectedIndices, setSelectedIndices] = useState<Set<number>>(new Set());
     const [sheetOpen, setSheetOpen] = useState(false);
     const [sheetMode, setSheetMode] = useState<"create" | "edit">("create");
-    const [draft, setDraft] = useState<SkillDraft>({
+    const emptyDraft: SkillDraft = useMemo<SkillDraft>(() => ({
         name: "",
         category: "",
         level: "",
@@ -110,7 +108,8 @@ export default function AppSkillsEditorContainer({
         last_used: "",
         aliases: [],
         primary: false,
-    });
+    }), []);
+    const [draft, setDraft] = useState<SkillDraft>(emptyDraft);
     const [originalName, setOriginalName] = useState<string | undefined>(undefined);
     const [draftErrors, setDraftErrors] = useState<ValidationErrors>({});
     const triggerRef = useRef<HTMLButtonElement | null>(null);
@@ -213,20 +212,12 @@ export default function AppSkillsEditorContainer({
     const openCreateSheet: () => void = useCallback<() => void>(
         () => {
             setSheetMode("create");
-            setDraft({
-                name: "",
-                category: "",
-                level: "",
-                years: "",
-                last_used: "",
-                aliases: [],
-                primary: false,
-            });
+            setDraft(emptyDraft);
             setOriginalName(undefined);
             setDraftErrors({});
             setSheetOpen(true);
         },
-        []
+        [emptyDraft]
     );
 
     useEffect(

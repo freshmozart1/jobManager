@@ -4,8 +4,7 @@ import mongoPromise from "@/lib/mongodb";
 import { fetchPersonalInformation } from "@/lib/personal";
 import { NextRequest, NextResponse } from "next/server";
 import { PersonalInformationDocument } from "@/types";
-import { MaxTagCount, MaxTagLength, VALID_PERSONAL_INFORMATION_TYPES } from "@/lib/constants";
-import { normaliseTags } from "@/lib/utils";
+import { VALID_PERSONAL_INFORMATION_TYPES } from "@/lib/constants";
 
 export function OPTIONS() {
     return new NextResponse(null, { headers: corsHeaders() });

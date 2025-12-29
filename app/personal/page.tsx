@@ -2,12 +2,11 @@
 
 import { useCallback, useRef, useState } from "react";
 import useToUrl from "@/hooks/useToUrl";
-import { type PersonalInformationSkill, type PersonalInformationExperienceItem, type PersonalInformationEducation, PersonalInformationCertification, PersonalInformationLanguageSpoken, type PersonalInformationEligibility, type PersonalInformationMotivation } from "@/types";
+import { type PersonalInformationSkill, type PersonalInformationExperienceItem, type PersonalInformationEducation, PersonalInformationCertification, PersonalInformationLanguageSpoken, type PersonalInformationEligibility, type PersonalInformationMotivation, type PersonalInformationCareerGoal } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { LoaderCircle, Save, ChevronDown, Phone, Globe, MapPin, Users, Briefcase, Building, Plus } from "lucide-react";
 import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from "@/components/ui/inputGroup";
 import {
@@ -28,6 +27,7 @@ import AppLanguagesEditor from "@/components/ui/AppLanguagesEditor/appLanguagesE
 import { AppEligibilityEditor } from "@/components/ui/AppEligibilityEditor";
 import { AppExclusionsEditor } from "@/components/ui/AppExclusionsEditor";
 import AppMotivationsEditor from "@/components/ui/AppMotivationsEditor/appMotivationsEditor";
+import AppCareerGoalsEditor from "@/components/ui/AppCareerGoalsEditor/appCareerGoalsEditor";
 
 export default function PersonalPage() {
     const toUrl = useToUrl();
@@ -327,6 +327,43 @@ export default function PersonalPage() {
         catch (error) {
             console.error('Error saving motivations:', error);
             throw (error instanceof Error ? error : new Error('Failed to save motivations.'));
+        }
+        finally {
+            setSaving(false);
+            setEditedField(null);
+        }
+    };
+
+    const persistCareerGoals = async (nextCareerGoals: PersonalInformationCareerGoal[]) => {
+        setSaving(true);
+        setEditedField('career_goals');
+        try {
+            const response = await fetch(toUrl('/api/personal'), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'career_goals', value: nextCareerGoals })
+            });
+            if (!response.ok) {
+                let message = 'Failed to save career goals.';
+                try {
+                    const parsed = await response.json();
+                    if (parsed?.error) {
+                        message = parsed.error;
+                    }
+                } catch {
+                    try {
+                        const text = await response.text();
+                        if (text) message = text;
+                    } catch {
+                        // ignore
+                    }
+                }
+                throw new Error(message);
+            }
+        }
+        catch (error) {
+            console.error('Error saving career goals:', error);
+            throw (error instanceof Error ? error : new Error('Failed to save career goals.'));
         }
         finally {
             setSaving(false);
@@ -704,29 +741,11 @@ export default function PersonalPage() {
                     <CardDescription>Your long-term career objectives</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div>
-                        <Label htmlFor="career-goals-json">Career Goals (JSON format)</Label>
-                        <Textarea
-                            id="career-goals-json"
-                            rows={6}
-                            value={JSON.stringify(personalInfo.career_goals, null, 2)}
-                            onChange={(e) => {
-                                try {
-                                    const parsed = JSON.parse(e.target.value);
-                                    setPersonalInfo(prev => prev ? { ...prev, career_goals: parsed } : null);
-                                } catch {
-                                    // Invalid JSON, don't update
-                                }
-                            }}
-                        />
-                    </div>
-                    <Button
-                        onClick={() => handleSave('career_goals', personalInfo.career_goals)}
-                        disabled={saving && editedField === 'career_goals'}
-                    >
-                        {saving && editedField === 'career_goals' ? <LoaderCircle className="animate-spin" /> : <Save />}
-                        Save Career Goals
-                    </Button>
+                    <AppCareerGoalsEditor
+                        careerGoals={personalInfo.career_goals}
+                        onChange={(items) => setPersonalInfo(prev => prev ? { ...prev, career_goals: items } : prev)}
+                        onPersist={persistCareerGoals}
+                    />
                 </CardContent>
             </Card>
         </>

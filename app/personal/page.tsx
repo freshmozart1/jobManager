@@ -26,6 +26,7 @@ import usePersonal from "@/hooks/usePersonal";
 import AppCertificationEditor from "@/components/ui/AppCertificationEditor/appCertificationEditor";
 import AppLanguagesEditor from "@/components/ui/AppLanguagesEditor/appLanguagesEditor";
 import { AppEligibilityEditor } from "@/components/ui/AppEligibilityEditor";
+import { AppExclusionsEditor } from "@/components/ui/AppExclusionsEditor";
 
 export default function PersonalPage() {
     const toUrl = useToUrl();
@@ -634,63 +635,12 @@ export default function PersonalPage() {
                     <CardDescription>Things you want to avoid</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="space-y-4">
-                        <div>
-                            <BadgeInput
-                                id="avoid-roles"
-                                label="Avoid Roles"
-                                value={personalInfo.exclusions.avoid_roles}
-                                onChange={(avoid_roles) => setPersonalInfo(prev => prev ? {
-                                    ...prev,
-                                    exclusions: { ...prev.exclusions, avoid_roles }
-                                } : null)}
-                                placeholder="Type role and press ','"
-                            />
-                        </div>
-                        <div>
-                            <BadgeInput
-                                id="avoid-technologies"
-                                label="Avoid Technologies"
-                                value={personalInfo.exclusions.avoid_technologies}
-                                onChange={(avoid_technologies) => setPersonalInfo(prev => prev ? {
-                                    ...prev,
-                                    exclusions: { ...prev.exclusions, avoid_technologies }
-                                } : null)}
-                                placeholder="Type technology and press ','"
-                            />
-                        </div>
-                        <div>
-                            <BadgeInput
-                                id="avoid-industries"
-                                label="Avoid Industries"
-                                value={personalInfo.exclusions.avoid_industries}
-                                onChange={(avoid_industries) => setPersonalInfo(prev => prev ? {
-                                    ...prev,
-                                    exclusions: { ...prev.exclusions, avoid_industries }
-                                } : null)}
-                                placeholder="Type industry and press ','"
-                            />
-                        </div>
-                        <div>
-                            <BadgeInput
-                                id="avoid-companies"
-                                label="Avoid Companies"
-                                value={personalInfo.exclusions.avoid_companies}
-                                onChange={(avoid_companies) => setPersonalInfo(prev => prev ? {
-                                    ...prev,
-                                    exclusions: { ...prev.exclusions, avoid_companies }
-                                } : null)}
-                                placeholder="Type company and press ','"
-                            />
-                        </div>
-                    </div>
-                    <Button
-                        onClick={() => handleSave('exclusions', personalInfo.exclusions)}
-                        disabled={saving && editedField === 'exclusions'}
-                    >
-                        {saving && editedField === 'exclusions' ? <LoaderCircle className="animate-spin" /> : <Save />}
-                        Save Exclusions
-                    </Button>
+                    <AppExclusionsEditor
+                        exclusions={personalInfo.exclusions}
+                        onChange={(exclusions) => setPersonalInfo(prev => prev ? { ...prev, exclusions } : prev)}
+                        onSave={() => handleSave('exclusions', personalInfo.exclusions)}
+                        saving={saving && editedField === 'exclusions'}
+                    />
                 </CardContent>
             </Card>
 

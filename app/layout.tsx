@@ -4,7 +4,7 @@ import "./globals.css";
 import { AppUserAvatar } from "@/components/ui/appUserAvatar";
 import AppSearch from "@/components/ui/appSearch";
 import AppHome from "@/components/ui/appHome";
-import { AppDrawer } from "@/components/ui/AppDrawer";
+import { AppDrawer } from "@/components/ui/appDrawer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

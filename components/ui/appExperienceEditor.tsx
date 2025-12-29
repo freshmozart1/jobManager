@@ -1,0 +1,186 @@
+'use client';
+
+import { PersonalInformationExperienceItem } from "@/types";
+import { normaliseExperienceItems } from "@/lib/personal";
+import { formatMonthYear } from "@/lib/utils";
+import { MaxTagCount, MaxTagLength } from "@/lib/constants";
+import { Badge } from "@/components/ui/badge";
+import {
+    AppItemEditor,
+    AppGenericCardContainer,
+    EditorConfig,
+    ValidationErrors,
+} from "./appItemEditor";
+
+const SUMMARY_SNIPPET_LENGTH = 160;
+const MAX_SUMMARY_LENGTH = 2000;
+
+function truncateSummary(summary: string, length: number): string {
+    if (summary.length <= length) return summary;
+    return `${summary.slice(0, length)}…`;
+}
+
+const experienceConfig: EditorConfig<PersonalInformationExperienceItem> = {
+    singularLabel: "experience",
+    pluralLabel: "experience",
+    fields: [
+        {
+            type: "date",
+            name: "from",
+            label: "Start month",
+            required: true,
+        },
+        {
+            type: "date",
+            name: "to",
+            label: "End month",
+            required: false,
+            allowClear: true,
+        },
+        {
+            type: "text",
+            name: "role",
+            label: "Role",
+            required: true,
+        },
+        {
+            type: "text",
+            name: "company",
+            label: "Company",
+            required: true,
+        },
+        {
+            type: "textarea",
+            name: "summary",
+            label: "Summary",
+            required: true,
+            rows: 5,
+            maxLength: MAX_SUMMARY_LENGTH,
+        },
+        {
+            type: "tags",
+            name: "tags",
+            label: "Tags",
+            required: false,
+            placeholder: "Type tag and press ','",
+        },
+    ],
+    defaultValue: {
+        from: new Date(),
+        to: undefined,
+        role: "",
+        company: "",
+        summary: "",
+        tags: [],
+    },
+    getItemLabel: (item) => {
+        const role = item.role.trim();
+        const company = item.company.trim();
+        if (!role && !company) return "Experience";
+        if (!company) return role;
+        return `${role} @ ${company}`;
+    },
+    getCardTitle: (item) => item.role,
+    getCardDescription: (item) => item.company,
+    getCardMeta: (item) => (
+        <p className="text-sm font-medium text-foreground">
+            {`${formatMonthYear(item.from)} – ${item.to ? formatMonthYear(item.to) : "Present"}`}
+        </p>
+    ),
+    cardContentClassName: "space-y-3",
+    renderCardContent: (item) => (
+        <>
+            <p className="text-sm text-muted-foreground">
+                {truncateSummary(item.summary, SUMMARY_SNIPPET_LENGTH)}
+            </p>
+            {item.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                    {item.tags.map((tag, tagIndex) => (
+                        <Badge key={`${tag}-${tagIndex}`} variant="secondary">
+                            {tag}
+                        </Badge>
+                    ))}
+                </div>
+            )}
+        </>
+    ),
+    validate: (draft): ValidationErrors<PersonalInformationExperienceItem> => {
+        const errors: ValidationErrors<PersonalInformationExperienceItem> = {};
+
+        // Date range validation
+        if (draft.to && draft.from && draft.to.getTime() < draft.from.getTime()) {
+            errors.to = "End month cannot be before the start month.";
+        }
+
+        // Summary length validation
+        if (draft.summary && draft.summary.length > MAX_SUMMARY_LENGTH) {
+            errors.summary = `Summary must be ${MAX_SUMMARY_LENGTH} characters or fewer.`;
+        }
+
+        // Tags validation
+        if (draft.tags.length > MaxTagCount) {
+            errors.tags = `Up to ${MaxTagCount} tags allowed.`;
+        } else if (draft.tags.some((tag) => tag.length > MaxTagLength)) {
+            errors.tags = `Tags must be ${MaxTagLength} characters or fewer.`;
+        }
+
+        return errors;
+    },
+    isDirty: (draft, initial) => {
+        const getTime = (d?: Date) => d?.getTime();
+        return (
+            getTime(draft.from) !== getTime(initial.from) ||
+            getTime(draft.to) !== getTime(initial.to) ||
+            draft.role !== initial.role ||
+            draft.company !== initial.company ||
+            draft.summary !== initial.summary ||
+            draft.tags.length !== initial.tags.length ||
+            draft.tags.some((tag, i) => tag !== initial.tags[i])
+        );
+    },
+    normaliseItems: normaliseExperienceItems,
+    sortItems: (items) =>
+        [...items].sort((a, b) => {
+            const fromDiff =
+                (b.from ? b.from.getTime() : Number.NEGATIVE_INFINITY) -
+                (a.from ? a.from.getTime() : Number.NEGATIVE_INFINITY);
+            if (fromDiff !== 0) return fromDiff;
+            const toDiff =
+                (b.to ? b.to.getTime() : Number.POSITIVE_INFINITY) -
+                (a.to ? a.to.getTime() : Number.POSITIVE_INFINITY);
+            if (toDiff !== 0) return toDiff;
+            return a.role.localeCompare(b.role);
+        }),
+};
+
+type AppExperienceEditorProps = {
+    experience: PersonalInformationExperienceItem[];
+    onChange: (items: PersonalInformationExperienceItem[]) => void;
+    onPersist: (items: PersonalInformationExperienceItem[]) => Promise<void>;
+};
+
+export default function AppExperienceEditor({
+    experience,
+    onChange,
+    onPersist,
+}: AppExperienceEditorProps) {
+    return (
+        <AppItemEditor<PersonalInformationExperienceItem>
+            items={experience}
+            normaliseItems={experienceConfig.normaliseItems}
+            sortItems={experienceConfig.sortItems}
+            onChange={onChange}
+            onPersist={onPersist}
+            getItemLabel={experienceConfig.getItemLabel}
+        >
+            {(editor) => (
+                <AppGenericCardContainer<PersonalInformationExperienceItem>
+                    editor={editor}
+                    config={experienceConfig}
+                />
+            )}
+        </AppItemEditor>
+    );
+}
+
+export { AppExperienceEditor };

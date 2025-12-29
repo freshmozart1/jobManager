@@ -18,16 +18,16 @@ import {
 import BadgeInput from "@/components/ui/badgeInput";
 import { AppSkillsEditor } from "@/components/ui/appSkillsEditor";
 import { AppExperienceEditor } from "@/components/ui/appExperienceEditor";
-import AppEducationEditor from "@/components/ui/appEducationEditor/appEducationEditor";
+import AppEducationEditor from "@/components/ui/appEducationEditor";
 import { normaliseExperienceItems, serializeExperienceItems } from "@/lib/personal";
 import { normaliseEducationItems } from "@/lib/personal";
 import usePersonal from "@/hooks/usePersonal";
-import AppCertificationEditor from "@/components/ui/AppCertificationEditor/appCertificationEditor";
-import AppLanguagesEditor from "@/components/ui/AppLanguagesEditor/appLanguagesEditor";
-import { AppEligibilityEditor } from "@/components/ui/AppEligibilityEditor";
-import { AppExclusionsEditor } from "@/components/ui/AppExclusionsEditor";
-import AppMotivationsEditor from "@/components/ui/AppMotivationsEditor/appMotivationsEditor";
-import AppCareerGoalsEditor from "@/components/ui/AppCareerGoalsEditor/appCareerGoalsEditor";
+import AppCertificationEditor from "@/components/ui/appCertificationEditor";
+import AppLanguagesEditor from "@/components/ui/appLanguagesEditor";
+import { AppEligibilityEditor } from "@/components/ui/appEligibilityEditor";
+import { AppExclusionsEditor } from "@/components/ui/appExclusionsEditor";
+import AppMotivationsEditor from "@/components/ui/appMotivationsEditor";
+import AppCareerGoalsEditor from "@/components/ui/appCareerGoalsEditor";
 
 export default function PersonalPage() {
     const toUrl = useToUrl();

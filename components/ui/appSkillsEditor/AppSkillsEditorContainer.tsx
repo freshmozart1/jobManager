@@ -2,7 +2,7 @@ import type { ItemEditorController } from "@/components/ui/appItemEditor/useItem
 import type { PersonalInformationSkill } from "@/types";
 import { Dispatch, SetStateAction, useState, useRef, useEffect, useCallback, type MouseEvent, useMemo } from "react";
 import { SkillRow } from ".";
-import { useAppDrawer } from "@/components/ui/AppDrawer";
+import { useAppDrawer } from "@/components/ui/appDrawer";
 import { AppItemUndoBanner } from "@/components/ui/appItemEditor/AppItemUndoBanner";
 import { SkillDraft, ValidationErrors } from "./AppSkillsEditor";
 import { sortSkills } from ".";

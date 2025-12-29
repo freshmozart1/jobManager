@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import useToUrl from "@/hooks/useToUrl";
-import { type PersonalInformationSkill, type PersonalInformationExperienceItem, type PersonalInformationEducation, PersonalInformationCertification, PersonalInformationLanguageSpoken, type PersonalInformationEligibility } from "@/types";
+import { type PersonalInformationSkill, type PersonalInformationExperienceItem, type PersonalInformationEducation, PersonalInformationCertification, PersonalInformationLanguageSpoken, type PersonalInformationEligibility, type PersonalInformationMotivation } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +27,7 @@ import AppCertificationEditor from "@/components/ui/AppCertificationEditor/appCe
 import AppLanguagesEditor from "@/components/ui/AppLanguagesEditor/appLanguagesEditor";
 import { AppEligibilityEditor } from "@/components/ui/AppEligibilityEditor";
 import { AppExclusionsEditor } from "@/components/ui/AppExclusionsEditor";
+import AppMotivationsEditor from "@/components/ui/AppMotivationsEditor/appMotivationsEditor";
 
 export default function PersonalPage() {
     const toUrl = useToUrl();
@@ -291,6 +292,43 @@ export default function PersonalPage() {
             console.error('Error saving skills:', error);
             throw (error instanceof Error ? error : new Error(String(error)));
         } finally {
+            setSaving(false);
+            setEditedField(null);
+        }
+    };
+
+    const persistMotivations = async (nextMotivations: PersonalInformationMotivation[]) => {
+        setSaving(true);
+        setEditedField('motivations');
+        try {
+            const response = await fetch(toUrl('/api/personal'), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'motivations', value: nextMotivations })
+            });
+            if (!response.ok) {
+                let message = 'Failed to save motivations.';
+                try {
+                    const parsed = await response.json();
+                    if (parsed?.error) {
+                        message = parsed.error;
+                    }
+                } catch {
+                    try {
+                        const text = await response.text();
+                        if (text) message = text;
+                    } catch {
+                        // ignore
+                    }
+                }
+                throw new Error(message);
+            }
+        }
+        catch (error) {
+            console.error('Error saving motivations:', error);
+            throw (error instanceof Error ? error : new Error('Failed to save motivations.'));
+        }
+        finally {
             setSaving(false);
             setEditedField(null);
         }
@@ -651,29 +689,11 @@ export default function PersonalPage() {
                     <CardDescription>What motivates you in your career</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div>
-                        <Label htmlFor="motivations-json">Motivations (JSON format)</Label>
-                        <Textarea
-                            id="motivations-json"
-                            rows={6}
-                            value={JSON.stringify(personalInfo.motivations, null, 2)}
-                            onChange={(e) => {
-                                try {
-                                    const parsed = JSON.parse(e.target.value);
-                                    setPersonalInfo(prev => prev ? { ...prev, motivations: parsed } : null);
-                                } catch {
-                                    // Invalid JSON, don't update
-                                }
-                            }}
-                        />
-                    </div>
-                    <Button
-                        onClick={() => handleSave('motivations', personalInfo.motivations)}
-                        disabled={saving && editedField === 'motivations'}
-                    >
-                        {saving && editedField === 'motivations' ? <LoaderCircle className="animate-spin" /> : <Save />}
-                        Save Motivations
-                    </Button>
+                    <AppMotivationsEditor
+                        motivations={personalInfo.motivations}
+                        onChange={(items) => setPersonalInfo(prev => prev ? { ...prev, motivations: items } : prev)}
+                        onPersist={persistMotivations}
+                    />
                 </CardContent>
             </Card>
 

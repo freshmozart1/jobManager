@@ -1,4 +1,4 @@
-import { PersonalInformation, PersonalInformationCertification, PersonalInformationDocument, PersonalInformationEducation, PersonalInformationExperienceItem, PersonalInformationLanguageSpoken, PersonalInformationSkill } from "@/types";
+import { PersonalInformation, PersonalInformationCertification, PersonalInformationDocument, PersonalInformationEducation, PersonalInformationExperienceItem, PersonalInformationLanguageSpoken, PersonalInformationMotivation, PersonalInformationSkill } from "@/types";
 import { Db } from "mongodb";
 import { NoPersonalInformationContactError, NoPersonalInformationEligibilityError, NoPersonalInformationConstraintsError, NoPersonalInformationPreferencesError, NoPersonalInformationSkillsError, NoPersonalInformationExperienceError, NoPersonalInformationEducationError, NoPersonalInformationCertificationsError, NoPersonalInformationLanguageSpokenError, NoPersonalInformationExclusionsError, NoPersonalInformationMotivationsError, NoPersonalInformationCareerGoalsError } from "./errors";
 import { makeUtcMonthYear, normaliseTags, formatMonthYear } from "./utils";
@@ -195,4 +195,24 @@ export function normaliseLanguages(value: unknown): PersonalInformationLanguageS
             };
         })
         .filter((item): item is PersonalInformationLanguageSpoken => item !== null);
+}
+
+export function normaliseMotivations(value: unknown): PersonalInformationMotivation[] {
+    if (!Array.isArray(value)) return [];
+    return value
+        .map((entry) => {
+            if (typeof entry !== "object" || entry === null) return null;
+            const source = entry as Record<string, unknown>;
+            const topic = typeof source.topic === "string" ? source.topic.trim() : "";
+            const description = typeof source.description === "string" ? source.description.trim() : "";
+
+            if (!topic || !description) return null;
+
+            return {
+                topic,
+                description,
+                reason_lite: "",
+            };
+        })
+        .filter((item): item is PersonalInformationMotivation => item !== null);
 }

@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import useToUrl from "@/hooks/useToUrl";
-import { type PersonalInformationSkill, type PersonalInformationExperienceItem, type PersonalInformationEducation, PersonalInformationCertification, PersonalInformationLanguageSpoken } from "@/types";
+import { type PersonalInformationSkill, type PersonalInformationExperienceItem, type PersonalInformationEducation, PersonalInformationCertification, PersonalInformationLanguageSpoken, type PersonalInformationEligibility } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +25,7 @@ import { normaliseEducationItems } from "@/lib/personal";
 import usePersonal from "@/hooks/usePersonal";
 import AppCertificationEditor from "@/components/ui/AppCertificationEditor/appCertificationEditor";
 import AppLanguagesEditor from "@/components/ui/AppLanguagesEditor/appLanguagesEditor";
+import { AppEligibilityEditor } from "@/components/ui/AppEligibilityEditor";
 
 export default function PersonalPage() {
     const toUrl = useToUrl();
@@ -221,6 +222,46 @@ export default function PersonalPage() {
         catch (error) {
             console.error('Error saving languages:', error);
             throw (error instanceof Error ? error : new Error('Failed to save languages.'));
+        }
+        finally {
+            setSaving(false);
+            setEditedField(null);
+        }
+    };
+
+    const persistEligibility = async (nextEligibility: PersonalInformationEligibility) => {
+        setSaving(true);
+        setEditedField('eligibility');
+        try {
+            const response = await fetch(toUrl('/api/personal'), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'eligibility', value: nextEligibility })
+            });
+            if (!response.ok) {
+                let message = 'Failed to save eligibility.';
+                try {
+                    const parsed = await response.json();
+                    if (parsed?.error) {
+                        message = parsed.error;
+                    }
+                } catch {
+                    try {
+                        const text = await response.text();
+                        if (text) message = text;
+                    } catch {
+                        // ignore
+                    }
+                }
+                throw new Error(message);
+            }
+
+            const updated = await response.json();
+            setPersonalInfo(prev => prev ? { ...prev, eligibility: updated.value } : null);
+        }
+        catch (error) {
+            console.error('Error saving eligibility:', error);
+            throw (error instanceof Error ? error : new Error('Failed to save eligibility.'));
         }
         finally {
             setSaving(false);
@@ -546,30 +587,13 @@ export default function PersonalPage() {
                     <CardTitle>Eligibility</CardTitle>
                     <CardDescription>Work authorization and availability</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    <div>
-                        <Label htmlFor="eligibility-json">Eligibility (JSON format)</Label>
-                        <Textarea
-                            id="eligibility-json"
-                            rows={10}
-                            value={JSON.stringify(personalInfo.eligibility, null, 2)}
-                            onChange={(e) => {
-                                try {
-                                    const parsed = JSON.parse(e.target.value);
-                                    setPersonalInfo(prev => prev ? { ...prev, eligibility: parsed } : null);
-                                } catch {
-                                    // Invalid JSON, don't update
-                                }
-                            }}
-                        />
-                    </div>
-                    <Button
-                        onClick={() => handleSave('eligibility', personalInfo.eligibility)}
-                        disabled={saving && editedField === 'eligibility'}
-                    >
-                        {saving && editedField === 'eligibility' ? <LoaderCircle className="animate-spin" /> : <Save />}
-                        Save Eligibility
-                    </Button>
+                <CardContent>
+                    <AppEligibilityEditor
+                        eligibility={personalInfo.eligibility}
+                        onChange={(eligibility) => setPersonalInfo(prev => prev ? { ...prev, eligibility } : prev)}
+                        onPersist={persistEligibility}
+                        saving={saving && editedField === 'eligibility'}
+                    />
                 </CardContent>
             </Card>
 

@@ -547,29 +547,6 @@ export default function PersonalPage() {
                         onChange={(items) => setPersonalInfo(prev => prev ? { ...prev, certifications: items } : prev)}
                         onPersist={persistCertifications}
                     />
-                    {/* <div>
-                        <Label htmlFor="certifications-json">Certifications (JSON format)</Label>
-                        <Textarea
-                            id="certifications-json"
-                            rows={6}
-                            value={JSON.stringify(personalInfo.certifications, null, 2)}
-                            onChange={(e) => {
-                                try {
-                                    const parsed = JSON.parse(e.target.value);
-                                    setPersonalInfo(prev => prev ? { ...prev, certifications: parsed } : null);
-                                } catch {
-                                    // Invalid JSON, don't update
-                                }
-                            }}
-                        />
-                    </div>
-                    <Button
-                        onClick={() => handleSave('certifications', personalInfo.certifications)}
-                        disabled={saving && editedField === 'certifications'}
-                    >
-                        {saving && editedField === 'certifications' ? <LoaderCircle className="animate-spin" /> : <Save />}
-                        Save Certifications
-                    </Button> */}
                 </CardContent>
             </Card>
 

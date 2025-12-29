@@ -1,4 +1,4 @@
-import { PersonalInformation, PersonalInformationDocument, PersonalInformationEducation, PersonalInformationExperienceItem, PersonalInformationSkill } from "@/types";
+import { PersonalInformation, PersonalInformationCertification, PersonalInformationDocument, PersonalInformationEducation, PersonalInformationExperienceItem, PersonalInformationSkill } from "@/types";
 import { Db } from "mongodb";
 import { NoPersonalInformationContactError, NoPersonalInformationEligibilityError, NoPersonalInformationConstraintsError, NoPersonalInformationPreferencesError, NoPersonalInformationSkillsError, NoPersonalInformationExperienceError, NoPersonalInformationEducationError, NoPersonalInformationCertificationsError, NoPersonalInformationLanguageSpokenError, NoPersonalInformationExclusionsError, NoPersonalInformationMotivationsError, NoPersonalInformationCareerGoalsError } from "./errors";
 import { makeUtcMonthYear, normaliseTags, formatMonthYear } from "./utils";
@@ -157,3 +157,23 @@ export function normaliseEducationItems(value: unknown): PersonalInformationEduc
         .filter((item): item is PersonalInformationEducation => item !== null);
 }
 
+export function normaliseCertifications(value: unknown): PersonalInformationCertification[] {
+    if (!Array.isArray(value)) return [];
+    return value
+        .map((entry) => {
+            if (typeof entry !== "object" || entry === null) return null;
+            const source = entry as Record<string, unknown>;
+            const name = typeof source.name === "string" ? source.name.trim() : "";
+            const issued = typeof source.issued === "string" ? source.issued.trim() : "";
+            const expires = typeof source.expires === "string" ? source.expires.trim() : null;
+
+            if (!name || !issued) return null;
+
+            return {
+                name,
+                issued,
+                expires,
+            };
+        })
+        .filter((item): item is PersonalInformationCertification => item !== null);
+}

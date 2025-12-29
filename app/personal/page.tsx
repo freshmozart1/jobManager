@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import useToUrl from "@/hooks/useToUrl";
-import { type PersonalInformationSkill, type PersonalInformationExperienceItem, type PersonalInformationEducation } from "@/types";
+import { type PersonalInformationSkill, type PersonalInformationExperienceItem, type PersonalInformationEducation, PersonalInformationCertification } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +23,7 @@ import AppEducationEditor from "@/components/ui/appEducationEditor/appEducationE
 import { normaliseExperienceItems, serializeExperienceItems } from "@/lib/personal";
 import { normaliseEducationItems } from "@/lib/personal";
 import usePersonal from "@/hooks/usePersonal";
+import AppCertificationEditor from "@/components/ui/AppCertificationEditor/appCertificationEditor";
 
 export default function PersonalPage() {
     const toUrl = useToUrl();
@@ -147,6 +148,43 @@ export default function PersonalPage() {
             console.error('Error saving education:', error);
             throw (error instanceof Error ? error : new Error('Failed to save education.'));
         } finally {
+            setSaving(false);
+            setEditedField(null);
+        }
+    };
+
+    const persistCertifications = async (nextCertifications: PersonalInformationCertification[]) => {
+        setSaving(true);
+        setEditedField('certifications');
+        try {
+            const response = await fetch(toUrl('/api/personal'), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'certifications', value: nextCertifications })
+            });
+            if (!response.ok) {
+                let message = 'Failed to save certifications.';
+                try {
+                    const parsed = await response.json();
+                    if (parsed?.error) {
+                        message = parsed.error;
+                    }
+                } catch {
+                    try {
+                        const text = await response.text();
+                        if (text) message = text;
+                    } catch {
+                        // ignore
+                    }
+                }
+                throw new Error(message);
+            }
+        }
+        catch (error) {
+            console.error('Error saving certifications:', error);
+            throw (error instanceof Error ? error : new Error('Failed to save certifications.'));
+        }
+        finally {
             setSaving(false);
             setEditedField(null);
         }
@@ -504,7 +542,12 @@ export default function PersonalPage() {
                     <CardDescription>Your professional certifications</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div>
+                    <AppCertificationEditor
+                        certifications={personalInfo.certifications}
+                        onChange={(items) => setPersonalInfo(prev => prev ? { ...prev, certifications: items } : prev)}
+                        onPersist={persistCertifications}
+                    />
+                    {/* <div>
                         <Label htmlFor="certifications-json">Certifications (JSON format)</Label>
                         <Textarea
                             id="certifications-json"
@@ -526,7 +569,7 @@ export default function PersonalPage() {
                     >
                         {saving && editedField === 'certifications' ? <LoaderCircle className="animate-spin" /> : <Save />}
                         Save Certifications
-                    </Button>
+                    </Button> */}
                 </CardContent>
             </Card>
 

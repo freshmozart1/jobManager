@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import useToUrl from "@/hooks/useToUrl";
-import { type PersonalInformationSkill, type PersonalInformationExperienceItem, type PersonalInformationEducation, PersonalInformationCertification } from "@/types";
+import { type PersonalInformationSkill, type PersonalInformationExperienceItem, type PersonalInformationEducation, PersonalInformationCertification, PersonalInformationLanguageSpoken } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +24,7 @@ import { normaliseExperienceItems, serializeExperienceItems } from "@/lib/person
 import { normaliseEducationItems } from "@/lib/personal";
 import usePersonal from "@/hooks/usePersonal";
 import AppCertificationEditor from "@/components/ui/AppCertificationEditor/appCertificationEditor";
+import AppLanguagesEditor from "@/components/ui/AppLanguagesEditor/appLanguagesEditor";
 
 export default function PersonalPage() {
     const toUrl = useToUrl();
@@ -183,6 +184,43 @@ export default function PersonalPage() {
         catch (error) {
             console.error('Error saving certifications:', error);
             throw (error instanceof Error ? error : new Error('Failed to save certifications.'));
+        }
+        finally {
+            setSaving(false);
+            setEditedField(null);
+        }
+    };
+
+    const persistLanguages = async (nextLanguages: PersonalInformationLanguageSpoken[]) => {
+        setSaving(true);
+        setEditedField('languages_spoken');
+        try {
+            const response = await fetch(toUrl('/api/personal'), {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'languages_spoken', value: nextLanguages })
+            });
+            if (!response.ok) {
+                let message = 'Failed to save languages.';
+                try {
+                    const parsed = await response.json();
+                    if (parsed?.error) {
+                        message = parsed.error;
+                    }
+                } catch {
+                    try {
+                        const text = await response.text();
+                        if (text) message = text;
+                    } catch {
+                        // ignore
+                    }
+                }
+                throw new Error(message);
+            }
+        }
+        catch (error) {
+            console.error('Error saving languages:', error);
+            throw (error instanceof Error ? error : new Error('Failed to save languages.'));
         }
         finally {
             setSaving(false);
@@ -557,29 +595,11 @@ export default function PersonalPage() {
                     <CardDescription>Languages you speak</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div>
-                        <Label htmlFor="languages-json">Languages (JSON format)</Label>
-                        <Textarea
-                            id="languages-json"
-                            rows={6}
-                            value={JSON.stringify(personalInfo.languages_spoken, null, 2)}
-                            onChange={(e) => {
-                                try {
-                                    const parsed = JSON.parse(e.target.value);
-                                    setPersonalInfo(prev => prev ? { ...prev, languages_spoken: parsed } : null);
-                                } catch {
-                                    // Invalid JSON, don't update
-                                }
-                            }}
-                        />
-                    </div>
-                    <Button
-                        onClick={() => handleSave('languages_spoken', personalInfo.languages_spoken)}
-                        disabled={saving && editedField === 'languages_spoken'}
-                    >
-                        {saving && editedField === 'languages_spoken' ? <LoaderCircle className="animate-spin" /> : <Save />}
-                        Save Languages
-                    </Button>
+                    <AppLanguagesEditor
+                        languages={personalInfo.languages_spoken}
+                        onChange={(items) => setPersonalInfo(prev => prev ? { ...prev, languages_spoken: items } : prev)}
+                        onPersist={persistLanguages}
+                    />
                 </CardContent>
             </Card>
 

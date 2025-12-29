@@ -1,4 +1,4 @@
-import { PersonalInformation, PersonalInformationCertification, PersonalInformationDocument, PersonalInformationEducation, PersonalInformationExperienceItem, PersonalInformationSkill } from "@/types";
+import { PersonalInformation, PersonalInformationCertification, PersonalInformationDocument, PersonalInformationEducation, PersonalInformationExperienceItem, PersonalInformationLanguageSpoken, PersonalInformationSkill } from "@/types";
 import { Db } from "mongodb";
 import { NoPersonalInformationContactError, NoPersonalInformationEligibilityError, NoPersonalInformationConstraintsError, NoPersonalInformationPreferencesError, NoPersonalInformationSkillsError, NoPersonalInformationExperienceError, NoPersonalInformationEducationError, NoPersonalInformationCertificationsError, NoPersonalInformationLanguageSpokenError, NoPersonalInformationExclusionsError, NoPersonalInformationMotivationsError, NoPersonalInformationCareerGoalsError } from "./errors";
 import { makeUtcMonthYear, normaliseTags, formatMonthYear } from "./utils";
@@ -176,4 +176,23 @@ export function normaliseCertifications(value: unknown): PersonalInformationCert
             };
         })
         .filter((item): item is PersonalInformationCertification => item !== null);
+}
+
+export function normaliseLanguages(value: unknown): PersonalInformationLanguageSpoken[] {
+    if (!Array.isArray(value)) return [];
+    return value
+        .map((entry) => {
+            if (typeof entry !== "object" || entry === null) return null;
+            const source = entry as Record<string, unknown>;
+            const language = typeof source.language === "string" ? source.language.trim() : "";
+            const level = typeof source.level === "string" ? source.level.trim() : "";
+
+            if (!language || !level) return null;
+
+            return {
+                language,
+                level,
+            };
+        })
+        .filter((item): item is PersonalInformationLanguageSpoken => item !== null);
 }

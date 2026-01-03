@@ -1,14 +1,5 @@
 import { ObjectId } from "mongodb";
 
-type PostalAddress = {
-    type?: 'PostalAddress' | string | null;
-    streetAddress?: string | null;
-    addressLocality?: string | null;
-    addressRegion?: string | null;
-    postalCode?: string | null;
-    addressCountry?: string | null;
-};
-
 export type ScrapedJob = {
     id: string;
     trackingId: string;
@@ -33,7 +24,14 @@ export type ScrapedJob = {
     jobFunction?: string | undefined;
     industries?: string | undefined;
     inputUrl: string;
-    companyAddress?: PostalAddress | undefined;
+    companyAddress?: {
+        type?: 'PostalAddress' | string | null;
+        streetAddress?: string | null;
+        addressLocality?: string | null;
+        addressRegion?: string | null;
+        postalCode?: string | null;
+        addressCountry?: string | null;
+    } | undefined;
     companyWebsite?: string | undefined;
     companySlogan?: string | null | undefined;
     companyDescription?: string | undefined;

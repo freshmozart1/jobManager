@@ -54,7 +54,7 @@ export type Job = ScrapedJob & {
 };
 
 
-type PersonalInformationContact = {
+export type PersonalInformationContact = {
     name: string;
     email: string;
     phone: string;
@@ -84,7 +84,7 @@ export type PersonalInformationEligibility = {
     };
 };
 
-type PersonalInformationConstraints = {
+export type PersonalInformationConstraints = {
     salary_min: {
         currency: string;
         amount: number;
@@ -92,7 +92,7 @@ type PersonalInformationConstraints = {
     locations_allowed: string[];
 };
 
-type PersonalInformationPreferences = {
+export type PersonalInformationPreferences = {
     roles: string[];
     seniority: string[];
     company_size: string[];
@@ -167,12 +167,6 @@ export type PersonalInformation = {
     exclusions: PersonalInformationExclusions,
     motivations: PersonalInformationMotivation[],
     career_goals: PersonalInformationCareerGoal[];
-};
-
-export type PersonalInformationDocument = {
-    _id: ObjectId;
-    type: string;
-    value: PersonalInformationContact | PersonalInformationEligibility | PersonalInformationConstraints | PersonalInformationPreferences | PersonalInformationSkill[] | PersonalInformationExperience[] | PersonalInformationEducation[] | PersonalInformationCertification[] | PersonalInformationLanguageSpoken[] | PersonalInformationExclusions | PersonalInformationMotivation[] | PersonalInformationCareerGoal[];
 };
 
 export type AgentType = 'filter' | 'writer' | 'evaluator';

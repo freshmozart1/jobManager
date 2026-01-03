@@ -1,10 +1,10 @@
 import { corsHeaders } from "@/lib/cors";
-import { NoDatabaseNameError, InvalidPersonalInformationTypeError, MissingPersonalInformationFieldsError, PersonalInformationDocumentNotFoundError } from "@/lib/errors";
+import { NoDatabaseNameError, InvalidPersonalInformationTypeError, MissingPersonalInformationFieldsError, PersonalInformationDocumentNotFoundError, NoPersonalInformationCareerGoalsError, NoPersonalInformationCertificationsError, NoPersonalInformationConstraintsError, NoPersonalInformationContactError, NoPersonalInformationEducationError, NoPersonalInformationEligibilityError, NoPersonalInformationExclusionsError, NoPersonalInformationExperienceError, NoPersonalInformationLanguageSpokenError, NoPersonalInformationMotivationsError, NoPersonalInformationPreferencesError, NoPersonalInformationSkillsError } from "@/lib/errors";
 import mongoPromise from "@/lib/mongodb";
-import { fetchPersonalInformation } from "@/lib/personal";
 import { NextRequest, NextResponse } from "next/server";
-import { PersonalInformationDocument } from "@/types";
+import { PersonalInformationPersonalInformationCareerGoal, PersonalInformationCertification, PersonalInformationConstraints, PersonalInformationContact, , PersonalInformationEducation, PersonalInformationEligibility, PersonalInformationExclusions, PersonalInformationExperience, PersonalInformationLanguageSpoken, PersonalInformationMotivation, PersonalInformationPreferences, PersonalInformationSkill } from "@/types";
 import { VALID_PERSONAL_INFORMATION_TYPES } from "@/lib/constants";
+import { Db, ObjectId } from "mongodb";
 
 export function OPTIONS() {
     return new NextResponse(null, { headers: corsHeaders() });
@@ -73,3 +73,32 @@ export async function PUT(req: NextRequest) {
 
     return NextResponse.json(updatedDoc, { headers: corsHeaders(origin) });
 }
+// Map-based personal information fetch -> returns object directly
+
+
+export async function fetchPersonalInformation(db: Db): Promise<PersonalInformation> {
+    return Object.fromEntries(await Promise.all([
+        ['contact', NoPersonalInformationContactError.name],
+        ['eligibility', NoPersonalInformationEligibilityError.name],
+        ['constraints', NoPersonalInformationConstraintsError.name],
+        ['preferences', NoPersonalInformationPreferencesError.name],
+        ['skills', NoPersonalInformationSkillsError.name],
+        ['experience', NoPersonalInformationExperienceError.name],
+        ['education', NoPersonalInformationEducationError.name],
+        ['certifications', NoPersonalInformationCertificationsError.name],
+        ['languages_spoken', NoPersonalInformationLanguageSpokenError.name],
+        ['exclusions', NoPersonalInformationExclusionsError.name],
+        ['motivations', NoPersonalInformationMotivationsError.name],
+        ['career_goals', NoPersonalInformationCareerGoalsError.name]
+    ].map(async ([key, errName]) => {
+        const doc = await db.collection<PersonalInformationDocument>("personalInformation")
+            .findOne({ type: key });
+        if (!doc) throw { status: 400, statusText: errName };
+        return [key, doc.value];
+    }))) as PersonalInformation;
+} export type PersonalInformationDocument = {
+    _id: ObjectId;
+    type: string;
+    value: PersonalInformationContact | PersonalInformationEligibility | PersonalInformationConstraints | PersonalInformationPreferences | PersonalInformationSkill[] | PersonalInformationExperience[] | PersonalInformationEducation[] | PersonalInformationCertification[] | PersonalInformationLanguageSpoken[] | PersonalInformationExclusions | PersonalInformationMotivation[] | PersonalInformationCareerGoal[];
+};
+

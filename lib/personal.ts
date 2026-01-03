@@ -1,4 +1,4 @@
-import { PersonalInformation, PersonalInformationCareerGoal, PersonalInformationCertification, PersonalInformationDocument, PersonalInformationEducation, PersonalInformationExperienceItem, PersonalInformationLanguageSpoken, PersonalInformationMotivation, PersonalInformationSkill } from "@/types";
+import { PersonalInformation, PersonalInformationCareerGoal, PersonalInformationCertification, PersonalInformationDocument, PersonalInformationEducation, PersonalInformationExperience, PersonalInformationLanguageSpoken, PersonalInformationMotivation, PersonalInformationSkill } from "@/types";
 import { Db } from "mongodb";
 import { NoPersonalInformationContactError, NoPersonalInformationEligibilityError, NoPersonalInformationConstraintsError, NoPersonalInformationPreferencesError, NoPersonalInformationSkillsError, NoPersonalInformationExperienceError, NoPersonalInformationEducationError, NoPersonalInformationCertificationsError, NoPersonalInformationLanguageSpokenError, NoPersonalInformationExclusionsError, NoPersonalInformationMotivationsError, NoPersonalInformationCareerGoalsError } from "./errors";
 import { makeUtcMonthYear, normaliseTags, formatMonthYear } from "./utils";
@@ -54,7 +54,7 @@ function ensureDate(input: unknown): Date | undefined {
     return undefined;
 }
 
-export function normaliseExperienceItems(value: unknown): PersonalInformationExperienceItem[] {
+export function normaliseExperienceItems(value: unknown): PersonalInformationExperience[] {
     if (!Array.isArray(value)) return [];
     return value
         .map((entry) => {
@@ -68,7 +68,7 @@ export function normaliseExperienceItems(value: unknown): PersonalInformationExp
             const summary = typeof source.summary === "string" ? source.summary.trim() : "";
             const tags = normaliseTags(source.tags);
             if (!role || !company || !summary) return null;
-            const normalised: PersonalInformationExperienceItem = {
+            const normalised: PersonalInformationExperience = {
                 from,
                 role,
                 company,
@@ -80,11 +80,11 @@ export function normaliseExperienceItems(value: unknown): PersonalInformationExp
             }
             return normalised;
         })
-        .filter((item): item is PersonalInformationExperienceItem => item !== null);
+        .filter((item): item is PersonalInformationExperience => item !== null);
 }
 
 export function serializeExperienceItems(
-    items: PersonalInformationExperienceItem[]
+    items: PersonalInformationExperience[]
 ): {
     from: string;
     to?: string;
@@ -93,7 +93,7 @@ export function serializeExperienceItems(
     summary: string;
     tags: string[];
 }[] {
-    return items.map((item: PersonalInformationExperienceItem) => ({
+    return items.map((item: PersonalInformationExperience) => ({
         from: formatMonthYear(item.from),
         to: item.to ? formatMonthYear(item.to) : undefined,
         role: item.role.trim(),

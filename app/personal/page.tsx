@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import useToUrl from "@/hooks/useToUrl";
-import { type PersonalInformationSkill, type PersonalInformationExperienceItem, type PersonalInformationEducation, PersonalInformationCertification, PersonalInformationLanguageSpoken, type PersonalInformationEligibility, type PersonalInformationMotivation, type PersonalInformationCareerGoal } from "@/types";
+import { type PersonalInformationSkill, type PersonalInformationExperience, type PersonalInformationEducation, PersonalInformationCertification, PersonalInformationLanguageSpoken, type PersonalInformationEligibility, type PersonalInformationMotivation, type PersonalInformationCareerGoal } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -76,7 +76,7 @@ export default function PersonalPage() {
         }
     };
 
-    const persistExperience = async (nextItems: PersonalInformationExperienceItem[]) => {
+    const persistExperience = async (nextItems: PersonalInformationExperience[]) => {
         setSaving(true);
         setEditedField('experience');
         try {

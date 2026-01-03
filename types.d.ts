@@ -111,7 +111,7 @@ export type PersonalInformationSkill = {
     primary: boolean;
 };
 
-export type PersonalInformationExperienceItem = {
+export type PersonalInformationExperience = {
     from: Date;
     to?: Date;
     role: string;
@@ -159,7 +159,7 @@ export type PersonalInformation = {
     constraints: PersonalInformationConstraints,
     preferences: PersonalInformationPreferences,
     skills: PersonalInformationSkill[],
-    experience: PersonalInformationExperienceItem[],
+    experience: PersonalInformationExperience[],
     education: PersonalInformationEducation[],
     certifications: PersonalInformationCertification[],
     languages_spoken: PersonalInformationLanguageSpoken[],
@@ -171,7 +171,7 @@ export type PersonalInformation = {
 export type PersonalInformationDocument = {
     _id: ObjectId;
     type: string;
-    value: PersonalInformationContact | PersonalInformationEligibility | PersonalInformationConstraints | PersonalInformationPreferences | PersonalInformationSkill[] | PersonalInformationExperienceItem[] | PersonalInformationEducation[] | PersonalInformationCertification[] | PersonalInformationLanguageSpoken[] | PersonalInformationExclusions | PersonalInformationMotivation[] | PersonalInformationCareerGoal[];
+    value: PersonalInformationContact | PersonalInformationEligibility | PersonalInformationConstraints | PersonalInformationPreferences | PersonalInformationSkill[] | PersonalInformationExperience[] | PersonalInformationEducation[] | PersonalInformationCertification[] | PersonalInformationLanguageSpoken[] | PersonalInformationExclusions | PersonalInformationMotivation[] | PersonalInformationCareerGoal[];
 };
 
 export type AgentType = 'filter' | 'writer' | 'evaluator';

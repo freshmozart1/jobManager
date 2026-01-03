@@ -1,6 +1,6 @@
 'use client';
 
-import { PersonalInformationExperienceItem } from "@/types";
+import { PersonalInformationExperience } from "@/types";
 import { normaliseExperienceItems } from "@/lib/personal";
 import { formatMonthYear } from "@/lib/utils";
 import { MaxTagCount, MaxTagLength } from "@/lib/constants";
@@ -20,7 +20,7 @@ function truncateSummary(summary: string, length: number): string {
     return `${summary.slice(0, length)}…`;
 }
 
-const experienceConfig: EditorConfig<PersonalInformationExperienceItem> = {
+const experienceConfig: EditorConfig<PersonalInformationExperience> = {
     singularLabel: "experience",
     pluralLabel: "experience",
     fields: [
@@ -104,8 +104,8 @@ const experienceConfig: EditorConfig<PersonalInformationExperienceItem> = {
             )}
         </>
     ),
-    validate: (draft): ValidationErrors<PersonalInformationExperienceItem> => {
-        const errors: ValidationErrors<PersonalInformationExperienceItem> = {};
+    validate: (draft): ValidationErrors<PersonalInformationExperience> => {
+        const errors: ValidationErrors<PersonalInformationExperience> = {};
 
         // Date range validation
         if (draft.to && draft.from && draft.to.getTime() < draft.from.getTime()) {
@@ -154,9 +154,9 @@ const experienceConfig: EditorConfig<PersonalInformationExperienceItem> = {
 };
 
 type AppExperienceEditorProps = {
-    experience: PersonalInformationExperienceItem[];
-    onChange: (items: PersonalInformationExperienceItem[]) => void;
-    onPersist: (items: PersonalInformationExperienceItem[]) => Promise<void>;
+    experience: PersonalInformationExperience[];
+    onChange: (items: PersonalInformationExperience[]) => void;
+    onPersist: (items: PersonalInformationExperience[]) => Promise<void>;
 };
 
 export default function AppExperienceEditor({
@@ -165,7 +165,7 @@ export default function AppExperienceEditor({
     onPersist,
 }: AppExperienceEditorProps) {
     return (
-        <AppItemEditor<PersonalInformationExperienceItem>
+        <AppItemEditor<PersonalInformationExperience>
             items={experience}
             normaliseItems={experienceConfig.normaliseItems}
             sortItems={experienceConfig.sortItems}
@@ -174,7 +174,7 @@ export default function AppExperienceEditor({
             getItemLabel={experienceConfig.getItemLabel}
         >
             {(editor) => (
-                <AppGenericCardContainer<PersonalInformationExperienceItem>
+                <AppGenericCardContainer<PersonalInformationExperience>
                     editor={editor}
                     config={experienceConfig}
                 />

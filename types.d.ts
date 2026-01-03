@@ -37,16 +37,6 @@ export type ScrapedJob = {
     companyDescription?: string | undefined;
 };
 
-export type JobGenerationArtifact = {
-    _id: ObjectId;
-    jobId: ObjectId;
-    type: 'cover-letter' | 'cv';
-    contentType: string;
-    fileName: string;
-    createdAt: Date;
-    content: string;
-};
-
 export type Job = ScrapedJob & {
     filteredAt: Date;
     filterResult: boolean | { error: string };

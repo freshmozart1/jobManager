@@ -204,6 +204,4 @@ export type FilterAgentResult = {
     errors: Job[];
 };
 
-export type FilterAgentPromise = Promise<FilterAgentResult>;
-
 export type JobWithNewFlag = Job & { new: boolean };

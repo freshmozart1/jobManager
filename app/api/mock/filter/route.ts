@@ -1,6 +1,6 @@
 import { MissingPromptIdInRequestBodyError, NoActorQueryParameterError } from "@/lib/errors";
 import { sleep } from "@/lib/utils";
-import { FilterAgentPromise, Job } from "@/types";
+import { FilterAgentResult, Job } from "@/types";
 import { ObjectId } from "mongodb";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -10,7 +10,7 @@ async function runFilterAgentMock(promptId: ObjectId, options: {
     errorRate?: number;   // 0..1 probability a job evaluation errors
     seed?: number;        // deterministic pseudo-random seed
     artificialDelayMsPerJob?: number; // simulate agent latency per job
-} = {}): FilterAgentPromise {
+} = {}): Promise<FilterAgentResult> {
     const {
         sampleJobs = [
             {

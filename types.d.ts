@@ -53,7 +53,8 @@ export type Job = ScrapedJob & {
     filteredBy: ObjectId;
 };
 
-export type PersonalInformationContact = {
+
+type PersonalInformationContact = {
     name: string;
     email: string;
     phone: string;
@@ -83,7 +84,7 @@ export type PersonalInformationEligibility = {
     };
 };
 
-export type PersonalInformationConstraints = {
+type PersonalInformationConstraints = {
     salary_min: {
         currency: string;
         amount: number;
@@ -91,7 +92,7 @@ export type PersonalInformationConstraints = {
     locations_allowed: string[];
 };
 
-export type PersonalInformationPreferences = {
+type PersonalInformationPreferences = {
     roles: string[];
     seniority: string[];
     company_size: string[];

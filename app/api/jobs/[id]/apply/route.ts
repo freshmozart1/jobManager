@@ -1,6 +1,6 @@
 import { jsonError } from "@/lib/api";
 import { corsHeaders } from "@/lib/cors";
-import { InvalidAppliedAtError, JobAlreadyAppliedError, JobNotFoundError, NoDatabaseNameError } from "@/lib/errors";
+import { InvalidAppliedAtError, JobNotFoundError, NoDatabaseNameError } from "@/lib/errors";
 import mongoPromise from "@/lib/mongodb";
 import { Job } from "@/types";
 import { NextRequest, NextResponse } from "next/server";
@@ -17,14 +17,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const body = await req.json().catch(() => ({}));
     const appliedAtInput = body?.appliedAt;
     const hasAppliedAt = appliedAtInput !== undefined;
+    const isClear = appliedAtInput === null;
 
-    if (hasAppliedAt && typeof appliedAtInput !== 'string') {
-        return jsonError(422, InvalidAppliedAtError.name, 'appliedAt must be an ISO timestamp string when provided', origin);
+    if (hasAppliedAt && !isClear && typeof appliedAtInput !== 'string') {
+        return jsonError(422, InvalidAppliedAtError.name, 'appliedAt must be an ISO timestamp string or null when provided', origin);
     }
 
-    const timestamp = hasAppliedAt ? new Date(appliedAtInput) : new Date();
-    if (Number.isNaN(timestamp.getTime())) {
-        return jsonError(422, InvalidAppliedAtError.name, 'appliedAt must be a valid ISO timestamp', origin);
+    let timestamp: Date | null = null;
+    if (!isClear) {
+        timestamp = hasAppliedAt ? new Date(appliedAtInput) : new Date();
+        if (Number.isNaN(timestamp.getTime())) {
+            return jsonError(422, InvalidAppliedAtError.name, 'appliedAt must be a valid ISO timestamp', origin);
+        }
     }
 
     const db = (await mongoPromise).db(DATABASE_NAME);
@@ -33,27 +37,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const job = await db.collection<Job>('jobs').findOne({ id }, { projection: { _id: 0, appliedAt: 1 } });
     if (!job) return jsonError(404, JobNotFoundError.name, `Job ${id} not found`, origin);
 
-    if (job.appliedAt) {
-        const existing = new Date(job.appliedAt);
-        if (!Number.isNaN(existing.getTime())) {
-            const existingIso = existing.toISOString();
-            if (!hasAppliedAt || existing.getTime() === timestamp.getTime()) {
-                return NextResponse.json({ appliedAt: existingIso }, { headers: corsHeaders(origin) });
-            }
-            return jsonError(409, JobAlreadyAppliedError.name, 'Job already marked as applied', origin, {
-                appliedAt: existingIso
-            });
-        }
+    if (isClear) {
+        await db.collection<Job>('jobs').updateOne(
+            { id },
+            { $unset: { appliedAt: "" } }
+        );
+        return NextResponse.json({ appliedAt: null }, { headers: corsHeaders(origin) });
     }
 
     await db.collection<Job>('jobs').updateOne(
         { id },
-        {
-            $set: {
-                appliedAt: timestamp
-            }
-        }
+        { $set: { appliedAt: timestamp as Date } }
     );
 
-    return NextResponse.json({ appliedAt: timestamp.toISOString() }, { headers: corsHeaders(origin) });
+    return NextResponse.json({ appliedAt: timestamp!.toISOString() }, { headers: corsHeaders(origin) });
 }

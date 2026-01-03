@@ -55,10 +55,6 @@ export type Job = ScrapedJob & {
     filteredBy: ObjectId;
 };
 
-export type ScrapeUrlDocument = {
-    url: string;
-};
-
 export type PersonalInformationContact = {
     name: string;
     email: string;

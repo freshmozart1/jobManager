@@ -2,13 +2,17 @@ import { corsHeaders } from "@/lib/cors";
 import { MissingPromptIdInRequestBodyError, NoActorQueryParameterError, NoApifyTokenError, NoDatabaseNameError, NoOpenAIKeyError, NoScrapeUrlsError, PromptNotFoundError } from "@/lib/errors";
 import mongoPromise from "@/lib/mongodb";
 import { chunkArray, toUrl, startAgentRun, completeAgentRun } from "@/lib/utils";
-import { Job, PersonalInformation, PromptDocument, ScrapedJob, ScrapeUrlDocument } from "@/types";
+import { Job, PersonalInformation, PromptDocument, ScrapedJob } from "@/types";
 import { Agent, Runner, tool } from "@openai/agents";
 import { ApifyClient } from "apify-client";
 import { ObjectId } from "mongodb";
 import { NextRequest, NextResponse } from "next/server";
 import z from "zod";
 import { safeCall } from "@/lib/safeCall";
+
+type ScrapeUrlDocument = {
+    url: string;
+};
 
 export function OPTIONS() {
     return new NextResponse(null, { headers: corsHeaders() });
@@ -136,8 +140,7 @@ export async function POST(req: NextRequest) {
                     ...job,
                     filteredAt: new Date(),
                     filterResult: { error: `Chunk error: ${String(r.reason)}` },
-                    filteredBy: promptId,
-                    generation: []
+                    filteredBy: promptId
                 });
             }
         }

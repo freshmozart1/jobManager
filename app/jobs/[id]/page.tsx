@@ -1,10 +1,13 @@
 'use client';
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { LoaderCircle } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import AppDatePicker from '@/components/ui/appDatePicker';
 import { Job } from '@/types';
 import useLoadJob from '@/hooks/useLoadJob';
+import useToUrl from '@/hooks/useToUrl';
 
 function hasSalary(job: Job): boolean {
     return typeof job.salary === 'string' && job.salary.trim() !== '';
@@ -35,7 +38,31 @@ export default function JobDetailPage() {
     const params = useParams();
     const router = useRouter();
     const jobId = params.id as string;
-    const [job, loading, error] = useLoadJob(jobId);
+    const [job, loading, error, refetch] = useLoadJob(jobId);
+    const toUrl = useToUrl();
+    const [appliedAtUpdating, setAppliedAtUpdating] = useState(false);
+    const [appliedAtError, setAppliedAtError] = useState<string | null>(null);
+
+    const handleAppliedAtChange = async (date: Date | undefined) => {
+        setAppliedAtUpdating(true);
+        setAppliedAtError(null);
+        try {
+            const response = await fetch(toUrl(`/api/jobs/${jobId}/apply`), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ appliedAt: date ? date.toISOString() : null }),
+            });
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || 'Failed to update applied date');
+            }
+            refetch();
+        } catch (err) {
+            setAppliedAtError(err instanceof Error ? err.message : 'Failed to update applied date');
+        } finally {
+            setAppliedAtUpdating(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -68,7 +95,7 @@ export default function JobDetailPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                     {/* Basic Information */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {job.location && (
                             <div>
                                 <h3 className="font-semibold text-sm text-muted-foreground">Location</h3>
@@ -91,6 +118,16 @@ export default function JobDetailPage() {
                                 <p>{job.seniorityLevel}</p>
                             </div>
                         )}
+                        <AppDatePicker
+                            id="applied-at"
+                            label="Applied At"
+                            value={job.appliedAt}
+                            onChange={handleAppliedAtChange}
+                            disabled={appliedAtUpdating}
+                            placeholder="Select when you applied"
+                            description={appliedAtUpdating ? 'Updating...' : undefined}
+                            error={appliedAtError || undefined}
+                        />
                     </div>
 
                     {/* Salary Information */}

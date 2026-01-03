@@ -41,6 +41,7 @@ export type Job = ScrapedJob & {
     filteredAt: Date;
     filterResult: boolean | { error: string };
     filteredBy: ObjectId;
+    appliedAt?: Date;
 };
 
 

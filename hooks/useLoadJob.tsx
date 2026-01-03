@@ -1,22 +1,28 @@
 import { Job } from "@/types";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import useToUrl from "./useToUrl";
 
 
 /**
  * Custom hook to load job details by LinkedIn job ID.
  * @param jobId The LinkedIn ID of the job in the database
- * @returns Job, loading state and error
+ * @returns Job, loading state, error, and refetch function
  */
-export default function useLoadJob(jobId: string): [Job | null, boolean, string | null] {
+export default function useLoadJob(jobId: string): [Job | null, boolean, string | null, () => void] {
     const [job, setJob] = useState<Job | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [fetchKey, setFetchKey] = useState(0);
     const toUrl = useToUrl();
+
+    const refetch = useCallback(() => {
+        setFetchKey(prev => prev + 1);
+    }, []);
 
     useEffect(() => {
         const controller = new AbortController();
         let isActive = true;
+        setLoading(true);
         fetch(toUrl(`/api/jobs/${jobId}`), { signal: controller.signal })
             .then(async res => {
                 if (res.status === 404) {
@@ -36,11 +42,12 @@ export default function useLoadJob(jobId: string): [Job | null, boolean, string 
                     return;
                 }
                 setJob(() => {
-                    const { postedAt, filteredAt, ...rest } = result.payload;
+                    const { postedAt, filteredAt, appliedAt, ...rest } = result.payload;
                     return {
-                        ...(rest as Omit<Job, 'postedAt' | 'filteredAt'>),
+                        ...(rest as Omit<Job, 'postedAt' | 'filteredAt' | 'appliedAt'>),
                         postedAt: new Date(postedAt),
-                        filteredAt: new Date(filteredAt)
+                        filteredAt: new Date(filteredAt),
+                        ...(appliedAt ? { appliedAt: new Date(appliedAt) } : {})
                     };
                 });
                 setError(null);
@@ -59,7 +66,7 @@ export default function useLoadJob(jobId: string): [Job | null, boolean, string 
             isActive = false;
             controller.abort();
         };
-    }, [jobId, toUrl]);
+    }, [jobId, toUrl, fetchKey]);
 
-    return [job, loading, error];
+    return [job, loading, error, refetch];
 }

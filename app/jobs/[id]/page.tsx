@@ -1,13 +1,18 @@
 'use client';
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { LoaderCircle } from 'lucide-react';
+import Link from 'next/link';
+import { LoaderCircle, FileText, Pencil } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import AppDatePicker from '@/components/ui/appDatePicker';
-import { Job } from '@/types';
+import { Job, JobArtifact } from '@/types';
 import useLoadJob from '@/hooks/useLoadJob';
 import useToUrl from '@/hooks/useToUrl';
+
+function getCoverLetterArtifact(job: Job): JobArtifact | undefined {
+    return job.artifacts?.find(a => a.type === 'cover-letter');
+}
 
 function hasSalary(job: Job): boolean {
     return typeof job.salary === 'string' && job.salary.trim() !== '';
@@ -210,6 +215,56 @@ export default function JobDetailPage() {
                             <p>{job.applicantsCount} applicants</p>
                         </div>
                     )}
+
+                    {/* Cover Letter Card */}
+                    {(() => {
+                        const coverLetter = getCoverLetterArtifact(job);
+                        if (!coverLetter) return null;
+                        return (
+                            <div className="border-t pt-6">
+                                <Card>
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <div className="flex items-center gap-2">
+                                            <FileText className="h-5 w-5 text-muted-foreground" />
+                                            <CardTitle className="text-lg">Cover Letter</CardTitle>
+                                        </div>
+                                        <Button asChild variant="outline" size="sm">
+                                            <Link href={`/jobs/${jobId}/write/cover`}>
+                                                <Pencil className="h-4 w-4 mr-2" />
+                                                Edit
+                                            </Link>
+                                        </Button>
+                                    </CardHeader>
+                                    <CardContent className="space-y-3">
+                                        {coverLetter.subject && (
+                                            <div>
+                                                <h4 className="font-semibold text-sm text-muted-foreground">Subject</h4>
+                                                <p className="font-medium">{coverLetter.subject}</p>
+                                            </div>
+                                        )}
+                                        {coverLetter.recipient && (
+                                            <div>
+                                                <h4 className="font-semibold text-sm text-muted-foreground">Recipient</h4>
+                                                <p className="whitespace-pre-line text-sm">{coverLetter.recipient}</p>
+                                            </div>
+                                        )}
+                                        {coverLetter.content && (
+                                            <div>
+                                                <h4 className="font-semibold text-sm text-muted-foreground">Content Preview</h4>
+                                                <p className="text-sm text-muted-foreground line-clamp-3">
+                                                    {coverLetter.content}
+                                                </p>
+                                            </div>
+                                        )}
+                                        <div className="flex gap-4 text-xs text-muted-foreground pt-2">
+                                            <span>Created: {coverLetter.createdAt.toLocaleDateString()}</span>
+                                            <span>Updated: {coverLetter.updatedAt.toLocaleDateString()}</span>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+                        );
+                    })()}
 
                     {/* Apply Button */}
                     {(job.applyUrl || job.link) && (

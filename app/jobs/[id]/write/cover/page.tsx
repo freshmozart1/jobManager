@@ -1,7 +1,7 @@
 'use client';
 
-import AppApplicantFields from "@/components/ui/appApplicantFields";
 import { Button } from "@/components/ui/button";
+import AppCoverLetterForm, { CoverLetterFormState } from "@/components/ui/appCoverLetterForm";
 import useDebounce from "@/hooks/useDebounce";
 import useLoadJob from "@/hooks/useLoadJob";
 import usePersonal from "@/hooks/usePersonal";
@@ -10,18 +10,10 @@ import { Check, LoaderCircle, AlertCircle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-type CoverLetterFormState = {
-    subject: string;
-    content: string;
-    recipient: string;
-    applicant: string;
-};
-
 export default function CoverPage() {
     const jobId = useParams().id as string;
     const router = useRouter();
     const toUrl = useToUrl();
-    const addressLine1counter = 6;
     const [job, loading, error] = useLoadJob(jobId);
     const [personal, , personalLoading] = usePersonal();
 
@@ -132,8 +124,8 @@ export default function CoverPage() {
     );
 
     // Update handlers
-    const updateField = useCallback(<K extends keyof CoverLetterFormState>(field: K, value: CoverLetterFormState[K]) => {
-        setFormState(prev => ({ ...prev, [field]: value }));
+    const updateFormState = useCallback((newState: CoverLetterFormState) => {
+        setFormState(newState);
     }, []);
 
     if (loading || personalLoading) {
@@ -154,11 +146,7 @@ export default function CoverPage() {
         );
     }
 
-    return <div className="print:visible" style={{
-        display: 'grid',
-        placeContent: 'center',
-        overflow: 'hidden',
-    }}>
+    return <div className="print:visible">
         {/* Save status indicator */}
         <div className="fixed top-4 right-4 flex items-center gap-2 text-sm print:hidden">
             {saveStatus === 'saving' && (
@@ -181,83 +169,9 @@ export default function CoverPage() {
             )}
         </div>
 
-        <form onSubmit={e => e.preventDefault()} autoComplete="off" style={{
-            width: '210mm',
-            minHeight: '297mm',
-            background: '#fff',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-            boxSizing: 'border-box',
-        }}>
-            <section style={{
-                height: '90mm',
-                width: '210mm',
-                position: 'relative',
-            }}>
-                <div style={{
-                    width: '85mm',
-                    height: '45mm',
-                    padding: '0 0 0 5mm',
-                    position: 'absolute',
-                    top: '45mm',
-                    left: '20mm'
-                }}>
-                    <div style={{
-                        width: '85mm',
-                        height: '17.7mm',
-                        fontSize: 17.7 / 5 + 'mm',
-                        lineHeight: 17.7 / 5 + 'mm',
-                        overflow: 'hidden',
-                        display: 'flex',
-                        alignItems: 'flex-end'
-                    }}>Recipient</div>
-                    <textarea style={{
-                        height: '27.3mm',
-                        width: '85mm',
-                        fontSize: 27.4 / addressLine1counter + 'mm',
-                        lineHeight: 27.3 / addressLine1counter + 'mm',
-                        margin: '0',
-                        padding: '0',
-                        resize: 'none',
-                        border: 'none',
-                        outline: 'none',
-                        overflow: 'hidden',
-                    }}
-                        value={formState.recipient}
-                        onChange={e => updateField('recipient', e.target.value)}></textarea>
-                </div>
-                <AppApplicantFields
-                    value={formState.applicant}
-                    onChange={value => updateField('applicant', value)}
-                />
-            </section>
-            <section style={{
-                width: '210mm',
-                minHeight: '207mm',
-                padding: '8.46mm 20mm 8.46mm 25mm',
-                display: 'flex',
-                flexDirection: 'column',
-                fontSize: '12pt'
-            }}>
-                <input type="text" inputMode="text" autoComplete="off" aria-autocomplete="none" placeholder="Subject" name="subject" value={formState.subject} onChange={e => updateField('subject', e.target.value)} style={{
-                    fontWeight: 'bold',
-                    fontSize: '12pt',
-                    marginBottom: '6pt',
-                    border: 'none',
-                    outline: 'none',
-                    width: '100%',
-                }}></input>
-                <textarea name="letter" placeholder="write your cover letter here..." value={formState.content} onChange={e => updateField('content', e.target.value)} style={{
-                    flexGrow: 1,
-                    border: 'none',
-                    outline: 'none',
-                    width: '100%',
-                    height: '100%',
-                    resize: 'none',
-                    fontSize: '12pt',
-                    lineHeight: '1.5',
-                    overflow: 'hidden',
-                }}></textarea>
-            </section>
-        </form >
+        <AppCoverLetterForm
+            value={formState}
+            onChange={updateFormState}
+        />
     </div>;
 }

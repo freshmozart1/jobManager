@@ -13,12 +13,12 @@ export default function useDebounce<T>(value: T, delayMs: number = 1000): T {
     const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
     useEffect(() => {
-        const handle = window.setTimeout(() => {
+        const handle = setTimeout(() => {
             setDebouncedValue(value);
         }, delayMs);
 
         return () => {
-            window.clearTimeout(handle);
+            clearTimeout(handle);
         };
     }, [value, delayMs]);
 

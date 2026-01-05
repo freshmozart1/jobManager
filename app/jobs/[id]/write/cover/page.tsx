@@ -44,7 +44,16 @@ export default function CoverPage() {
 
         const existingArtifact = job.artifacts?.find(a => a.type === 'cover-letter');
 
-        const defaultRecipient = `${job.companyName}\n${job.companyAddress?.streetAddress ?? ''}\n${job.companyAddress?.postalCode ?? ''} ${job.companyAddress?.addressLocality ?? ''}`.trim();
+        const cityLine = [
+            job.companyAddress?.postalCode?.trim(),
+            job.companyAddress?.addressLocality?.trim()
+        ].filter(Boolean).join(' ');
+
+        const defaultRecipient = [
+            job.companyName,
+            job.companyAddress?.streetAddress,
+            cityLine
+        ].filter(Boolean).join('\n');
         const defaultApplicant = `${personal.contact.name}\n${personal.contact.email}\n${personal.contact.phone}\n${new Date().toLocaleDateString()}`;
 
         setFormState({

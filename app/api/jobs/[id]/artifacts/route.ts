@@ -114,7 +114,9 @@ export async function PUT(
     return upsertArtifact(req, context, () => req.json());
 }
 
-// POST handler for sendBeacon calls with text/plain content type
+// POST handler to support navigator.sendBeacon, which sends string payloads as
+// "text/plain;charset=UTF-8" by default. We read the body as text and parse JSON
+// here as a compatibility workaround, not as a general text/plain API contract.
 export async function POST(
     req: NextRequest,
     context: { params: Promise<{ id: string }> }

@@ -37,11 +37,24 @@ export type ScrapedJob = {
     companyDescription?: string | undefined;
 };
 
+export type JobArtifactType = 'cover-letter' | 'cv';
+
+export type JobArtifact = {
+    type: JobArtifactType;
+    content: string;
+    subject?: string;
+    recipient?: string;
+    applicant?: string;
+    createdAt: Date;
+    updatedAt: Date;
+};
+
 export type Job = ScrapedJob & {
     filteredAt: Date;
     filterResult: boolean | { error: string };
     filteredBy: ObjectId;
     appliedAt?: Date;
+    artifacts?: JobArtifact[];
 };
 
 

@@ -42,12 +42,19 @@ export default function useLoadJob(jobId: string): [Job | null, boolean, string 
                     return;
                 }
                 setJob(() => {
-                    const { postedAt, filteredAt, appliedAt, ...rest } = result.payload;
+                    const { postedAt, filteredAt, appliedAt, artifacts, ...rest } = result.payload;
                     return {
-                        ...(rest as Omit<Job, 'postedAt' | 'filteredAt' | 'appliedAt'>),
+                        ...(rest as Omit<Job, 'postedAt' | 'filteredAt' | 'appliedAt' | 'artifacts'>),
                         postedAt: new Date(postedAt),
                         filteredAt: new Date(filteredAt),
-                        ...(appliedAt ? { appliedAt: new Date(appliedAt) } : {})
+                        ...(appliedAt ? { appliedAt: new Date(appliedAt) } : {}),
+                        ...(artifacts ? {
+                            artifacts: artifacts.map(a => ({
+                                ...a,
+                                createdAt: new Date(a.createdAt),
+                                updatedAt: new Date(a.updatedAt)
+                            }))
+                        } : {})
                     };
                 });
                 setError(null);

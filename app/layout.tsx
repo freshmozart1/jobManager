@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { AppUserAvatar } from "@/components/ui/appUserAvatar";
-import AppSearch from "@/components/ui/appSearch";
-import AppHome from "@/components/ui/appHome";
-import { AppDrawer } from "@/components/ui/appDrawer";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/ui/appSidebar";
+import { AppRightPanelProvider } from "@/components/ui/appRightPanel";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,21 +24,24 @@ export const metadata: Metadata = {
 export default async function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactElement;
+  children: ReactNode;
 }>) {
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AppDrawer>
-          <div data-position="left" className="p-2 flex flex-col gap-2 justify-center items-center">
-            <AppUserAvatar />
-            <AppHome />
-            <AppSearch />
-          </div>
-          {children}
-        </AppDrawer>
+        <SidebarProvider defaultOpen={false}>
+          <AppSidebar />
+          <SidebarInset>
+            <header className="flex h-12 items-center px-4 md:hidden">
+              <SidebarTrigger />
+            </header>
+            <AppRightPanelProvider>
+              {children}
+            </AppRightPanelProvider>
+          </SidebarInset>
+        </SidebarProvider>
       </body>
     </html>
   );

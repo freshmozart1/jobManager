@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
-import { useAppDrawer } from "@/components/ui/appDrawer";
+import { useAppRightPanel } from "@/components/ui/appRightPanel";
 import { ItemEditorController } from "./useItemEditor";
 import AppAddItemButton from "./appAddItemButton";
 import { AppItemUndoBanner } from "./AppItemUndoBanner";
@@ -18,13 +18,12 @@ type AppGenericCardContainerProps<T> = {
 };
 
 export default function AppGenericCardContainer<T>({ editor, config }: AppGenericCardContainerProps<T>) {
-    const { toggleDrawer } = useAppDrawer();
+    const { openPanel, closePanel } = useAppRightPanel();
     const prevSheetOpen = useRef(editor.sheetOpen);
 
     useEffect(() => {
         if (editor.sheetOpen) {
-            toggleDrawer(
-                "right",
+            openPanel(
                 <AppGenericItemForm<T>
                     key={editor.formKey}
                     mode={editor.sheetMode}
@@ -35,15 +34,13 @@ export default function AppGenericCardContainer<T>({ editor, config }: AppGeneri
                     onCancel={editor.closeSheet}
                     disabled={editor.isPersisting}
                     config={config}
-                />,
-                0,
-                true
+                />
             );
         } else if (prevSheetOpen.current) {
-            toggleDrawer("right", undefined);
+            closePanel();
         }
         prevSheetOpen.current = editor.sheetOpen;
-    }, [editor, toggleDrawer, config]);
+    }, [editor, openPanel, closePanel, config]);
 
     return (
         <div className="space-y-4">

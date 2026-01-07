@@ -2,7 +2,7 @@ import type { ItemEditorController } from "@/components/ui/appItemEditor/useItem
 import type { PersonalInformationSkill } from "@/types";
 import { Dispatch, SetStateAction, useState, useRef, useEffect, useCallback, type MouseEvent, useMemo } from "react";
 import { SkillRow } from ".";
-import { useAppDrawer } from "@/components/ui/appDrawer";
+import { useAppRightPanel } from "@/components/ui/appRightPanel";
 import { AppItemUndoBanner } from "@/components/ui/appItemEditor/AppItemUndoBanner";
 import { SkillDraft, ValidationErrors } from "./AppSkillsEditor";
 import { sortSkills } from ".";
@@ -443,7 +443,7 @@ export default function AppSkillsEditorContainer({
         [showBulkDelete]
     );
 
-    const { toggleDrawer } = useAppDrawer();
+    const { openPanel, closePanel } = useAppRightPanel();
 
     const drawerContent = useMemo(
         () => <AppSkillsSheet
@@ -480,16 +480,17 @@ export default function AppSkillsEditorContainer({
     useEffect(
         () => {
             if (sheetOpen) {
-                toggleDrawer("right", drawerContent, 0, true);
+                openPanel(drawerContent);
             } else if (prevSheetOpen.current) {
-                toggleDrawer("right", undefined);
+                closePanel();
             }
             prevSheetOpen.current = sheetOpen;
         },
         [
             sheetOpen,
             drawerContent,
-            toggleDrawer
+            openPanel,
+            closePanel
         ]
     );
 

@@ -1,15 +1,15 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LoaderCircle, FileText, Pencil, ChevronDown, ChevronUp } from 'lucide-react';
+import { LoaderCircle, FileText, Pencil } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import AppDatePicker from '@/components/ui/appDatePicker';
+import AppCollapsibleCard from '@/components/ui/appCollapsibleCard';
 import { Job, JobArtifact } from '@/types';
 import useLoadJob from '@/hooks/useLoadJob';
 import useToUrl from '@/hooks/useToUrl';
-import { cn } from '@/lib/utils';
 import { useSidebarBack } from '@/hooks/useSidebarBack';
 
 function getCoverLetterArtifact(job: Job): JobArtifact | undefined {
@@ -41,26 +41,6 @@ export default function JobDetailPage() {
     useSidebarBack(router.back, "Back to Jobs");
     const [appliedAtUpdating, setAppliedAtUpdating] = useState(false);
     const [appliedAtError, setAppliedAtError] = useState<string | null>(null);
-    const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
-    const [isDescriptionOverflowing, setIsDescriptionOverflowing] = useState(false);
-    const descriptionRef = useRef<HTMLDivElement>(null);
-    const descriptionCardRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const el = descriptionRef.current;
-        if (!el) return;
-
-        const checkOverflow = () => {
-            setIsDescriptionOverflowing(el.scrollHeight > 192); // 192px = max-h-48
-        };
-
-        checkOverflow();
-
-        const resizeObserver = new ResizeObserver(checkOverflow);
-        resizeObserver.observe(el);
-
-        return () => resizeObserver.disconnect();
-    }, [job?.descriptionHtml]);
 
     const handleAppliedAtChange = async (date: Date | undefined) => {
         setAppliedAtUpdating(true);
@@ -161,65 +141,31 @@ export default function JobDetailPage() {
 
                     {/* Job Description Card */}
                     {job.descriptionHtml && (
-                        <Card ref={descriptionCardRef}>
-                            <CardHeader>
-                                <CardTitle>Job Description</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="relative">
-                                    <div
-                                        ref={descriptionRef}
-                                        className={cn(
-                                            "prose prose-sm max-w-none overflow-hidden transition-all duration-300",
-                                            isDescriptionExpanded ? "max-h-[5000px]" : "max-h-48"
-                                        )}
-                                        dangerouslySetInnerHTML={{ __html: job.descriptionHtml }}
-                                    />
-                                    {!isDescriptionExpanded && isDescriptionOverflowing && (
-                                        <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-card to-transparent pointer-events-none" />
+                        <AppCollapsibleCard
+                            title="Job Description"
+                            collapsedHeightPx={192}
+                            scrollIntoViewOnExpand
+                            contentClassName="prose prose-sm max-w-none"
+                        >
+                            <div dangerouslySetInnerHTML={{ __html: job.descriptionHtml }} />
+                            {/* Additional metadata */}
+                            {(job.jobFunction || (job.applicantsCount && job.applicantsCount !== 0 && job.applicantsCount !== '')) && (
+                                <div className="border-t pt-4 grid grid-cols-2 gap-4">
+                                    {job.jobFunction && (
+                                        <div>
+                                            <h3 className="font-semibold text-sm text-muted-foreground">Job Function</h3>
+                                            <p>{job.jobFunction}</p>
+                                        </div>
+                                    )}
+                                    {(job.applicantsCount && job.applicantsCount !== 0 && job.applicantsCount !== '') && (
+                                        <div>
+                                            <h3 className="font-semibold text-sm text-muted-foreground">Applicants</h3>
+                                            <p>{job.applicantsCount} applicants</p>
+                                        </div>
                                     )}
                                 </div>
-                                {isDescriptionOverflowing && (
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => {
-                                            const wasCollapsed = !isDescriptionExpanded;
-                                            setIsDescriptionExpanded(!isDescriptionExpanded);
-                                            if (wasCollapsed) {
-                                                requestAnimationFrame(() => {
-                                                    descriptionCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                                });
-                                            }
-                                        }}
-                                        className="w-full"
-                                    >
-                                        {isDescriptionExpanded ? (
-                                            <>View Less <ChevronUp className="ml-1 h-4 w-4" /></>
-                                        ) : (
-                                            <>View More <ChevronDown className="ml-1 h-4 w-4" /></>
-                                        )}
-                                    </Button>
-                                )}
-                                {/* Additional metadata */}
-                                {(job.jobFunction || (job.applicantsCount && job.applicantsCount !== 0 && job.applicantsCount !== '')) && (
-                                    <div className="border-t pt-4 grid grid-cols-2 gap-4">
-                                        {job.jobFunction && (
-                                            <div>
-                                                <h3 className="font-semibold text-sm text-muted-foreground">Job Function</h3>
-                                                <p>{job.jobFunction}</p>
-                                            </div>
-                                        )}
-                                        {(job.applicantsCount && job.applicantsCount !== 0 && job.applicantsCount !== '') && (
-                                            <div>
-                                                <h3 className="font-semibold text-sm text-muted-foreground">Applicants</h3>
-                                                <p>{job.applicantsCount} applicants</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </CardContent>
-                        </Card>
+                            )}
+                        </AppCollapsibleCard>
                     )}
 
                     {/* Cover Letter Card */}
@@ -273,11 +219,20 @@ export default function JobDetailPage() {
                 <div className="space-y-6">
                     {/* Company Information Card */}
                     {hasCompanyInfo(job) && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Company Information</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
+                        <AppCollapsibleCard
+                            title="Company Information"
+                            defaultExpanded={!job.companyDescription}
+                            canExpand={!!(job.companyEmployeesCount || job.industries || job.companyWebsite || job.companyLinkedinUrl)}
+                            collapsedContent={
+                                job.companyDescription ? (
+                                    <div>
+                                        <h4 className="font-semibold text-sm text-muted-foreground">About</h4>
+                                        <p className="text-sm mt-1">{job.companyDescription}</p>
+                                    </div>
+                                ) : undefined
+                            }
+                        >
+                            <div className="space-y-4">
                                 {job.companyEmployeesCount && (
                                     <div>
                                         <h4 className="font-semibold text-sm text-muted-foreground">Company Size</h4>
@@ -312,8 +267,8 @@ export default function JobDetailPage() {
                                         <p className="text-sm mt-1">{job.companyDescription}</p>
                                     </div>
                                 )}
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </AppCollapsibleCard>
                     )}
 
                     {/* Compensation Card */}

@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/sidebar";
 
 export function useSidebarBack(onClick: () => void, label: string = "Back"): void {
-    const { setHeaderContent } = useAppSidebarContent();
+    const { setHeaderContent, setBackAction } = useAppSidebarContent();
 
     useEffect(() => {
         setHeaderContent(
@@ -23,9 +23,11 @@ export function useSidebarBack(onClick: () => void, label: string = "Back"): voi
                 </SidebarMenuItem>
             </SidebarMenu>
         );
+        setBackAction({ onClick, label });
 
         return () => {
             setHeaderContent(null);
+            setBackAction(null);
         };
-    }, [onClick, label, setHeaderContent]);
+    }, [onClick, label, setHeaderContent, setBackAction]);
 }

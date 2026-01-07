@@ -1,14 +1,15 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LoaderCircle, FileText, Pencil } from 'lucide-react';
+import { LoaderCircle, FileText, Pencil, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import AppDatePicker from '@/components/ui/appDatePicker';
 import { Job, JobArtifact } from '@/types';
 import useLoadJob from '@/hooks/useLoadJob';
 import useToUrl from '@/hooks/useToUrl';
+import { cn } from '@/lib/utils';
 import { useSidebarBack } from '@/hooks/useSidebarBack';
 
 function getCoverLetterArtifact(job: Job): JobArtifact | undefined {
@@ -40,6 +41,26 @@ export default function JobDetailPage() {
     useSidebarBack(router.back, "Back to Jobs");
     const [appliedAtUpdating, setAppliedAtUpdating] = useState(false);
     const [appliedAtError, setAppliedAtError] = useState<string | null>(null);
+    const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+    const [isDescriptionOverflowing, setIsDescriptionOverflowing] = useState(false);
+    const descriptionRef = useRef<HTMLDivElement>(null);
+    const descriptionCardRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const el = descriptionRef.current;
+        if (!el) return;
+
+        const checkOverflow = () => {
+            setIsDescriptionOverflowing(el.scrollHeight > 192); // 192px = max-h-48
+        };
+
+        checkOverflow();
+
+        const resizeObserver = new ResizeObserver(checkOverflow);
+        resizeObserver.observe(el);
+
+        return () => resizeObserver.disconnect();
+    }, [job?.descriptionHtml]);
 
     const handleAppliedAtChange = async (date: Date | undefined) => {
         setAppliedAtUpdating(true);
@@ -140,15 +161,46 @@ export default function JobDetailPage() {
 
                     {/* Job Description Card */}
                     {job.descriptionHtml && (
-                        <Card>
+                        <Card ref={descriptionCardRef}>
                             <CardHeader>
                                 <CardTitle>Job Description</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                <div
-                                    className="prose prose-sm max-w-none"
-                                    dangerouslySetInnerHTML={{ __html: job.descriptionHtml }}
-                                />
+                                <div className="relative">
+                                    <div
+                                        ref={descriptionRef}
+                                        className={cn(
+                                            "prose prose-sm max-w-none overflow-hidden transition-all duration-300",
+                                            isDescriptionExpanded ? "max-h-[5000px]" : "max-h-48"
+                                        )}
+                                        dangerouslySetInnerHTML={{ __html: job.descriptionHtml }}
+                                    />
+                                    {!isDescriptionExpanded && isDescriptionOverflowing && (
+                                        <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-card to-transparent pointer-events-none" />
+                                    )}
+                                </div>
+                                {isDescriptionOverflowing && (
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                            const wasCollapsed = !isDescriptionExpanded;
+                                            setIsDescriptionExpanded(!isDescriptionExpanded);
+                                            if (wasCollapsed) {
+                                                requestAnimationFrame(() => {
+                                                    descriptionCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                });
+                                            }
+                                        }}
+                                        className="w-full"
+                                    >
+                                        {isDescriptionExpanded ? (
+                                            <>View Less <ChevronUp className="ml-1 h-4 w-4" /></>
+                                        ) : (
+                                            <>View More <ChevronDown className="ml-1 h-4 w-4" /></>
+                                        )}
+                                    </Button>
+                                )}
                                 {/* Additional metadata */}
                                 {(job.jobFunction || (job.applicantsCount && job.applicantsCount !== 0 && job.applicantsCount !== '')) && (
                                     <div className="border-t pt-4 grid grid-cols-2 gap-4">

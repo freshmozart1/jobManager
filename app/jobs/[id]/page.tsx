@@ -2,13 +2,14 @@
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { LoaderCircle, FileText, Pencil, ArrowLeft } from 'lucide-react';
+import { LoaderCircle, FileText, Pencil } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardAction } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import AppDatePicker from '@/components/ui/appDatePicker';
 import { Job, JobArtifact } from '@/types';
 import useLoadJob from '@/hooks/useLoadJob';
 import useToUrl from '@/hooks/useToUrl';
+import { useSidebarBack } from '@/hooks/useSidebarBack';
 
 function getCoverLetterArtifact(job: Job): JobArtifact | undefined {
     return job.artifacts?.find(a => a.type === 'cover-letter');
@@ -36,6 +37,7 @@ export default function JobDetailPage() {
     const jobId = params.id as string;
     const [job, loading, error, refetch] = useLoadJob(jobId);
     const toUrl = useToUrl();
+    useSidebarBack(router.back, "Back to Jobs");
     const [appliedAtUpdating, setAppliedAtUpdating] = useState(false);
     const [appliedAtError, setAppliedAtError] = useState<string | null>(null);
 
@@ -90,12 +92,6 @@ export default function JobDetailPage() {
                         <CardHeader>
                             <CardTitle className="text-2xl">{job.title}</CardTitle>
                             <CardDescription className="text-lg">{job.companyName}</CardDescription>
-                            <CardAction>
-                                <Button onClick={() => router.back()} variant="outline" size="sm">
-                                    <ArrowLeft className="h-4 w-4 mr-2" />
-                                    Back to Jobs
-                                </Button>
-                            </CardAction>
                         </CardHeader>
                     </Card>
 

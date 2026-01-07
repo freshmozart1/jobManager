@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/ui/appSidebar";
+import { AppSidebar, AppSidebarContentProvider } from "@/components/ui/appSidebar";
 import { AppRightPanelProvider } from "@/components/ui/appRightPanel";
 
 const geistSans = Geist({
@@ -32,15 +32,17 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SidebarProvider defaultOpen={false}>
-          <AppSidebar />
-          <SidebarInset>
-            <header className="flex h-12 items-center px-4 md:hidden">
-              <SidebarTrigger />
-            </header>
-            <AppRightPanelProvider>
-              {children}
-            </AppRightPanelProvider>
-          </SidebarInset>
+          <AppSidebarContentProvider>
+            <AppSidebar />
+            <SidebarInset>
+              <header className="flex h-12 items-center px-4 md:hidden">
+                <SidebarTrigger />
+              </header>
+              <AppRightPanelProvider>
+                {children}
+              </AppRightPanelProvider>
+            </SidebarInset>
+          </AppSidebarContentProvider>
         </SidebarProvider>
       </body>
     </html>

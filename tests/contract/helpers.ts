@@ -166,5 +166,4 @@ export async function seedJob(db: Db, job: Job) {
 
 export async function cleanupJobData(db: Db, jobId: string) {
     await db.collection('jobs').deleteOne({ id: jobId });
-    await db.collection('jobArtifacts').deleteMany({ jobId });
 }

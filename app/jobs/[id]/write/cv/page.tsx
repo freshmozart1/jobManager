@@ -11,7 +11,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
     createEmptyCvModel,
-    parseCvModelFromHtml,
     personalEducationToCvEducation,
     personalExperienceToCvExperience,
     personalSkillsToCvSkills,
@@ -28,18 +27,18 @@ export default function CvPage() {
     // Track if initial values have been set
     const initializedRef = useRef(false);
 
-    // CV content (HTML string from editor)
-    const [cvContentHtml, setCvContentHtml] = useState<string>('');
+    // CV content (CvModel object)
+    const [cvModel, setCvModel] = useState<CvModel | null>(null);
 
     // Save status
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const [saveError, setSaveError] = useState<string | null>(null);
 
     // Pending save ref for beforeunload flush
-    const pendingPayloadRef = useRef<string | null>(null);
+    const pendingPayloadRef = useRef<CvModel | null>(null);
 
     // Debounced content for auto-save (1000ms)
-    const debouncedCvContent = useDebounce(cvContentHtml, 1000);
+    const debouncedCvModel = useDebounce(cvModel, 1000);
 
     // Initial model state
     const [initialModel, setInitialModel] = useState<CvModel | null>(null);
@@ -50,11 +49,10 @@ export default function CvPage() {
 
         const existingArtifact = job.artifacts?.find((a) => a.type === 'cv');
 
-        // Parse existing HTML or create empty model
+        // Use existing CvModel or create empty model
         let model: CvModel;
-        if (existingArtifact?.content) {
-            const parsed = parseCvModelFromHtml(existingArtifact.content);
-            model = parsed || createEmptyCvModel();
+        if (existingArtifact && existingArtifact.type === 'cv' && typeof existingArtifact.content === 'object') {
+            model = existingArtifact.content;
         } else {
             model = createEmptyCvModel();
         }
@@ -67,6 +65,7 @@ export default function CvPage() {
         }
 
         setInitialModel(model);
+        setCvModel(model);
         initializedRef.current = true;
     }, [job, personal]);
 
@@ -79,12 +78,12 @@ export default function CvPage() {
             return;
         }
 
-        if (!initializedRef.current || !debouncedCvContent) return;
+        if (!initializedRef.current || !debouncedCvModel) return;
 
         const saveArtifact = async () => {
             setSaveStatus('saving');
             setSaveError(null);
-            pendingPayloadRef.current = debouncedCvContent;
+            pendingPayloadRef.current = debouncedCvModel;
 
             try {
                 const response = await fetch(toUrl(`/api/jobs/${jobId}/artifacts`), {
@@ -92,7 +91,7 @@ export default function CvPage() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         type: 'cv',
-                        content: debouncedCvContent,
+                        content: debouncedCvModel,
                     }),
                 });
 
@@ -113,7 +112,7 @@ export default function CvPage() {
         };
 
         saveArtifact();
-    }, [debouncedCvContent, jobId, toUrl]);
+    }, [debouncedCvModel, jobId, toUrl]);
 
     // Flush pending saves on beforeunload using sendBeacon
     useEffect(() => {
@@ -133,8 +132,8 @@ export default function CvPage() {
     }, [jobId, toUrl]);
 
     // Update handler from editor
-    const handleCvChange = useCallback((html: string) => {
-        setCvContentHtml(html);
+    const handleCvChange = useCallback((model: CvModel) => {
+        setCvModel(model);
     }, []);
 
     if (loading || personalLoading) {

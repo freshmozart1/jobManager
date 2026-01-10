@@ -21,118 +21,96 @@ export default function AppCvEditorPalette({
     placedSkillIds,
 }: AppCvEditorPaletteProps) {
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 w-80 border-r bg-muted/20 overflow-y-auto p-4">
             {/* Education Items */}
-            <div>
-                <h3 className="text-sm font-semibold mb-2 text-muted-foreground">Education</h3>
-                <div className="space-y-2">
-                    {education.map((item) => {
-                        const isPlaced = placedEducationIds.includes(item.id);
-                        return (
-                            <PaletteEducationItem key={item.id} item={item} disabled={isPlaced} />
-                        );
-                    })}
-                </div>
-            </div>
+            <PaletteGroup title="Education">
+                {
+                    education.map(
+                        item => <PaletteItem
+                            key={item.id}
+                            itemId={item.id}
+                            itemTitle={`${item.degree} in ${item.field}`}
+                            itemText={`${item.institution}, ${item.graduation_year}`}
+                            disabled={placedEducationIds.includes(item.id)}
+                        />
+                    )
+                }
+            </PaletteGroup>
 
             {/* Experience Items */}
-            <div>
-                <h3 className="text-sm font-semibold mb-2 text-muted-foreground">Work Experience</h3>
-                <div className="space-y-2">
-                    {experience.map((item) => {
-                        const isPlaced = placedExperienceIds.includes(item.id);
-                        return (
-                            <PaletteExperienceItem key={item.id} item={item} disabled={isPlaced} />
-                        );
-                    })}
-                </div>
-            </div>
+            <PaletteGroup title="Work Experience">
+                {
+                    experience.map(
+                        item => <PaletteItem
+                            key={item.id}
+                            itemId={item.id}
+                            itemTitle={item.role}
+                            itemText={item.company}
+                            disabled={placedExperienceIds.includes(item.id)}
+                        />
+                    )
+                }
+            </PaletteGroup>
 
             {/* Skills Items */}
-            <div>
-                <h3 className="text-sm font-semibold mb-2 text-muted-foreground">Skills</h3>
-                <div className="space-y-2">
-                    {skills.map((item) => {
-                        const isPlaced = placedSkillIds.includes(item.id);
-                        return <PaletteSkillItem key={item.id} item={item} disabled={isPlaced} />;
-                    })}
-                </div>
-            </div>
+            <PaletteGroup title="Skills">
+                {
+                    skills.map(
+                        item => <PaletteItem
+                            key={item.id}
+                            itemId={item.id}
+                            itemTitle={item.name}
+                            itemText={`${item.level} - ${item.years} years`}
+                            disabled={placedSkillIds.includes(item.id)}
+                        />
+                    )
+                }
+            </PaletteGroup>
         </div>
     );
 }
 
-function PaletteEducationItem({ item, disabled }: { item: CvEducationItem; disabled: boolean }) {
-    const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-        id: `palette:${item.id}`,
-        disabled,
-    });
-
-    return (
-        <div
-            ref={setNodeRef}
-            {...listeners}
-            {...attributes}
-            className={`p-2 bg-white border rounded text-sm cursor-move ${
-                disabled ? 'opacity-40 cursor-not-allowed' : ''
-            } ${isDragging ? 'opacity-50' : ''}`}
-        >
-            <p className="font-semibold text-xs">
-                {item.degree} in {item.field}
-            </p>
-            <p className="text-xs text-muted-foreground">
-                {item.institution}, {item.graduation_year}
-            </p>
-        </div>
-    );
-}
-
-function PaletteExperienceItem({
-    item,
-    disabled,
-}: {
-    item: CvExperienceItem;
+type AppPaletteItemProps = {
+    itemId: string;
+    itemTitle: string;
+    itemText: string;
     disabled: boolean;
-}) {
-    const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-        id: `palette:${item.id}`,
+};
+
+function PaletteItem({ itemId, itemTitle, itemText, disabled }: AppPaletteItemProps) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        isDragging
+    } = useDraggable({
+        id: `palette:${itemId}`,
         disabled,
     });
-
-    return (
-        <div
-            ref={setNodeRef}
-            {...listeners}
-            {...attributes}
-            className={`p-2 bg-white border rounded text-sm cursor-move ${
-                disabled ? 'opacity-40 cursor-not-allowed' : ''
+    return <div
+        ref={setNodeRef}
+        {...listeners}
+        {...attributes}
+        className={`p-2 bg-white border rounded text-sm cursor-move ${disabled ? 'opacity-40 cursor-not-allowed' : ''
             } ${isDragging ? 'opacity-50' : ''}`}
-        >
-            <p className="font-semibold text-xs">{item.role}</p>
-            <p className="text-xs text-muted-foreground">{item.company}</p>
-        </div>
-    );
+    >
+        <p className='font-semibold text-xs'>{itemTitle}</p>
+        <p className='text-xs text-muted-foreground'>{itemText}</p>
+    </div>;
 }
 
-function PaletteSkillItem({ item, disabled }: { item: CvSkillItem; disabled: boolean }) {
-    const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-        id: `palette:${item.id}`,
-        disabled,
-    });
+type AppPaletteGroupProps = {
+    title: string;
+    children: React.ReactNode;
+};
 
+function PaletteGroup({ title, children }: AppPaletteGroupProps) {
     return (
-        <div
-            ref={setNodeRef}
-            {...listeners}
-            {...attributes}
-            className={`p-2 bg-white border rounded text-sm cursor-move ${
-                disabled ? 'opacity-40 cursor-not-allowed' : ''
-            } ${isDragging ? 'opacity-50' : ''}`}
-        >
-            <p className="font-semibold text-xs">{item.name}</p>
-            <p className="text-xs text-muted-foreground">
-                {item.level} - {item.years} years
-            </p>
+        <div>
+            <h3 className="text-sm font-semibold mb-2 text-muted-foreground">{title}</h3>
+            <div className="space-y-2">
+                {children}
+            </div>
         </div>
     );
 }

@@ -30,9 +30,8 @@ export default function AppCvEditorSlot({
     return (
         <div
             ref={setNodeRef}
-            className={`min-h-[100px] p-4 border-2 border-dashed rounded-lg ${
-                isOver ? 'border-primary bg-primary/5' : 'border-gray-300'
-            }`}
+            className={`mb-6 min-h-[100px] p-4 border-2 border-dashed rounded-lg ${isOver ? 'border-primary bg-primary/5' : 'border-gray-300'
+                }`}
         >
             <h3 className="text-sm font-semibold mb-2 text-muted-foreground">{title}</h3>
             <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>

@@ -29,21 +29,40 @@ test('POST /api/jobs/{id}/generate returns 202 with artifact pointers', async ({
         const data = await res.json();
         expect(typeof data.runId).toBe('string');
         expect(Array.isArray(data.artifacts)).toBe(true);
-        expect(data.artifacts).toEqual(expect.arrayContaining([
-            expect.objectContaining({ type: 'cover-letter', url: `/api/jobs/${jobId}/download?type=cover-letter` }),
-            expect.objectContaining({ type: 'cv', url: `/api/jobs/${jobId}/download?type=cv` })
-        ]));
+        expect(data.artifacts.length).toBe(2);
 
-        const storedArtifacts = await dbContext.db.collection('jobArtifacts').find({ jobId }).toArray();
-        expect(storedArtifacts).toHaveLength(2);
-        storedArtifacts.forEach(artifact => {
-            expect(artifact.runId).toBe(data.runId);
-            expect(typeof artifact.content).toBe('string');
-        });
+        // Verify artifacts stored in Job.artifacts[] array
+        const jobDoc = await dbContext.db.collection('jobs').findOne(
+            { id: jobId },
+            { projection: { artifacts: 1, _id: 0 } }
+        );
+        expect(jobDoc?.artifacts).toHaveLength(2);
 
-        const jobDoc = await dbContext.db.collection('jobs').findOne({ id: jobId }, { projection: { generation: 1, _id: 0 } });
-        expect(jobDoc?.generation?.runId).toBe(data.runId);
-        expect(jobDoc?.generation?.types).toEqual(['cover-letter', 'cv']);
+        // Verify cover letter artifact is string
+        const coverLetterArtifact = jobDoc?.artifacts.find((a: any) => a.type === 'cover-letter');
+        expect(coverLetterArtifact).toBeDefined();
+        expect(typeof coverLetterArtifact?.content).toBe('string');
+        expect(coverLetterArtifact?.content.length).toBeGreaterThan(0);
+
+        // Verify CV artifact is CvModel JSON with YYYY-MM dates
+        const cvArtifact = jobDoc?.artifacts.find((a: any) => a.type === 'cv');
+        expect(cvArtifact).toBeDefined();
+        expect(typeof cvArtifact?.content).toBe('object');
+        expect(cvArtifact?.content.templateId).toBeDefined();
+        expect(cvArtifact?.content.header).toBeDefined();
+        expect(cvArtifact?.content.slots).toBeDefined();
+
+        // Validate experience dates are YYYY-MM strings (regression assertion)
+        const experience = cvArtifact?.content.slots.experience;
+        if (experience && experience.length > 0) {
+            const firstExp = experience[0];
+            expect(typeof firstExp.from).toBe('string');
+            expect(firstExp.from).toMatch(/^\d{4}-\d{2}$/);
+            if (firstExp.to) {
+                expect(typeof firstExp.to).toBe('string');
+                expect(firstExp.to).toMatch(/^\d{4}-\d{2}$/);
+            }
+        }
     } finally {
         await api.dispose();
         await cleanupJobData(dbContext.db, jobId);

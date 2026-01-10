@@ -1,7 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import { Plus, FileText, FileUser } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import AppEditableCard from '@/components/ui/appItemEditor/appEditableCard';
 import { cn } from '@/lib/utils';
 import type { JobArtifact } from '@/types';
@@ -25,6 +24,14 @@ export default function AppJobArtifactEditor({ jobId, artifacts = [], disabled =
 
     const handleCoverLetterDelete = () => {
         console.info('delete artifact', { jobId, type: 'cover-letter' });
+    };
+
+    const handleCvEdit = () => {
+        router.push(`/jobs/${jobId}/write/cv`);
+    };
+
+    const handleCvDelete = () => {
+        console.info('delete artifact', { jobId, type: 'cv' });
     };
 
     return (
@@ -82,19 +89,49 @@ export default function AppJobArtifactEditor({ jobId, artifacts = [], disabled =
                 </button>
             )}
 
-            {/* CV Slot - Only show if CV exists, fully disabled/muted */}
-            {cvArtifact && (
-                <Card className="opacity-60 cursor-not-allowed">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-base">
+            {/* CV Slot */}
+            {cvArtifact ? (
+                <AppEditableCard
+                    title={
+                        <div className="flex items-center gap-2">
                             <FileUser className="h-5 w-5 text-muted-foreground" />
                             <span>CV</span>
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-sm text-muted-foreground">Coming soon</p>
-                    </CardContent>
-                </Card>
+                        </div>
+                    }
+                    editAriaLabel="Edit CV"
+                    deleteAriaLabel="Delete CV"
+                    onEdit={handleCvEdit}
+                    onDelete={handleCvDelete}
+                    disabled={disabled}
+                >
+                    <div className="space-y-3">
+                        <div>
+                            <h4 className="font-semibold text-sm text-muted-foreground">Content Preview</h4>
+                            <p className="text-sm text-muted-foreground line-clamp-3">
+                                {cvArtifact.content?.substring(0, 150)}...
+                            </p>
+                        </div>
+                        <div className="flex gap-4 text-xs text-muted-foreground pt-2">
+                            <span>Created: {cvArtifact.createdAt.toLocaleDateString()}</span>
+                            <span>Updated: {cvArtifact.updatedAt.toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                </AppEditableCard>
+            ) : (
+                <button
+                    type="button"
+                    onClick={handleCvEdit}
+                    disabled={disabled}
+                    className={cn(
+                        'flex min-h-[220px] items-center justify-center rounded-lg border border-dashed border-muted-foreground/50 bg-muted/20 text-muted-foreground transition hover:border-primary hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring',
+                        disabled && 'cursor-not-allowed opacity-60'
+                    )}
+                >
+                    <span className="flex items-center gap-2 text-sm font-medium">
+                        <Plus className="h-4 w-4" />
+                        Add CV
+                    </span>
+                </button>
             )}
         </div>
     );

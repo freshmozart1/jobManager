@@ -4,22 +4,97 @@ import { corsHeaders } from "@/lib/cors";
 import { InvalidArtifactTypeError, JobNotFoundError, NoDatabaseNameError } from "@/lib/errors";
 import mongoPromise from "@/lib/mongodb";
 import { Job, JobArtifact, JobArtifactType } from "@/types";
+import { CvModel } from "@/lib/cvModel";
 import { NextRequest, NextResponse } from "next/server";
 
 export function OPTIONS() {
     return new NextResponse(null, { headers: corsHeaders() });
 }
 
-type ArtifactRequestBody = {
-    type: JobArtifactType;
+type CoverLetterRequestBody = {
+    type: 'cover-letter';
     content: string;
     subject?: string;
     recipient?: string;
     applicant?: string;
 };
 
-function isValidArtifactType(type: unknown): type is JobArtifactType {
-    return typeof type === 'string' && JOB_ARTIFACT_TYPES.includes(type as JobArtifactType);
+type CvRequestBody = {
+    type: 'cv';
+    content: CvModel;
+};
+
+type ArtifactRequestBody = CoverLetterRequestBody | CvRequestBody;
+
+/**
+ * Validate YYYY-MM date format and month range
+ */
+function isValidYYYYMM(dateStr: string): boolean {
+    const match = dateStr.match(/^(\d{4})-(\d{2})$/);
+    if (!match) return false;
+    const month = parseInt(match[2], 10);
+    return month >= 1 && month <= 12;
+}
+
+/**
+ * Validate CV artifact structure
+ */
+function validateCvContent(content: unknown): boolean {
+    if (typeof content !== 'object' || content === null) {
+        return false;
+    }
+
+    const { templateId, header, slots } = content as CvModel;
+
+    // Required keys
+    if (!templateId || !header || !slots) {
+        return false;
+    }
+
+    // Header validation
+    const { name, email, phone, location } = header;
+    if (
+        (typeof name !== 'string' || name.trim() === '') ||
+        (typeof email !== 'string' || email.trim() === '') ||
+        (typeof phone !== 'string' || phone.trim() === '') ||
+        (location !== undefined && (typeof location !== 'string' || location.trim() === ''))
+    ) return false;
+
+    // Slots validation
+    const { education, experience, skills } = slots;
+    if (
+        !Array.isArray(education) || // Education (may be empty)
+        (!Array.isArray(experience) || experience.length === 0) || // Experience (must be non-empty)
+        (!Array.isArray(skills) || skills.length === 0) // Skills (must be non-empty)
+    ) return false;
+
+    for (const { degree, field, institution, graduation_year } of education) if (
+        (typeof degree !== 'string' || degree.trim() === '') ||
+        (typeof field !== 'string' || field.trim() === '') ||
+        (typeof institution !== 'string' || institution.trim() === '') ||
+        (typeof graduation_year !== 'number' || !Number.isFinite(graduation_year))
+    ) return false;
+
+    for (const { from, to, role, company, summary, tags } of experience) {
+        if (
+            (typeof from !== 'string' || !isValidYYYYMM(from)) ||
+            (to !== undefined && (typeof to !== 'string' || !isValidYYYYMM(to))) ||
+            (typeof role !== 'string' || role.trim() === '') ||
+            (typeof company !== 'string' || company.trim() === '') ||
+            (typeof summary !== 'string' || summary.trim() === '') ||
+            (!Array.isArray(tags) || tags.length === 0)
+        ) return false;
+        for (const tag of tags) if (typeof tag !== 'string' || tag.trim() === '') return false;
+    }
+
+    for (const { name, category, level, years } of skills) if (
+        (typeof name !== 'string' || name.trim() === '') ||
+        (typeof category !== 'string' || category.trim() === '') ||
+        (typeof level !== 'string' || level.trim() === '') ||
+        (typeof years !== 'number' || !Number.isFinite(years))
+    ) return false;
+
+    return true;
 }
 
 async function upsertArtifact(
@@ -41,14 +116,23 @@ async function upsertArtifact(
         return jsonError(400, 'InvalidRequestBody', 'Request body must be valid JSON', origin);
     }
 
-    const { type, content, subject, recipient, applicant } = body;
+    const { type: artifactType } = body;
 
-    if (!isValidArtifactType(type)) {
+    if (!(typeof artifactType === 'string' && JOB_ARTIFACT_TYPES.includes(artifactType as JobArtifactType))) {
         return jsonError(422, InvalidArtifactTypeError.name, `Artifact type must be one of: ${JOB_ARTIFACT_TYPES.join(', ')}`, origin);
     }
 
-    if (typeof content !== 'string') {
-        return jsonError(422, 'InvalidContent', 'Content must be a string', origin);
+    // Type-specific validation
+    if (artifactType === 'cv') {
+        if (!validateCvContent(body.content)) {
+            return jsonError(400, 'InvalidCvContent',
+                'CV content must be a valid CvModel object with required fields: templateId, header (name/email/phone/location non-empty), slots.skills (non-empty, with non-empty name/category/level and numeric years), slots.experience (non-empty, with YYYY-MM dates and non-empty tags), slots.education (may be empty)',
+                origin);
+        }
+    } else if (artifactType === 'cover-letter') {
+        if (typeof body.content !== 'string') {
+            return jsonError(422, 'InvalidContent', 'Cover letter content must be a string', origin);
+        }
     }
 
     const db = (await mongoPromise).db(DATABASE_NAME);
@@ -66,17 +150,28 @@ async function upsertArtifact(
     }
 
     const now = new Date();
-    const existingArtifact = job.artifacts?.find(a => a.type === type);
+    const existingArtifact = job.artifacts?.find(a => a.type === artifactType);
 
-    const artifact: JobArtifact = {
-        type,
-        content,
-        ...(subject !== undefined && { subject }),
-        ...(recipient !== undefined && { recipient }),
-        ...(applicant !== undefined && { applicant }),
-        createdAt: existingArtifact?.createdAt ?? now,
-        updatedAt: now
-    };
+    let artifact: JobArtifact;
+    if (artifactType === 'cv') {
+        artifact = {
+            type: 'cv',
+            content: body.content,
+            createdAt: existingArtifact?.createdAt ?? now,
+            updatedAt: now
+        };
+    } else {
+        const coverLetterBody = body as CoverLetterRequestBody;
+        artifact = {
+            type: 'cover-letter',
+            content: coverLetterBody.content,
+            ...(coverLetterBody.subject !== undefined && { subject: coverLetterBody.subject }),
+            ...(coverLetterBody.recipient !== undefined && { recipient: coverLetterBody.recipient }),
+            ...(coverLetterBody.applicant !== undefined && { applicant: coverLetterBody.applicant }),
+            createdAt: existingArtifact?.createdAt ?? now,
+            updatedAt: now
+        };
+    }
 
     if (existingArtifact) {
         // Update existing artifact using array filters
@@ -88,7 +183,7 @@ async function upsertArtifact(
                 }
             },
             {
-                arrayFilters: [{ 'elem.type': type }]
+                arrayFilters: [{ 'elem.type': artifactType }]
             }
         );
     } else {
@@ -121,8 +216,5 @@ export async function POST(
     req: NextRequest,
     context: { params: Promise<{ id: string }> }
 ) {
-    return upsertArtifact(req, context, async () => {
-        const text = await req.text();
-        return JSON.parse(text);
-    });
+    return upsertArtifact(req, context, async () => JSON.parse(await req.text()));
 }

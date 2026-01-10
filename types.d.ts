@@ -1,4 +1,5 @@
 import { ObjectId } from "mongodb";
+import { CvModel } from "@/lib/cvModel";
 
 export type ScrapedJob = {
     id: string;
@@ -39,8 +40,8 @@ export type ScrapedJob = {
 
 export type JobArtifactType = 'cover-letter' | 'cv';
 
-export type JobArtifact = {
-    type: JobArtifactType;
+export type CoverLetterArtifact = {
+    type: 'cover-letter';
     content: string;
     subject?: string;
     recipient?: string;
@@ -48,6 +49,15 @@ export type JobArtifact = {
     createdAt: Date;
     updatedAt: Date;
 };
+
+export type CvArtifact = {
+    type: 'cv';
+    content: CvModel;
+    createdAt: Date;
+    updatedAt: Date;
+};
+
+export type JobArtifact = CoverLetterArtifact | CvArtifact;
 
 export type Job = ScrapedJob & {
     filteredAt: Date;

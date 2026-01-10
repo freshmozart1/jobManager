@@ -6,19 +6,6 @@ This is a Next.js 15 application for managing and displaying job listings, built
 
 Job Manager is a web application that scrapes, stores, and displays job listings. It provides a search interface for users to find jobs and uses OpenAI's API for intelligent filtering and matching.
 
-## Technology Stack
-
-- **Framework**: Next.js 15.5.5 (with Turbopack)
-- **React**: 19.1.0
-- **Language**: TypeScript 5
-- **Styling**: TailwindCSS 4 with Tailwind Animate CSS
-- **Database**: MongoDB
-- **UI Components**: [shadcn/ui](https://ui.shadcn.com/docs) on top of Radix UI primitives (Dialog, Avatar, Separator, Slot, Tooltip)
-- **Data Tables**: TanStack React Table
-- **AI/ML**: OpenAI API and OpenAI Agents
-- **Web Scraping**: Apify Client
-- **Utilities**: clsx, class-variance-authority, tailwind-merge, lucide-react
-
 ## Project Structure
 
 ```
@@ -59,8 +46,6 @@ Job Manager is a web application that scrapes, stores, and displays job listings
 
 ### Naming Conventions
 - **Files**: Use camelCase for multi-word files (e.g., `jobCard.tsx`) and add 'app' prefix (e.g., `appJobCard.tsx`) to UI components in the `/components` directory
-- **Components**: Use PascalCase (e.g., `JobCard`)
-- **Functions/Variables**: Use camelCase (e.g., `fetchJobs`, `jobData`)
 - **Types**: Use PascalCase (e.g., `Job`, `PersonalInformationContact`)
 - **Constants**: Use SCREAMING_SNAKE_CASE for true constants (e.g., `DATABASE_NAME`)
 
@@ -95,7 +80,7 @@ Job Manager is a web application that scrapes, stores, and displays job listings
 - Use the `/api/mock/*` endpoints for generating mock data during development
 
 ### Error Handling
-- Use custom error classes from `@/lib/errors`
+- Use custom error classes from `@/lib/errors.ts`
 - Always add new error classes in `@/lib/errors.ts` instead of inline errors
 - Return proper HTTP status codes and status text
 - Handle database connection errors gracefully
@@ -134,26 +119,7 @@ Runs ESLint with Next.js TypeScript configuration
 
 ## Environment Variables
 
-Ensure the following environment variables are configured:
 - `DATABASE_NAME`: MongoDB database name
-- Other environment-specific variables as needed
-
-## Dependencies
-
-### Key Libraries
-- `@openai/agents` and `openai`: AI-powered features
-- `apify-client`: Web scraping functionality
-- `mongodb`: Database driver
-- `@tanstack/react-table`: Advanced data tables
-- `@radix-ui/*`: Accessible UI primitives
-- `lucide-react`: Icon library
-- `shadcn`: UI component library
-
-### Development Dependencies
-- `eslint` and `eslint-config-next`: Code linting
-- `@tailwindcss/postcss`: Tailwind CSS processing
-- `typescript`: Type checking
-- `shadcn`: UI component library
 
 ## Special Notes
 
@@ -181,10 +147,3 @@ Ensure the following environment variables are configured:
 - Write clear, descriptive commit messages
 - Ensure code passes linting before committing
 - Test thoroughly before pushing changes
-
-## Active Technologies
-- TypeScript 5; React 19; Next.js 15 (App Router) + TailwindCSS 4, shadcn/ui (Radix), MongoDB driver, OpenAI SDK (001-baseline-spec)
-- MongoDB (connection via `lib/mongodb.ts`) (001-baseline-spec)
-
-## Recent Changes
-- 001-baseline-spec: Added TypeScript 5; React 19; Next.js 15 (App Router) + TailwindCSS 4, shadcn/ui (Radix), MongoDB driver, OpenAI SDK

@@ -52,12 +52,18 @@ function validateCvContent(content: unknown): boolean {
     }
 
     // Header validation
-    const { name, email, phone, location } = header;
+    const { name, email, phone, address } = header;
     if (
         (typeof name !== 'string' || name.trim() === '') ||
         (typeof email !== 'string' || email.trim() === '') ||
         (typeof phone !== 'string' || phone.trim() === '') ||
-        (location !== undefined && (typeof location !== 'string' || location.trim() === ''))
+        !address ||
+        typeof address !== 'object' ||
+        (typeof address.streetAddress !== 'string' || address.streetAddress.trim() === '') ||
+        (typeof address.addressLocality !== 'string' || address.addressLocality.trim() === '') ||
+        (typeof address.addressRegion !== 'string' || address.addressRegion.trim() === '') ||
+        (typeof address.postalCode !== 'string' || address.postalCode.trim() === '') ||
+        (typeof address.addressCountry !== 'string' || address.addressCountry.trim() === '')
     ) return false;
 
     // Slots validation
@@ -82,7 +88,7 @@ function validateCvContent(content: unknown): boolean {
             (typeof role !== 'string' || role.trim() === '') ||
             (typeof company !== 'string' || company.trim() === '') ||
             (typeof summary !== 'string' || summary.trim() === '') ||
-            (!Array.isArray(tags) || tags.length === 0)
+            (!Array.isArray(tags))
         ) return false;
         for (const tag of tags) if (typeof tag !== 'string' || tag.trim() === '') return false;
     }
@@ -90,7 +96,7 @@ function validateCvContent(content: unknown): boolean {
     for (const { name, category, level, years } of skills) if (
         (typeof name !== 'string' || name.trim() === '') ||
         (typeof category !== 'string' || category.trim() === '') ||
-        (typeof level !== 'string' || level.trim() === '') ||
+        (typeof level !== 'string') ||
         (typeof years !== 'number' || !Number.isFinite(years))
     ) return false;
 
@@ -126,7 +132,7 @@ async function upsertArtifact(
     if (artifactType === 'cv') {
         if (!validateCvContent(body.content)) {
             return jsonError(400, 'InvalidCvContent',
-                'CV content must be a valid CvModel object with required fields: templateId, header (name/email/phone/location non-empty), slots.skills (non-empty, with non-empty name/category/level and numeric years), slots.experience (non-empty, with YYYY-MM dates and non-empty tags), slots.education (may be empty)',
+                'CV content must be a valid CvModel object with required fields: templateId, header (name/email/phone non-empty, address with non-empty streetAddress/addressLocality/addressRegion/postalCode/addressCountry), slots.skills (non-empty, with non-empty name/category and numeric years), slots.experience (non-empty, with YYYY-MM dates), slots.education (may be empty)',
                 origin);
         }
     } else if (artifactType === 'cover-letter') {

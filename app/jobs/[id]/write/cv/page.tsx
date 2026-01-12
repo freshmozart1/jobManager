@@ -43,6 +43,22 @@ export default function CvPage() {
     // Initial model state
     const [initialModel, setInitialModel] = useState<CvModel | null>(null);
 
+    // Validate if model can be saved
+    const canAutosave = (model: CvModel | null): boolean => {
+        if (!model) return false;
+        const { address } = model.header;
+        return !!(
+            address.streetAddress?.trim() &&
+            address.addressLocality?.trim() &&
+            address.addressRegion?.trim() &&
+            address.postalCode?.trim() &&
+            address.addressCountry?.trim()
+        );
+    };
+
+    // Check if model has changed from initial
+    const isDirty = cvModel && initialModel && JSON.stringify(cvModel) !== JSON.stringify(initialModel);
+
     // Initialize form from existing artifact or defaults
     useEffect(() => {
         if (initializedRef.current || !job || !personal) return;
@@ -64,6 +80,23 @@ export default function CvPage() {
             model.header.phone = personal.contact?.phone || '';
         }
 
+        // Prefill address from personal info if empty
+        if (!model.header.address.streetAddress) {
+            model.header.address.streetAddress = personal.contact?.address?.streetAddress || '';
+        }
+        if (!model.header.address.addressLocality) {
+            model.header.address.addressLocality = personal.contact?.address?.addressLocality || '';
+        }
+        if (!model.header.address.addressRegion) {
+            model.header.address.addressRegion = personal.contact?.address?.addressRegion || '';
+        }
+        if (!model.header.address.postalCode) {
+            model.header.address.postalCode = personal.contact?.address?.postalCode || '';
+        }
+        if (!model.header.address.addressCountry) {
+            model.header.address.addressCountry = personal.contact?.address?.addressCountry || '';
+        }
+
         setInitialModel(model);
         setCvModel(model);
         initializedRef.current = true;
@@ -79,6 +112,16 @@ export default function CvPage() {
         }
 
         if (!initializedRef.current || !debouncedCvModel) return;
+
+        // Check if model can be saved
+        if (!canAutosave(debouncedCvModel)) {
+            // Show draft status only if model has been edited
+            if (isDirty) {
+                setSaveStatus('idle');
+                setSaveError('Draft (not saved)');
+            }
+            return;
+        }
 
         const saveArtifact = async () => {
             setSaveStatus('saving');
@@ -112,12 +155,12 @@ export default function CvPage() {
         };
 
         saveArtifact();
-    }, [debouncedCvModel, jobId, toUrl]);
+    }, [debouncedCvModel, jobId, toUrl, isDirty]);
 
     // Flush pending saves on beforeunload using sendBeacon
     useEffect(() => {
         const handleBeforeUnload = () => {
-            if (pendingPayloadRef.current) {
+            if (pendingPayloadRef.current && canAutosave(pendingPayloadRef.current)) {
                 navigator.sendBeacon(
                     toUrl(`/api/jobs/${jobId}/artifacts`),
                     JSON.stringify({
@@ -181,6 +224,12 @@ export default function CvPage() {
                     <>
                         <AlertCircle className="w-4 h-4 text-destructive" />
                         <span className="text-destructive">{saveError}</span>
+                    </>
+                )}
+                {saveStatus === 'idle' && saveError && (
+                    <>
+                        <AlertCircle className="w-4 h-4 text-amber-600" />
+                        <span className="text-amber-600">{saveError}</span>
                     </>
                 )}
             </div>

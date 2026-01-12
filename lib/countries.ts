@@ -11,7 +11,7 @@ export function getCountryNames(): string[] {
     for (const country of countriesData) {
         const trimmed = country.trim();
         if (!trimmed) continue;
-        
+
         const normalized = trimmed.toLowerCase();
         if (!seen.has(normalized)) {
             seen.add(normalized);

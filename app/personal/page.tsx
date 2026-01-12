@@ -41,7 +41,7 @@ export default function PersonalPage() {
 
     const [personalInfo, setPersonalInfo, loading] = usePersonal();
     const countryNames = useMemo(() => getCountryNames(), []);
-    
+
     const registerAddSkill = useCallback((handler: (() => void) | null) => {
         openSkillsSheetRef.current = handler;
         setCanOpenSkillsSheet(Boolean(handler));
@@ -78,7 +78,7 @@ export default function PersonalPage() {
             setShowAddressValidation(true);
             return;
         }
-        
+
         setSaving(true);
         setEditedField(type);
         setShowAddressValidation(false);
@@ -99,7 +99,7 @@ export default function PersonalPage() {
                     }
                 };
             }
-            
+
             const response = await fetch(toUrl('/api/personal'), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },

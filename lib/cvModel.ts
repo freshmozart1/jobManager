@@ -18,7 +18,13 @@ export type CvModel = {
         name: string;
         email: string;
         phone: string;
-        location?: string;
+        address: {
+            streetAddress: string;
+            addressLocality: string;
+            addressRegion: string;
+            postalCode: string;
+            addressCountry: string;
+        };
     };
     slots: {
         education: CvEducationItem[];
@@ -120,7 +126,13 @@ export function createEmptyCvModel(): CvModel {
             name: '',
             email: '',
             phone: '',
-            location: '',
+            address: {
+                streetAddress: '',
+                addressLocality: '',
+                addressRegion: '',
+                postalCode: '',
+                addressCountry: '',
+            },
         },
         slots: {
             education: [],

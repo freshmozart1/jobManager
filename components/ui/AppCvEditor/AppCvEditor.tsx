@@ -140,6 +140,20 @@ export default function AppCvEditor({
         }));
     }, []);
 
+    // Update header address field
+    const handleHeaderAddressChange = useCallback((field: keyof CvModel['header']['address'], value: string) => {
+        setModel((prev) => ({
+            ...prev,
+            header: {
+                ...prev.header,
+                address: {
+                    ...prev.header.address,
+                    [field]: value,
+                },
+            },
+        }));
+    }, []);
+
     return (
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
             <div className="flex h-screen print:hidden">
@@ -160,6 +174,7 @@ export default function AppCvEditor({
                         <AppCvEditorPreview
                             model={model}
                             onHeaderChange={handleHeaderChange}
+                            onHeaderAddressChange={handleHeaderAddressChange}
                             onRemove={handleRemove}
                         />
                     </div>

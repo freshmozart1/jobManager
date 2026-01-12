@@ -13,7 +13,12 @@ export default function usePersonal(): [PersonalInformation | null, Dispatch<Set
             .then(res => res.json())
             .then((data: PersonalInformation) => {
                 const normalizedExperience = normaliseExperienceItems(data.experience);
-                setPersonalInfo({ ...data, experience: normalizedExperience });
+                // Ensure contact.address exists (normalize for older DB entries)
+                const normalizedContact = {
+                    ...data.contact,
+                    address: data.contact.address || {}
+                };
+                setPersonalInfo({ ...data, contact: normalizedContact, experience: normalizedExperience });
                 setLoading(false);
             })
             .catch(err => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import useToUrl from "@/hooks/useToUrl";
 import { type PersonalInformationSkill, type PersonalInformationExperience, type PersonalInformationEducation, PersonalInformationCertification, PersonalInformationLanguageSpoken, type PersonalInformationEligibility, type PersonalInformationMotivation, type PersonalInformationCareerGoal } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,19 +28,36 @@ import { AppEligibilityEditor } from "@/components/ui/appEligibilityEditor";
 import { AppExclusionsEditor } from "@/components/ui/appExclusionsEditor";
 import AppMotivationsEditor from "@/components/ui/appMotivationsEditor";
 import AppCareerGoalsEditor from "@/components/ui/appCareerGoalsEditor";
+import { AppCategoryCombobox } from "@/components/ui/appCategoryCombobox";
+import { getCountryNames } from "@/lib/countries";
 
 export default function PersonalPage() {
     const toUrl = useToUrl();
     const [saving, setSaving] = useState(false);
     const [editedField, setEditedField] = useState<string | null>(null);
+    const [showAddressValidation, setShowAddressValidation] = useState(false);
     const openSkillsSheetRef = useRef<(() => void) | null>(null);
     const [canOpenSkillsSheet, setCanOpenSkillsSheet] = useState(false);
 
     const [personalInfo, setPersonalInfo, loading] = usePersonal();
+    const countryNames = useMemo(() => getCountryNames(), []);
+
     const registerAddSkill = useCallback((handler: (() => void) | null) => {
         openSkillsSheetRef.current = handler;
         setCanOpenSkillsSheet(Boolean(handler));
     }, []);
+
+    // Validate address fields (all required, trimmed, postal code no whitespace)
+    const isAddressValid = useMemo(() => {
+        if (!personalInfo?.contact.address) return false;
+        const addr = personalInfo.contact.address;
+        const street = (addr.streetAddress || '').trim();
+        const locality = (addr.addressLocality || '').trim();
+        const region = (addr.addressRegion || '').trim();
+        const postal = (addr.postalCode || '').replace(/\s/g, '');
+        const country = (addr.addressCountry || '').trim();
+        return !!(street && locality && region && postal && country);
+    }, [personalInfo?.contact.address]);
 
     const handleCurrencyChange = (currency: string) => {
         setPersonalInfo(prev => {
@@ -56,13 +73,37 @@ export default function PersonalPage() {
     };
 
     const handleSave = async (type: string, value: unknown) => {
+        // For contact, validate address fields first
+        if (type === 'contact' && !isAddressValid) {
+            setShowAddressValidation(true);
+            return;
+        }
+
         setSaving(true);
         setEditedField(type);
+        setShowAddressValidation(false);
         try {
+            // Sanitize contact address fields before saving
+            let sanitizedValue = value;
+            if (type === 'contact' && personalInfo?.contact.address) {
+                const addr = personalInfo.contact.address;
+                sanitizedValue = {
+                    ...personalInfo.contact,
+                    address: {
+                        ...addr,
+                        streetAddress: (addr.streetAddress || '').trim(),
+                        addressLocality: (addr.addressLocality || '').trim(),
+                        addressRegion: (addr.addressRegion || '').trim(),
+                        postalCode: (addr.postalCode || '').replace(/\s/g, ''),
+                        addressCountry: (addr.addressCountry || '').trim(),
+                    }
+                };
+            }
+
             const response = await fetch(toUrl('/api/personal'), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type, value })
+                body: JSON.stringify({ type, value: sanitizedValue })
             });
             if (response.ok) {
                 const updated = await response.json();
@@ -454,6 +495,119 @@ export default function PersonalPage() {
                             />
                         </div>
                     </div>
+
+                    {/* Address Section */}
+                    <div className="pt-4 border-t">
+                        <h3 className="text-sm font-medium mb-3">Address</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="md:col-span-2">
+                                <Label htmlFor="streetAddress">Street Address *</Label>
+                                <Input
+                                    id="streetAddress"
+                                    value={personalInfo.contact.address?.streetAddress || ''}
+                                    onChange={(e) => {
+                                        setPersonalInfo(prev => prev ? {
+                                            ...prev,
+                                            contact: {
+                                                ...prev.contact,
+                                                address: { ...prev.contact.address, streetAddress: e.target.value }
+                                            }
+                                        } : null);
+                                    }}
+                                    placeholder="123 Main Street"
+                                    className={showAddressValidation && !(personalInfo.contact.address?.streetAddress || '').trim() ? 'border-destructive' : ''}
+                                />
+                                {showAddressValidation && !(personalInfo.contact.address?.streetAddress || '').trim() && (
+                                    <p className="text-xs text-destructive mt-1">Street address is required</p>
+                                )}
+                            </div>
+                            <div>
+                                <Label htmlFor="addressLocality">City *</Label>
+                                <Input
+                                    id="addressLocality"
+                                    value={personalInfo.contact.address?.addressLocality || ''}
+                                    onChange={(e) => {
+                                        setPersonalInfo(prev => prev ? {
+                                            ...prev,
+                                            contact: {
+                                                ...prev.contact,
+                                                address: { ...prev.contact.address, addressLocality: e.target.value }
+                                            }
+                                        } : null);
+                                    }}
+                                    placeholder="New York"
+                                    className={showAddressValidation && !(personalInfo.contact.address?.addressLocality || '').trim() ? 'border-destructive' : ''}
+                                />
+                                {showAddressValidation && !(personalInfo.contact.address?.addressLocality || '').trim() && (
+                                    <p className="text-xs text-destructive mt-1">City is required</p>
+                                )}
+                            </div>
+                            <div>
+                                <Label htmlFor="addressRegion">Region/State *</Label>
+                                <Input
+                                    id="addressRegion"
+                                    value={personalInfo.contact.address?.addressRegion || ''}
+                                    onChange={(e) => {
+                                        setPersonalInfo(prev => prev ? {
+                                            ...prev,
+                                            contact: {
+                                                ...prev.contact,
+                                                address: { ...prev.contact.address, addressRegion: e.target.value }
+                                            }
+                                        } : null);
+                                    }}
+                                    placeholder="NY"
+                                    className={showAddressValidation && !(personalInfo.contact.address?.addressRegion || '').trim() ? 'border-destructive' : ''}
+                                />
+                                {showAddressValidation && !(personalInfo.contact.address?.addressRegion || '').trim() && (
+                                    <p className="text-xs text-destructive mt-1">Region is required</p>
+                                )}
+                            </div>
+                            <div>
+                                <Label htmlFor="postalCode">Postal Code *</Label>
+                                <Input
+                                    id="postalCode"
+                                    value={personalInfo.contact.address?.postalCode || ''}
+                                    onChange={(e) => {
+                                        const noWhitespace = e.target.value.replace(/\s/g, '');
+                                        setPersonalInfo(prev => prev ? {
+                                            ...prev,
+                                            contact: {
+                                                ...prev.contact,
+                                                address: { ...prev.contact.address, postalCode: noWhitespace }
+                                            }
+                                        } : null);
+                                    }}
+                                    placeholder="10001"
+                                    className={showAddressValidation && !(personalInfo.contact.address?.postalCode || '').replace(/\s/g, '') ? 'border-destructive' : ''}
+                                />
+                                {showAddressValidation && !(personalInfo.contact.address?.postalCode || '').replace(/\s/g, '') && (
+                                    <p className="text-xs text-destructive mt-1">Postal code is required</p>
+                                )}
+                            </div>
+                            <div>
+                                <Label htmlFor="addressCountry">Country *</Label>
+                                <AppCategoryCombobox
+                                    id="addressCountry"
+                                    value={personalInfo.contact.address?.addressCountry || ''}
+                                    options={countryNames}
+                                    onChange={(country) => {
+                                        setPersonalInfo(prev => prev ? {
+                                            ...prev,
+                                            contact: {
+                                                ...prev.contact,
+                                                address: { ...prev.contact.address, addressCountry: country }
+                                            }
+                                        } : null);
+                                    }}
+                                    placeholder="Select a country"
+                                    allowCustomValue={false}
+                                    error={showAddressValidation && !(personalInfo.contact.address?.addressCountry || '').trim() ? 'Country is required' : undefined}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
                     <Button
                         onClick={() => handleSave('contact', personalInfo.contact)}
                         disabled={saving && editedField === 'contact'}

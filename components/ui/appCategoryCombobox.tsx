@@ -26,6 +26,7 @@ type AppCategoryComboboxProps = {
     placeholder?: string
     disabled?: boolean
     maxLength?: number
+    allowCustomValue?: boolean
 }
 
 export function AppCategoryCombobox({
@@ -37,9 +38,11 @@ export function AppCategoryCombobox({
     placeholder = "Select or type a category",
     disabled = false,
     maxLength = DEFAULT_MAX_LENGTH,
+    allowCustomValue = true,
 }: AppCategoryComboboxProps) {
     const [open, setOpen] = useState(false)
     const [search, setSearch] = useState(value)
+    const [attemptedInvalidCommit, setAttemptedInvalidCommit] = useState(false)
 
     const trimmedValue = value.trim()
     const normalizedValue = trimmedValue.toLowerCase()
@@ -51,11 +54,24 @@ export function AppCategoryCombobox({
     const handleOpenChange = (nextOpen: boolean) => {
         setOpen(nextOpen)
         if (!nextOpen) {
-            const trimmed = value.trim().slice(0, maxLength)
-            setSearch(trimmed)
-            if (trimmed !== value) {
-                onChange(trimmed)
+            if (allowCustomValue) {
+                const trimmed = value.trim().slice(0, maxLength)
+                setSearch(trimmed)
+                if (trimmed !== value) {
+                    onChange(trimmed)
+                }
+            } else {
+                // Strict mode: check if current value is valid
+                const trimmed = search.trim()
+                const isValid = uniqueOptions.some(opt => opt.toLowerCase() === trimmed.toLowerCase())
+                if (!isValid && trimmed) {
+                    setAttemptedInvalidCommit(true)
+                }
+                // Revert to last valid value
+                setSearch(value)
             }
+        } else {
+            setAttemptedInvalidCommit(false)
         }
     }
 
@@ -100,35 +116,43 @@ export function AppCategoryCombobox({
                         )}
                         disabled={disabled}
                     >
-                        {trimmedValue || placeholder}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" aria-hidden="true" />
+                        <span className="truncate">{trimmedValue || placeholder}</span>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="p-0" align="start">
+                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
                     <Command>
                         <CommandInput
                             value={search}
                             onValueChange={(next: string) => {
                                 const limited = next.slice(0, maxLength)
                                 setSearch(limited)
-                                onChange(limited)
+                                if (allowCustomValue) {
+                                    onChange(limited)
+                                }
+                                setAttemptedInvalidCommit(false)
                             }}
                             onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
                                 if (event.key === "Enter") {
                                     event.preventDefault()
                                     const next = search.trim()
                                     if (next) {
-                                        handleSelect(next)
-                                    } else {
-                                        setOpen(false)
+                                        if (allowCustomValue) {
+                                            handleSelect(next)
+                                        } else {
+                                            // Strict mode: only select if exact match
+                                            const isValid = uniqueOptions.some(opt => opt.toLowerCase() === next.toLowerCase())
+                                            if (isValid) {
+                                                const matchedOption = uniqueOptions.find(opt => opt.toLowerCase() === next.toLowerCase())!
+                                                handleSelect(matchedOption)
+                                            } else {
+                                                setAttemptedInvalidCommit(true)
+                                            }
+                                        }
                                     }
                                 }
                             }}
-                            placeholder="Search categories"
-                            disabled={disabled}
-                            className="border-0"
-                            aria-autocomplete="list"
-                            aria-controls={`${id}-list`}
+                            placeholder={placeholder}
                         />
                         <CommandList id={`${id}-list`}>
                             <CommandEmpty>No categories found.</CommandEmpty>
@@ -146,7 +170,7 @@ export function AppCategoryCombobox({
                                         </CommandItem>
                                     )
                                 })}
-                                {search.trim() && !uniqueOptions.some((option) => option.toLowerCase() === search.trim().toLowerCase()) && (
+                                {allowCustomValue && search.trim() && !uniqueOptions.some((option) => option.toLowerCase() === search.trim().toLowerCase()) && (
                                     <CommandItem
                                         value={search.trim()}
                                         onSelect={() => handleSelect(search.trim())}
@@ -157,6 +181,11 @@ export function AppCategoryCombobox({
                                     </CommandItem>
                                 )}
                             </CommandGroup>
+                            {!allowCustomValue && attemptedInvalidCommit && search.trim() && !uniqueOptions.some((option) => option.toLowerCase() === search.trim().toLowerCase()) && (
+                                <div className="border-t px-3 py-2 text-xs text-destructive">
+                                    Please select a valid option from the list
+                                </div>
+                            )}
                         </CommandList>
                     </Command>
                 </PopoverContent>

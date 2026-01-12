@@ -1,13 +1,13 @@
 'use client';
 
-import type { CvModel } from '@/lib/cvModel';
+import type { CvModel, CvModelNormalized } from '@/lib/cvModel';
 import { Input } from '@/components/ui/input';
 import AppCvEditorSlot from './appCvEditorSlot';
 
 type AppCvEditorPreviewProps = {
-    model: CvModel;
-    onHeaderChange: (field: keyof CvModel['header'], value: string) => void;
-    onHeaderAddressChange: (field: keyof CvModel['header']['address'], value: string) => void;
+    model: CvModelNormalized;
+    onHeaderChange: (field: keyof CvModelNormalized['header'], value: string) => void;
+    onHeaderAddressChange: (field: keyof CvModelNormalized['header']['address'], value: string) => void;
     onRemove: (slotType: 'education' | 'experience' | 'skills', itemId: string) => void;
 };
 

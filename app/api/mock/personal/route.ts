@@ -10,8 +10,15 @@ function generateMockPersonalInformation(): PersonalInformation {
     return {
         contact: {
             name: "Alex Morgan",
-            email: "alex.morgan@example.com", 
+            email: "alex.morgan@example.com",
             phone: "+1-555-0123",
+            address: {
+                streetAddress: "123 Main St",
+                addressLocality: "San Francisco",
+                addressRegion: "CA",
+                postalCode: "94102",
+                addressCountry: "US"
+            },
             portfolio_urls: [
                 "https://alexmorgan.dev",
                 "https://github.com/alexmorgan",
@@ -25,7 +32,7 @@ function generateMockPersonalInformation(): PersonalInformation {
                     status: "Citizen"
                 },
                 {
-                    region: "European Union", 
+                    region: "European Union",
                     status: "Work Permit"
                 }
             ],
@@ -75,7 +82,7 @@ function generateMockPersonalInformation(): PersonalInformation {
             ],
             industries: [
                 "Technology",
-                "FinTech", 
+                "FinTech",
                 "HealthTech",
                 "AI/ML",
                 "Cloud Infrastructure"
@@ -95,7 +102,7 @@ function generateMockPersonalInformation(): PersonalInformation {
                 name: "React",
                 aliases: ["React.js", "ReactJS"],
                 category: "Frontend Framework",
-                level: "Expert", 
+                level: "Expert",
                 years: 5,
                 last_used: "2024-10",
                 primary: true
@@ -137,37 +144,32 @@ function generateMockPersonalInformation(): PersonalInformation {
                 primary: false
             }
         ],
-        experience: {
-            years_total: 8,
-            domains: [
-                "Web Development",
-                "API Development", 
-                "Cloud Architecture",
-                "Team Leadership"
-            ],
-            recent_titles: [
-                "Senior Software Engineer",
-                "Full-Stack Developer",
-                "Technical Lead"
-            ],
-            achievements: [
-                {
-                    type: 'project',
-                    tag: "Performance",
-                    brief: "Optimized application performance resulting in 40% faster load times"
-                },
-                {
-                    type: 'project',
-                    tag: "Leadership",
-                    brief: "Led a team of 5 developers in migrating legacy system to modern architecture"
-                },
-                {
-                    type: 'project',
-                    tag: "Innovation",
-                    brief: "Designed and implemented microservices architecture serving 1M+ users"
-                }
-            ]
-        },
+        experience: [
+            {
+                from: new Date("2021-01-01"),
+                to: new Date("2024-10-01"),
+                role: "Senior Software Engineer",
+                company: "Tech Corp",
+                summary: "Led development of cloud-based applications serving 1M+ users. Designed and implemented microservices architecture. Mentored junior developers.",
+                tags: ["TypeScript", "React", "Node.js", "AWS", "Leadership"]
+            },
+            {
+                from: new Date("2018-06-01"),
+                to: new Date("2021-01-01"),
+                role: "Full-Stack Developer",
+                company: "Startup Inc",
+                summary: "Built and maintained web applications using React and Node.js. Optimized application performance resulting in 40% faster load times. Collaborated with cross-functional teams.",
+                tags: ["JavaScript", "React", "Node.js", "MongoDB"]
+            },
+            {
+                from: new Date("2016-07-01"),
+                to: new Date("2018-06-01"),
+                role: "Junior Developer",
+                company: "Software Solutions LLC",
+                summary: "Developed features for enterprise applications. Participated in code reviews and learned best practices. Fixed bugs and improved code quality.",
+                tags: ["JavaScript", "HTML", "CSS", "SQL"]
+            }
+        ],
         education: [
             {
                 degree: "Bachelor of Science",
@@ -194,7 +196,7 @@ function generateMockPersonalInformation(): PersonalInformation {
                 level: "Native"
             },
             {
-                language: "Spanish", 
+                language: "Spanish",
                 level: "Conversational"
             },
             {
@@ -266,7 +268,7 @@ export async function GET(req: NextRequest) {
 
     try {
         const mockData = generateMockPersonalInformation();
-        return NextResponse.json(mockData, { 
+        return NextResponse.json(mockData, {
             status: 200,
             headers
         });
@@ -274,8 +276,8 @@ export async function GET(req: NextRequest) {
         console.error('Error generating mock personal information:', error);
         return NextResponse.json(
             { error: 'Internal server error' },
-            { 
-                status: 500, 
+            {
+                status: 500,
                 statusText: 'Internal Server Error',
                 headers
             }

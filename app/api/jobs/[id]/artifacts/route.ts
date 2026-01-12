@@ -37,68 +37,154 @@ function isValidYYYYMM(dateStr: string): boolean {
 }
 
 /**
- * Validate CV artifact structure
+ * Check if a string is blank (empty or whitespace-only)
+ */
+function isBlank(value: unknown): boolean {
+    return typeof value === 'string' && value.trim() === '';
+}
+
+/**
+ * Validate CV artifact structure.
+ * Only templateId is required. All other fields are optional and validated only if present.
+ * Blank strings are treated as absent (not validated).
  */
 function validateCvContent(content: unknown): boolean {
     if (typeof content !== 'object' || content === null) {
         return false;
     }
 
-    const { templateId, header, slots } = content as CvModel;
+    const cv = content as CvModel;
 
-    // Required keys
-    if (!templateId || !header || !slots) {
+    // Only templateId is required
+    if (!cv.templateId || typeof cv.templateId !== 'string') {
         return false;
     }
 
-    // Header validation
-    const { name, email, phone, address } = header;
-    if (
-        (typeof name !== 'string' || name.trim() === '') ||
-        (typeof email !== 'string' || email.trim() === '') ||
-        (typeof phone !== 'string' || phone.trim() === '') ||
-        !address ||
-        typeof address !== 'object' ||
-        (typeof address.streetAddress !== 'string' || address.streetAddress.trim() === '') ||
-        (typeof address.addressLocality !== 'string' || address.addressLocality.trim() === '') ||
-        (typeof address.addressRegion !== 'string' || address.addressRegion.trim() === '') ||
-        (typeof address.postalCode !== 'string' || address.postalCode.trim() === '') ||
-        (typeof address.addressCountry !== 'string' || address.addressCountry.trim() === '')
-    ) return false;
+    // Header validation (optional, validate if present)
+    if (cv.header !== undefined) {
+        if (typeof cv.header !== 'object' || cv.header === null) {
+            return false;
+        }
 
-    // Slots validation
-    const { education, experience, skills } = slots;
-    if (
-        !Array.isArray(education) || // Education (may be empty)
-        (!Array.isArray(experience) || experience.length === 0) || // Experience (must be non-empty)
-        (!Array.isArray(skills) || skills.length === 0) // Skills (must be non-empty)
-    ) return false;
+        // Name, email, phone: if present and non-blank, must be valid strings
+        if (cv.header.name !== undefined && (typeof cv.header.name !== 'string' || isBlank(cv.header.name))) {
+            return false;
+        }
+        if (cv.header.email !== undefined && (typeof cv.header.email !== 'string' || isBlank(cv.header.email))) {
+            return false;
+        }
+        if (cv.header.phone !== undefined && (typeof cv.header.phone !== 'string' || isBlank(cv.header.phone))) {
+            return false;
+        }
 
-    for (const { degree, field, institution, graduation_year } of education) if (
-        (typeof degree !== 'string' || degree.trim() === '') ||
-        (typeof field !== 'string' || field.trim() === '') ||
-        (typeof institution !== 'string' || institution.trim() === '') ||
-        (typeof graduation_year !== 'number' || !Number.isFinite(graduation_year))
-    ) return false;
+        // Address: if present, validate structure
+        if (cv.header.address !== undefined) {
+            if (typeof cv.header.address !== 'object' || cv.header.address === null) {
+                return false;
+            }
 
-    for (const { from, to, role, company, summary, tags } of experience) {
-        if (
-            (typeof from !== 'string' || !isValidYYYYMM(from)) ||
-            (to !== undefined && (typeof to !== 'string' || !isValidYYYYMM(to))) ||
-            (typeof role !== 'string' || role.trim() === '') ||
-            (typeof company !== 'string' || company.trim() === '') ||
-            (typeof summary !== 'string' || summary.trim() === '') ||
-            (!Array.isArray(tags))
-        ) return false;
-        for (const tag of tags) if (typeof tag !== 'string' || tag.trim() === '') return false;
+            const { streetAddress, addressLocality, addressRegion, postalCode, addressCountry } = cv.header.address;
+
+            if (streetAddress !== undefined && (typeof streetAddress !== 'string' || isBlank(streetAddress))) {
+                return false;
+            }
+            if (addressLocality !== undefined && (typeof addressLocality !== 'string' || isBlank(addressLocality))) {
+                return false;
+            }
+            if (addressRegion !== undefined && (typeof addressRegion !== 'string' || isBlank(addressRegion))) {
+                return false;
+            }
+            if (postalCode !== undefined && (typeof postalCode !== 'string' || isBlank(postalCode))) {
+                return false;
+            }
+            if (addressCountry !== undefined && (typeof addressCountry !== 'string' || isBlank(addressCountry))) {
+                return false;
+            }
+        }
     }
 
-    for (const { name, category, level, years } of skills) if (
-        (typeof name !== 'string' || name.trim() === '') ||
-        (typeof category !== 'string' || category.trim() === '') ||
-        (typeof level !== 'string') ||
-        (typeof years !== 'number' || !Number.isFinite(years))
-    ) return false;
+    // Slots validation (optional, validate if present)
+    if (cv.slots !== undefined) {
+        if (typeof cv.slots !== 'object' || cv.slots === null) {
+            return false;
+        }
+
+        // Education: if present, must be array; validate items if present
+        if (cv.slots.education !== undefined) {
+            if (!Array.isArray(cv.slots.education)) {
+                return false;
+            }
+            for (const item of cv.slots.education) {
+                if (item.degree !== undefined && (typeof item.degree !== 'string' || isBlank(item.degree))) {
+                    return false;
+                }
+                if (item.field !== undefined && (typeof item.field !== 'string' || isBlank(item.field))) {
+                    return false;
+                }
+                if (item.institution !== undefined && (typeof item.institution !== 'string' || isBlank(item.institution))) {
+                    return false;
+                }
+                if (item.graduation_year !== undefined && (typeof item.graduation_year !== 'number' || !Number.isFinite(item.graduation_year))) {
+                    return false;
+                }
+            }
+        }
+
+        // Experience: if present, must be array; validate items if present
+        if (cv.slots.experience !== undefined) {
+            if (!Array.isArray(cv.slots.experience)) {
+                return false;
+            }
+            for (const item of cv.slots.experience) {
+                if (item.from !== undefined && (typeof item.from !== 'string' || !isValidYYYYMM(item.from))) {
+                    return false;
+                }
+                if (item.to !== undefined && (typeof item.to !== 'string' || !isValidYYYYMM(item.to))) {
+                    return false;
+                }
+                if (item.role !== undefined && (typeof item.role !== 'string' || isBlank(item.role))) {
+                    return false;
+                }
+                if (item.company !== undefined && (typeof item.company !== 'string' || isBlank(item.company))) {
+                    return false;
+                }
+                if (item.summary !== undefined && (typeof item.summary !== 'string' || isBlank(item.summary))) {
+                    return false;
+                }
+                if (item.tags !== undefined) {
+                    if (!Array.isArray(item.tags)) {
+                        return false;
+                    }
+                    for (const tag of item.tags) {
+                        if (typeof tag !== 'string' || isBlank(tag)) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Skills: if present, must be array; validate items if present
+        if (cv.slots.skills !== undefined) {
+            if (!Array.isArray(cv.slots.skills)) {
+                return false;
+            }
+            for (const item of cv.slots.skills) {
+                if (item.name !== undefined && (typeof item.name !== 'string' || isBlank(item.name))) {
+                    return false;
+                }
+                if (item.category !== undefined && (typeof item.category !== 'string' || isBlank(item.category))) {
+                    return false;
+                }
+                if (item.level !== undefined && typeof item.level !== 'string') {
+                    return false;
+                }
+                if (item.years !== undefined && (typeof item.years !== 'number' || !Number.isFinite(item.years))) {
+                    return false;
+                }
+            }
+        }
+    }
 
     return true;
 }
@@ -132,7 +218,7 @@ async function upsertArtifact(
     if (artifactType === 'cv') {
         if (!validateCvContent(body.content)) {
             return jsonError(400, 'InvalidCvContent',
-                'CV content must be a valid CvModel object with required fields: templateId, header (name/email/phone non-empty, address with non-empty streetAddress/addressLocality/addressRegion/postalCode/addressCountry), slots.skills (non-empty, with non-empty name/category and numeric years), slots.experience (non-empty, with YYYY-MM dates), slots.education (may be empty)',
+                'CV content must be a valid CvModel object. Required: templateId (string). Optional: header, header.address, slots (education/experience/skills arrays). Blank strings are treated as absent. When present, fields must have valid types: experience dates must be YYYY-MM format, numeric fields must be finite numbers.',
                 origin);
         }
     } else if (artifactType === 'cover-letter') {

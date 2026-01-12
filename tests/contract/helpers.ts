@@ -58,6 +58,13 @@ const PERSONAL_INFORMATION_FIXTURE: PersonalInformation = {
         name: 'Alex Morgan',
         email: 'alex.morgan@example.com',
         phone: '+1-555-0123',
+        address: {
+            streetAddress: '123 Main St',
+            addressLocality: 'San Francisco',
+            addressRegion: 'CA',
+            postalCode: '94102',
+            addressCountry: 'US'
+        },
         portfolio_urls: ['https://alexmorgan.dev']
     },
     eligibility: {
@@ -99,14 +106,16 @@ const PERSONAL_INFORMATION_FIXTURE: PersonalInformation = {
             primary: true
         }
     ],
-    experience: {
-        years_total: 8,
-        domains: ['Web Development', 'API Design'],
-        recent_titles: ['Senior Software Engineer', 'Tech Lead'],
-        achievements: [
-            { type: 'project', tag: 'API Quality', brief: 'Improved API reliability by 30% through contract testing.' }
-        ]
-    },
+    experience: [
+        {
+            from: new Date('2020-01-01'),
+            to: new Date('2024-10-01'),
+            role: 'Senior Software Engineer',
+            company: 'Tech Corp',
+            summary: 'Led development of scalable web applications. Improved API reliability by 30% through contract testing.',
+            tags: ['TypeScript', 'React', 'Node.js', 'API Design']
+        }
+    ],
     education: [
         {
             degree: 'BSc Computer Science',

@@ -1,11 +1,11 @@
-import { CvModel, CvTemplate } from "@/lib/cvModel";
+import { CvModel, CvModelNormalized, CvTemplate } from "@/lib/cvModel";
 import { Button } from '@/components/ui/button';
 import { useCallback } from "react";
 import { Printer } from "lucide-react";
 
 type AppAppCvEditorToolbarProps = {
-    model: CvModel;
-    onChange: (model: CvModel) => void;
+    model: CvModelNormalized;
+    onChange: (model: CvModelNormalized) => void;
 };
 
 export default function AppCvEditorToolbar({ model, onChange }: AppAppCvEditorToolbarProps) {

@@ -14,7 +14,10 @@ import {
     personalEducationToCvEducation,
     personalExperienceToCvExperience,
     personalSkillsToCvSkills,
+    normalizeCvModel,
+    sanitizeCvDraftForSave,
     type CvModel,
+    type CvModelNormalized,
 } from '@/lib/cvModel';
 
 export default function CvPage() {
@@ -27,8 +30,8 @@ export default function CvPage() {
     // Track if initial values have been set
     const initializedRef = useRef(false);
 
-    // CV content (CvModel object)
-    const [cvModel, setCvModel] = useState<CvModel | null>(null);
+    // CV content (normalized CvModelNormalized object for editor)
+    const [cvModel, setCvModel] = useState<CvModelNormalized | null>(null);
 
     // Save status
     const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -41,20 +44,7 @@ export default function CvPage() {
     const debouncedCvModel = useDebounce(cvModel, 1000);
 
     // Initial model state
-    const [initialModel, setInitialModel] = useState<CvModel | null>(null);
-
-    // Validate if model can be saved
-    const canAutosave = (model: CvModel | null): boolean => {
-        if (!model) return false;
-        const { address } = model.header;
-        return !!(
-            address.streetAddress?.trim() &&
-            address.addressLocality?.trim() &&
-            address.addressRegion?.trim() &&
-            address.postalCode?.trim() &&
-            address.addressCountry?.trim()
-        );
-    };
+    const [initialModel, setInitialModel] = useState<CvModelNormalized | null>(null);
 
     // Check if model has changed from initial
     const isDirty = cvModel && initialModel && JSON.stringify(cvModel) !== JSON.stringify(initialModel);
@@ -65,10 +55,11 @@ export default function CvPage() {
 
         const existingArtifact = job.artifacts?.find((a) => a.type === 'cv');
 
-        // Use existing CvModel or create empty model
-        let model: CvModel;
-        if (existingArtifact && existingArtifact.type === 'cv' && typeof existingArtifact.content === 'object') {
-            model = existingArtifact.content;
+        // Normalize existing artifact or create empty model (both return CvModelNormalized)
+        let model: CvModelNormalized;
+        if (existingArtifact && existingArtifact.type === 'cv') {
+            // Normalize the loaded artifact to ensure all fields are present
+            model = normalizeCvModel(existingArtifact.content);
         } else {
             model = createEmptyCvModel();
         }
@@ -113,20 +104,18 @@ export default function CvPage() {
 
         if (!initializedRef.current || !debouncedCvModel) return;
 
-        // Check if model can be saved
-        if (!canAutosave(debouncedCvModel)) {
-            // Show draft status only if model has been edited
-            if (isDirty) {
-                setSaveStatus('idle');
-                setSaveError('Draft (not saved)');
-            }
+        // Don't save if model hasn't changed
+        if (!isDirty) {
             return;
         }
 
         const saveArtifact = async () => {
             setSaveStatus('saving');
             setSaveError(null);
-            pendingPayloadRef.current = debouncedCvModel;
+
+            // Sanitize the draft before saving (omit blanks, drop invalid items)
+            const sanitized = sanitizeCvDraftForSave(debouncedCvModel);
+            pendingPayloadRef.current = sanitized;
 
             try {
                 const response = await fetch(toUrl(`/api/jobs/${jobId}/artifacts`), {
@@ -134,7 +123,7 @@ export default function CvPage() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         type: 'cv',
-                        content: debouncedCvModel,
+                        content: sanitized,
                     }),
                 });
 
@@ -160,7 +149,7 @@ export default function CvPage() {
     // Flush pending saves on beforeunload using sendBeacon
     useEffect(() => {
         const handleBeforeUnload = () => {
-            if (pendingPayloadRef.current && canAutosave(pendingPayloadRef.current)) {
+            if (pendingPayloadRef.current) {
                 navigator.sendBeacon(
                     toUrl(`/api/jobs/${jobId}/artifacts`),
                     JSON.stringify({
@@ -176,7 +165,8 @@ export default function CvPage() {
 
     // Update handler from editor
     const handleCvChange = useCallback((model: CvModel) => {
-        setCvModel(model);
+        // Model from editor is CvModelNormalized, cast to store as CvModelNormalized for state
+        setCvModel(model as CvModelNormalized);
     }, []);
 
     if (loading || personalLoading) {

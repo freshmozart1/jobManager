@@ -13,6 +13,7 @@ import {
 import { arrayMove } from '@dnd-kit/sortable';
 import type {
     CvModel,
+    CvModelNormalized,
     CvEducationItem,
     CvExperienceItem,
     CvSkillItem,
@@ -22,7 +23,7 @@ import AppCvEditorPreview from './appCvEditorPreview';
 import AppCvEditorToolbar from './appCvEditorToolbar';
 
 export type AppCvEditorProps = {
-    initialModel: CvModel;
+    initialModel: CvModelNormalized;
     availableEducation: CvEducationItem[];
     availableExperience: CvExperienceItem[];
     availableSkills: CvSkillItem[];
@@ -41,7 +42,7 @@ export default function AppCvEditor({
     availableSkills,
     onChange,
 }: AppCvEditorProps) {
-    const [model, setModel] = useState<CvModel>(initialModel);
+    const [model, setModel] = useState<CvModelNormalized>(initialModel);
     const [activeId, setActiveId] = useState<string | null>(null);
 
     const sensors = useSensors(
@@ -130,7 +131,7 @@ export default function AppCvEditor({
     }, []);
 
     // Update header field
-    const handleHeaderChange = useCallback((field: keyof CvModel['header'], value: string) => {
+    const handleHeaderChange = useCallback((field: keyof CvModelNormalized['header'], value: string) => {
         setModel((prev) => ({
             ...prev,
             header: {
@@ -141,7 +142,7 @@ export default function AppCvEditor({
     }, []);
 
     // Update header address field
-    const handleHeaderAddressChange = useCallback((field: keyof CvModel['header']['address'], value: string) => {
+    const handleHeaderAddressChange = useCallback((field: keyof CvModelNormalized['header']['address'], value: string) => {
         setModel((prev) => ({
             ...prev,
             header: {

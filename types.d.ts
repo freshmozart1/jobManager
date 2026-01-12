@@ -1,6 +1,16 @@
 import { ObjectId } from "mongodb";
 import { CvModel } from "@/lib/cvModel";
 
+
+type Address = {
+    type?: 'PostalAddress' | string | null;
+    streetAddress?: string | null;
+    addressLocality?: string | null;
+    addressRegion?: string | null;
+    postalCode?: string | null;
+    addressCountry?: string | null;
+};
+
 export type ScrapedJob = {
     id: string;
     trackingId: string;
@@ -25,14 +35,7 @@ export type ScrapedJob = {
     jobFunction?: string | undefined;
     industries?: string | undefined;
     inputUrl: string;
-    companyAddress?: {
-        type?: 'PostalAddress' | string | null;
-        streetAddress?: string | null;
-        addressLocality?: string | null;
-        addressRegion?: string | null;
-        postalCode?: string | null;
-        addressCountry?: string | null;
-    } | undefined;
+    companyAddress?: Address | undefined;
     companyWebsite?: string | undefined;
     companySlogan?: string | null | undefined;
     companyDescription?: string | undefined;
@@ -73,6 +76,7 @@ export type PersonalInformationContact = {
     email: string;
     phone: string;
     portfolio_urls: string[];
+    address: Address;
 };
 
 export type PersonalInformationEligibility = {

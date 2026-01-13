@@ -106,8 +106,8 @@ function SortableSlotItem({
                                 <p className="text-xs text-muted-foreground">
                                     {item.from} –{' '}
                                     {'to' in item &&
-                                    typeof item.to === 'string' &&
-                                    item.to.trim() !== ''
+                                        typeof item.to === 'string' &&
+                                        item.to.trim() !== ''
                                         ? item.to
                                         : 'Present'}
                                 </p>

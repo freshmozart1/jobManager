@@ -233,10 +233,12 @@ export function sanitizeCvDraftForSave(model: CvModel): CvModel {
         Object.fromEntries(
             (keys ?? Object.keys(obj))
                 .map((k) => [k, obj[k]] as const)
-                .filter(([, v]) => typeof v === 'string' && v.trim() !== '')
+                .filter(([, v]) =>
+                    typeof v === 'string' ? v.trim() !== '' : v !== null && v !== undefined
+                )
         ) as Partial<Pick<T, K>>;
 
-    // Header fields
+    const header = pickNonBlank(model.header as UnknownRecord, ['name', 'email', 'phone']) as Partial<CvModelNonNullable<'header'>>;
     if (model.header) {
         const header = pickNonBlank(model.header as UnknownRecord, ['name', 'email', 'phone']) as CvModelNonNullable<'header'>;
         const address = model.header.address
@@ -255,15 +257,15 @@ export function sanitizeCvDraftForSave(model: CvModel): CvModel {
 
         const isBlank = (value: unknown) => typeof value === 'string' && value.trim() === '';
         const isYear = (value: unknown) => typeof value === 'number' && Number.isFinite(value);
-        const addSlot = (
-            slotName: keyof Slots,
-            slotItems: unknown[],
-            isValid: (item: any) => boolean
+        const addSlot = <K extends keyof Slots>(
+            slotName: K,
+            slotItems: NonNullable<Slots[K]>,
+            isValid: (item: NonNullable<Slots[K]>[number]) => boolean
         ) => {
             if (!slotItems.length) return;
             const validItems = slotItems.filter(isValid);
             if (!validItems.length) return;
-            (slots as any)[slotName] = validItems;
+            (slots as Record<string, (CvEducationItem | CvExperienceItem | CvSkillItem)[]>)[slotName] = validItems;
             hasSlotsData = true;
         };
 

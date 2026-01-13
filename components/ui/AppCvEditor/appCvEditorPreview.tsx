@@ -1,6 +1,6 @@
 'use client';
 
-import type { CvModel, CvModelNormalized } from '@/lib/cvModel';
+import type { CvModelNormalized } from '@/lib/cvModel';
 import { Input } from '@/components/ui/input';
 import AppCvEditorSlot from './appCvEditorSlot';
 

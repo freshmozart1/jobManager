@@ -85,7 +85,7 @@ function SortableSlotItem({
             {...listeners}
             className="p-2 bg-white border rounded text-sm flex items-start justify-between cursor-move group"
         >
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
                 {slotType === 'education' && 'degree' in item && (
                     <>
                         <p className="font-semibold text-xs">
@@ -100,6 +100,11 @@ function SortableSlotItem({
                     <>
                         <p className="font-semibold text-xs">{item.role}</p>
                         <p className="text-xs text-muted-foreground">{item.company}</p>
+                        {'summary' in item && item.summary.trim() !== '' && (
+                            <p className="text-xs text-muted-foreground whitespace-pre-wrap mt-1">
+                                {item.summary}
+                            </p>
+                        )}
                     </>
                 )}
                 {slotType === 'skills' && 'name' in item && (
@@ -117,7 +122,7 @@ function SortableSlotItem({
                     e.stopPropagation();
                     onRemove();
                 }}
-                className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 text-muted-foreground hover:text-destructive"
+                className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 text-muted-foreground hover:text-destructive shrink-0"
             >
                 <X className="w-4 h-4" />
             </button>

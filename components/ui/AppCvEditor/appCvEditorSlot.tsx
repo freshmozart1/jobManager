@@ -100,6 +100,18 @@ function SortableSlotItem({
                     <>
                         <p className="font-semibold text-xs">{item.role}</p>
                         <p className="text-xs text-muted-foreground">{item.company}</p>
+                        {'from' in item &&
+                            typeof item.from === 'string' &&
+                            item.from.trim() !== '' && (
+                                <p className="text-xs text-muted-foreground">
+                                    {item.from} –{' '}
+                                    {'to' in item &&
+                                        typeof item.to === 'string' &&
+                                        item.to.trim() !== ''
+                                        ? item.to
+                                        : 'Present'}
+                                </p>
+                            )}
                         {'summary' in item && item.summary.trim() !== '' && (
                             <p className="text-xs text-muted-foreground whitespace-pre-wrap mt-1">
                                 {item.summary}

@@ -133,12 +133,12 @@ function formatDateToYYYYMM(date: Date): string {
 }
 
 export function personalSkillsToCvSkills(items: PersonalInformationSkill[]): CvSkillItem[] {
-    return items.map((item, idx) => ({
+    return items.map(({ name, category, level, years }, idx) => ({
         id: `skill-${idx}`,
-        name: item.name,
-        category: item.category,
-        level: item.level,
-        years: item.years,
+        name,
+        category,
+        level,
+        years,
     }));
 }
 
@@ -176,13 +176,6 @@ function isValidYYYYMM(dateStr: string): boolean {
     if (!match) return false;
     const month = parseInt(match[2], 10);
     return month >= 1 && month <= 12;
-}
-
-/**
- * Check if a string is blank (empty or whitespace-only)
- */
-function isBlank(value: unknown): boolean {
-    return typeof value === 'string' && value.trim() === '';
 }
 
 /**
@@ -225,119 +218,79 @@ export function normalizeCvModel(partial: unknown): CvModelNormalized {
  * and remove empty objects/arrays to keep drafts compact.
  */
 export function sanitizeCvDraftForSave(model: CvModel): CvModel {
+    type UnknownRecord = Record<string, unknown>;
+    type CvModelNonNullable<K extends keyof CvModel> = NonNullable<CvModel[K]>;
+    type Slots = CvModelNonNullable<'slots'>;
+
     const result: CvModel = {
         templateId: model.templateId,
     };
 
-    // Header fields
+    const pickNonBlank = <T extends UnknownRecord, K extends keyof T>(
+        obj: T,
+        keys?: readonly K[]
+    ): Partial<Pick<T, K>> =>
+        Object.fromEntries(
+            (keys ?? Object.keys(obj))
+                .map((k) => [k, obj[k]] as const)
+                .filter(([, v]) =>
+                    typeof v === 'string' ? v.trim() !== '' : v !== null && v !== undefined
+                )
+        ) as Partial<Pick<T, K>>;
+
+    const header = pickNonBlank(model.header as UnknownRecord, ['name', 'email', 'phone']) as Partial<CvModelNonNullable<'header'>>;
     if (model.header) {
-        const header: NonNullable<CvModel['header']> = {};
-        let hasHeaderFields = false;
-
-        if (model.header.name && !isBlank(model.header.name)) {
-            header.name = model.header.name;
-            hasHeaderFields = true;
-        }
-        if (model.header.email && !isBlank(model.header.email)) {
-            header.email = model.header.email;
-            hasHeaderFields = true;
-        }
-        if (model.header.phone && !isBlank(model.header.phone)) {
-            header.phone = model.header.phone;
-            hasHeaderFields = true;
-        }
-
-        // Address fields
-        if (model.header.address) {
-            const address: NonNullable<NonNullable<CvModel['header']>['address']> = {};
-            let hasAddressFields = false;
-
-            if (model.header.address.streetAddress && !isBlank(model.header.address.streetAddress)) {
-                address.streetAddress = model.header.address.streetAddress;
-                hasAddressFields = true;
-            }
-            if (model.header.address.addressLocality && !isBlank(model.header.address.addressLocality)) {
-                address.addressLocality = model.header.address.addressLocality;
-                hasAddressFields = true;
-            }
-            if (model.header.address.addressRegion && !isBlank(model.header.address.addressRegion)) {
-                address.addressRegion = model.header.address.addressRegion;
-                hasAddressFields = true;
-            }
-            if (model.header.address.postalCode && !isBlank(model.header.address.postalCode)) {
-                address.postalCode = model.header.address.postalCode;
-                hasAddressFields = true;
-            }
-            if (model.header.address.addressCountry && !isBlank(model.header.address.addressCountry)) {
-                address.addressCountry = model.header.address.addressCountry;
-                hasAddressFields = true;
-            }
-
-            if (hasAddressFields) {
-                header.address = address;
-                hasHeaderFields = true;
-            }
-        }
-
-        if (hasHeaderFields) {
-            result.header = header;
-        }
+        const header = pickNonBlank(model.header as UnknownRecord, ['name', 'email', 'phone']) as CvModelNonNullable<'header'>;
+        const address = model.header.address
+            ? pickNonBlank(model.header.address as UnknownRecord)
+            : undefined;
+        if (address && Object.keys(address).length) header.address = address;
+        if (Object.keys(header).length) result.header = header;
     }
 
     // Slots
     if (model.slots) {
-        const slots: NonNullable<CvModel['slots']> = {};
+        const slots: Slots = {};
         let hasSlotsData = false;
 
-        // Education items (drop items with blank required fields)
-        if (Array.isArray(model.slots.education) && model.slots.education.length > 0) {
-            const validEducation = model.slots.education.filter((item) => {
-                return (
-                    item.degree && !isBlank(item.degree) &&
-                    item.field && !isBlank(item.field) &&
-                    item.institution && !isBlank(item.institution) &&
-                    typeof item.graduation_year === 'number' && Number.isFinite(item.graduation_year)
-                );
-            });
-            if (validEducation.length > 0) {
-                slots.education = validEducation;
-                hasSlotsData = true;
-            }
-        }
+        const { education = [], experience = [], skills = [] } = model.slots;
 
-        // Experience items (drop items with invalid dates or blank required fields)
-        if (Array.isArray(model.slots.experience) && model.slots.experience.length > 0) {
-            const validExperience = model.slots.experience.filter((item) => {
-                return (
-                    item.from && isValidYYYYMM(item.from) &&
-                    (item.to === undefined || isValidYYYYMM(item.to)) &&
-                    item.role && !isBlank(item.role) &&
-                    item.company && !isBlank(item.company) &&
-                    item.summary && !isBlank(item.summary) &&
-                    Array.isArray(item.tags)
-                );
-            });
-            if (validExperience.length > 0) {
-                slots.experience = validExperience;
-                hasSlotsData = true;
-            }
-        }
+        const isBlank = (value: unknown) => typeof value === 'string' && value.trim() === '';
+        const isYear = (value: unknown) => typeof value === 'number' && Number.isFinite(value);
+        const addSlot = <K extends keyof Slots>(
+            slotName: K,
+            slotItems: NonNullable<Slots[K]>,
+            isValid: (item: NonNullable<Slots[K]>[number]) => boolean
+        ) => {
+            if (!slotItems.length) return;
+            const validItems = slotItems.filter(isValid);
+            if (!validItems.length) return;
+            (slots as Record<string, (CvEducationItem | CvExperienceItem | CvSkillItem)[]>)[slotName] = validItems;
+            hasSlotsData = true;
+        };
 
-        // Skill items (drop items with blank required fields)
-        if (Array.isArray(model.slots.skills) && model.slots.skills.length > 0) {
-            const validSkills = model.slots.skills.filter((item) => {
-                return (
-                    item.name && !isBlank(item.name) &&
-                    item.category && !isBlank(item.category) &&
-                    typeof item.level === 'string' &&
-                    typeof item.years === 'number' && Number.isFinite(item.years)
-                );
-            });
-            if (validSkills.length > 0) {
-                slots.skills = validSkills;
-                hasSlotsData = true;
-            }
-        }
+        addSlot('education', education, (item: CvEducationItem) => (
+            !!item.degree && !isBlank(item.degree) &&
+            !!item.field && !isBlank(item.field) &&
+            !!item.institution && !isBlank(item.institution) &&
+            isYear(item.graduation_year)
+        ));
+
+        addSlot('experience', experience, (item: CvExperienceItem) => (
+            !!item.from && isValidYYYYMM(item.from) &&
+            (item.to === undefined || isValidYYYYMM(item.to)) &&
+            !!item.role && !isBlank(item.role) &&
+            !!item.company && !isBlank(item.company) &&
+            !!item.summary && !isBlank(item.summary) &&
+            Array.isArray(item.tags)
+        ));
+
+        addSlot('skills', skills, (item: CvSkillItem) => (
+            !!item.name && !isBlank(item.name) &&
+            !!item.category && !isBlank(item.category) &&
+            typeof item.level === 'string' &&
+            isYear(item.years)
+        ));
 
         if (hasSlotsData) {
             result.slots = slots;
@@ -346,6 +299,3 @@ export function sanitizeCvDraftForSave(model: CvModel): CvModel {
 
     return result;
 }
-
-
-

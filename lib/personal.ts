@@ -1,6 +1,98 @@
 import { PersonalInformationCareerGoal, PersonalInformationCertification, PersonalInformationEducation, PersonalInformationExperience, PersonalInformationLanguageSpoken, PersonalInformationMotivation, PersonalInformationSkill } from "@/types";
 import { makeUtcMonthYear, normaliseTags, formatMonthYear } from "./utils";
 
+/**
+ * Parse result for month dates with potential error message
+ */
+export type ParsedMonthDate = {
+    value: Date | null;
+    error?: string;
+};
+
+/**
+ * Parse a month date input (Date, ISO string, or YYYY-MM) into a UTC month-start Date
+ * Accepts:
+ * - Date objects
+ * - ISO strings (any valid ISO date)
+ * - YYYY-MM strings
+ * - null/undefined -> null
+ * Returns: { value: Date | null, error?: string }
+ */
+export function parseMonthDate(input: unknown): ParsedMonthDate {
+    if (!input || input === null || input === undefined || input === '') {
+        return { value: null };
+    }
+
+    if (input instanceof Date) {
+        if (Number.isNaN(input.getTime())) {
+            return { value: null, error: 'Invalid date' };
+        }
+        // Normalize to month start
+        return { value: makeUtcMonthYear(input.getFullYear(), input.getMonth()) };
+    }
+
+    if (typeof input === 'string') {
+        const trimmed = input.trim();
+
+        // Try YYYY-MM format first
+        if (/^\d{4}-\d{2}$/.test(trimmed)) {
+            const [yearStr, monthStr] = trimmed.split("-");
+            const year = Number(yearStr);
+            const month = Number(monthStr);
+
+            if (!Number.isFinite(year) || !Number.isFinite(month)) {
+                return { value: null, error: `Invalid YYYY-MM format: ${trimmed}` };
+            }
+
+            if (month < 1 || month > 12) {
+                return { value: null, error: `Month must be between 1-12, got: ${month}` };
+            }
+
+            return { value: makeUtcMonthYear(year, month - 1) };
+        }
+
+        // Try ISO date string
+        const parsed = new Date(trimmed);
+        if (!Number.isNaN(parsed.getTime())) {
+            return { value: makeUtcMonthYear(parsed.getFullYear(), parsed.getMonth()) };
+        }
+
+        return { value: null, error: `Cannot parse date: ${trimmed}` };
+    }
+
+    if (typeof input === 'number') {
+        const parsed = new Date(input);
+        if (!Number.isNaN(parsed.getTime())) {
+            return { value: makeUtcMonthYear(parsed.getFullYear(), parsed.getMonth()) };
+        }
+        return { value: null, error: `Invalid timestamp: ${input}` };
+    }
+
+    return { value: null, error: `Unsupported date type: ${typeof input}` };
+}
+
+/**
+ * Convert a Date to canonical month ISO string (YYYY-MM-01T00:00:00.000Z)
+ * Used for persistence to ensure consistent storage format
+ */
+export function toCanonicalMonthIso(date: Date | null): string | null {
+    if (!date || !(date instanceof Date) || Number.isNaN(date.getTime())) {
+        return null;
+    }
+    const normalized = makeUtcMonthYear(date.getFullYear(), date.getMonth());
+    return normalized.toISOString();
+}
+
+/**
+ * Convert a Date to YYYY-MM format for CV artifacts
+ * Maintains backward compatibility with existing CV string contracts
+ */
+export function toCvMonthString(date: Date | null): string | null {
+    if (!date || !(date instanceof Date) || Number.isNaN(date.getTime())) {
+        return null;
+    }
+    return formatMonthYear(date);
+}
 
 function ensureDate(input: unknown): Date | undefined {
     if (!input) return undefined;
@@ -139,18 +231,46 @@ export function normaliseCertifications(value: unknown): PersonalInformationCert
             if (typeof entry !== "object" || entry === null) return null;
             const source = entry as Record<string, unknown>;
             const name = typeof source.name === "string" ? source.name.trim() : "";
-            const issued = typeof source.issued === "string" ? source.issued.trim() : "";
-            const expires = typeof source.expires === "string" ? source.expires.trim() : null;
 
-            if (!name || !issued) return null;
+            if (!name) return null;
+
+            // Parse issued date (required)
+            const issuedParsed = parseMonthDate(source.issued);
+            if (!issuedParsed.value) {
+                console.warn(`Skipping certification "${name}": invalid issued date`, issuedParsed.error);
+                return null;
+            }
+
+            // Parse expires date (optional)
+            const expiresParsed = parseMonthDate(source.expires);
+            if (expiresParsed.error && source.expires !== null && source.expires !== undefined && source.expires !== '') {
+                console.warn(`Certification "${name}": invalid expires date`, expiresParsed.error);
+            }
 
             return {
                 name,
-                issued,
-                expires,
+                issued: issuedParsed.value,
+                expires: expiresParsed.value,
             };
         })
         .filter((item): item is PersonalInformationCertification => item !== null);
+}
+
+/**
+ * Serialize certifications to canonical month ISO strings for persistence
+ */
+export function serializeCertifications(
+    items: PersonalInformationCertification[]
+): {
+    name: string;
+    issued: string;
+    expires: string | null;
+}[] {
+    return items.map((item) => ({
+        name: item.name.trim(),
+        issued: toCanonicalMonthIso(item.issued)!,
+        expires: toCanonicalMonthIso(item.expires),
+    }));
 }
 
 export function normaliseLanguages(value: unknown): PersonalInformationLanguageSpoken[] {

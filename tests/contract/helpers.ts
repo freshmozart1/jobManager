@@ -127,8 +127,13 @@ const PERSONAL_INFORMATION_FIXTURE: PersonalInformation = {
     certifications: [
         {
             name: 'AWS Certified Developer',
-            issued: '2023-01',
-            expires: '2026-01'
+            issued: '2023-01-01T00:00:00.000Z' as unknown as Date,
+            expires: '2026-01-01T00:00:00.000Z' as unknown as Date
+        },
+        {
+            name: 'Legacy Cert (YYYY-MM)',
+            issued: '2022-06' as unknown as Date,
+            expires: null
         }
     ],
     languages_spoken: [

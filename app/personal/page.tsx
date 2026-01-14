@@ -19,7 +19,7 @@ import BadgeInput from "@/components/ui/badgeInput";
 import { AppSkillsEditor } from "@/components/ui/appSkillsEditor";
 import { AppExperienceEditor } from "@/components/ui/appExperienceEditor";
 import AppEducationEditor from "@/components/ui/appEducationEditor";
-import { normaliseExperienceItems, serializeExperienceItems } from "@/lib/personal";
+import { normaliseExperienceItems, serializeExperienceItems, serializeCertifications } from "@/lib/personal";
 import { normaliseEducationItems } from "@/lib/personal";
 import usePersonal from "@/hooks/usePersonal";
 import AppCertificationEditor from "@/components/ui/appCertificationEditor";
@@ -202,10 +202,11 @@ export default function PersonalPage() {
         setSaving(true);
         setEditedField('certifications');
         try {
+            const payload = serializeCertifications(nextCertifications);
             const response = await fetch(toUrl('/api/personal'), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: 'certifications', value: nextCertifications })
+                body: JSON.stringify({ type: 'certifications', value: payload })
             });
             if (!response.ok) {
                 let message = 'Failed to save certifications.';

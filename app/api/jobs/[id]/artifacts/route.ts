@@ -184,6 +184,24 @@ function validateCvContent(content: unknown): boolean {
                 }
             }
         }
+
+        // Certifications: if present, must be array; validate items if present
+        if (cv.slots.certifications !== undefined) {
+            if (!Array.isArray(cv.slots.certifications)) {
+                return false;
+            }
+            for (const item of cv.slots.certifications) {
+                if (item.name !== undefined && (typeof item.name !== 'string' || isBlank(item.name))) {
+                    return false;
+                }
+                if (item.issued !== undefined && typeof item.issued !== 'string') {
+                    return false;
+                }
+                if (item.expires !== undefined && item.expires !== null && typeof item.expires !== 'string') {
+                    return false;
+                }
+            }
+        }
     }
 
     return true;
@@ -218,7 +236,7 @@ async function upsertArtifact(
     if (artifactType === 'cv') {
         if (!validateCvContent(body.content)) {
             return jsonError(400, 'InvalidCvContent',
-                'CV content must be a valid CvModel object. Required: templateId (string). Optional: header, header.address, slots (education/experience/skills arrays). Blank strings are treated as absent. When present, fields must have valid types: experience dates must be YYYY-MM format, numeric fields must be finite numbers.',
+                'CV content must be a valid CvModel object. Required: templateId (string). Optional: header, header.address, slots (education/experience/skills/certifications arrays). Blank strings are treated as absent. When present, fields must have valid types: experience dates must be YYYY-MM format, certification issued/expires dates must be YYYY-MM format (expires can be null), numeric fields must be finite numbers.',
                 origin);
         }
     } else if (artifactType === 'cover-letter') {

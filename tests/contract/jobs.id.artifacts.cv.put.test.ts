@@ -220,3 +220,94 @@ test('PUT /api/jobs/{id}/artifacts rejects CV without templateId', async ({ base
         await cleanupJobData(dbContext.db, jobId);
     }
 });
+
+test('PUT /api/jobs/{id}/artifacts accepts CV with certifications in YYYY-MM format', async ({ baseURL }) => {
+    const jobId = 'contract-job-cv-certifications';
+    const job = createJobFixture(jobId);
+    await seedJob(dbContext.db, job);
+
+    const api = await request.newContext({ baseURL });
+    try {
+        const res = await api.put(`/api/jobs/${jobId}/artifacts`, {
+            data: {
+                type: 'cv',
+                content: {
+                    templateId: 'modern',
+                    slots: {
+                        certifications: [
+                            {
+                                id: 'cert-1',
+                                name: 'AWS Solutions Architect',
+                                issued: '2023-01',
+                                expires: '2026-01'
+                            },
+                            {
+                                id: 'cert-2',
+                                name: 'PMP Certification',
+                                issued: '2022-06',
+                                expires: null
+                            }
+                        ]
+                    }
+                }
+            }
+        });
+
+        expect(res.status(), await res.text()).toBe(200);
+        const data = await res.json();
+        expect(data.artifact).toBeDefined();
+        expect(data.artifact.type).toBe('cv');
+        expect(data.artifact.content.slots.certifications).toHaveLength(2);
+        expect(data.artifact.content.slots.certifications[0].name).toBe('AWS Solutions Architect');
+        expect(data.artifact.content.slots.certifications[0].issued).toBe('2023-01');
+        expect(data.artifact.content.slots.certifications[0].expires).toBe('2026-01');
+        expect(data.artifact.content.slots.certifications[1].expires).toBeNull();
+
+        // Verify stored correctly
+        const jobDoc = await dbContext.db.collection('jobs').findOne(
+            { id: jobId },
+            { projection: { artifacts: 1, _id: 0 } }
+        );
+        const cvArtifact = jobDoc?.artifacts?.find((a: any) => a.type === 'cv');
+        expect(cvArtifact).toBeDefined();
+        expect(cvArtifact?.content.slots.certifications).toHaveLength(2);
+    } finally {
+        await api.dispose();
+        await cleanupJobData(dbContext.db, jobId);
+    }
+});
+
+test('PUT /api/jobs/{id}/artifacts rejects CV with invalid certification date format', async ({ baseURL }) => {
+    const jobId = 'contract-job-cv-invalid-cert-date';
+    const job = createJobFixture(jobId);
+    await seedJob(dbContext.db, job);
+
+    const api = await request.newContext({ baseURL });
+    try {
+        const res = await api.put(`/api/jobs/${jobId}/artifacts`, {
+            data: {
+                type: 'cv',
+                content: {
+                    templateId: 'modern',
+                    slots: {
+                        certifications: [
+                            {
+                                id: 'cert-1',
+                                name: 'Invalid Cert',
+                                issued: '2023-13', // Invalid month
+                                expires: null
+                            }
+                        ]
+                    }
+                }
+            }
+        });
+
+        expect(res.status()).toBe(400);
+        const data = await res.json();
+        expect(data.error).toBe('InvalidCvContent');
+    } finally {
+        await api.dispose();
+        await cleanupJobData(dbContext.db, jobId);
+    }
+});

@@ -4,14 +4,14 @@ import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { X } from 'lucide-react';
-import type { CvEducationItem, CvExperienceItem, CvSkillItem } from '@/lib/cvModel';
+import type { CvEducationItem, CvExperienceItem, CvSkillItem, CvCertificationItem } from '@/lib/cvModel';
 
-type SlotType = 'education' | 'experience' | 'skills';
+type SlotType = 'education' | 'experience' | 'skills' | 'certifications';
 
 type AppCvEditorSlotProps = {
     slotType: SlotType;
     title: string;
-    items: (CvEducationItem | CvExperienceItem | CvSkillItem)[];
+    items: (CvEducationItem | CvExperienceItem | CvSkillItem | CvCertificationItem)[];
     onRemove: (itemId: string) => void;
 };
 
@@ -63,7 +63,7 @@ function SortableSlotItem({
     onRemove,
 }: {
     id: string;
-    item: CvEducationItem | CvExperienceItem | CvSkillItem;
+    item: CvEducationItem | CvExperienceItem | CvSkillItem | CvCertificationItem;
     slotType: SlotType;
     onRemove: () => void;
 }) {
@@ -119,11 +119,20 @@ function SortableSlotItem({
                         )}
                     </>
                 )}
-                {slotType === 'skills' && 'name' in item && (
+                {slotType === 'skills' && 'name' in item && 'level' in item && 'years' in item && (
                     <>
                         <p className="font-semibold text-xs">{item.name}</p>
                         <p className="text-xs text-muted-foreground">
                             {item.level} - {item.years} years
+                        </p>
+                    </>
+                )}
+                {slotType === 'certifications' && 'issued' in item && (
+                    <>
+                        <p className="font-semibold text-xs">{item.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                            Issued: {item.issued}
+                            {'expires' in item && item.expires && ` | Expires: ${item.expires}`}
                         </p>
                     </>
                 )}

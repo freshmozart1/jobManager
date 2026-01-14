@@ -2,6 +2,7 @@ import type {
     PersonalInformationEducation,
     PersonalInformationExperience,
     PersonalInformationSkill,
+    PersonalInformationCertification,
 } from '@/types';
 
 /**
@@ -31,6 +32,7 @@ export type CvModel = {
         education?: CvEducationItem[];
         experience?: CvExperienceItem[];
         skills?: CvSkillItem[];
+        certifications?: CvCertificationItem[];
     };
 };
 
@@ -56,6 +58,7 @@ export type CvModelNormalized = {
         education: CvEducationItem[];
         experience: CvExperienceItem[];
         skills: CvSkillItem[];
+        certifications: CvCertificationItem[];
     };
 };
 
@@ -88,6 +91,16 @@ export type CvSkillItem = {
     category: string;
     level: string;
     years: number;
+};
+
+/**
+ * Placed item in Certifications slot
+ */
+export type CvCertificationItem = {
+    id: string;
+    name: string;
+    issued: string; // YYYY-MM format
+    expires: string | null; // YYYY-MM format or null
 };
 
 /**
@@ -142,6 +155,17 @@ export function personalSkillsToCvSkills(items: PersonalInformationSkill[]): CvS
     }));
 }
 
+export function personalCertificationsToCvCertifications(
+    items: PersonalInformationCertification[]
+): CvCertificationItem[] {
+    return items.map((item, idx) => ({
+        id: `cert-${idx}`,
+        name: item.name,
+        issued: item.issued,
+        expires: item.expires,
+    }));
+}
+
 /**
  * Create an empty CV model with all fields populated
  */
@@ -164,6 +188,7 @@ export function createEmptyCvModel(): CvModelNormalized {
             education: [],
             experience: [],
             skills: [],
+            certifications: [],
         },
     };
 }
@@ -209,6 +234,7 @@ export function normalizeCvModel(partial: unknown): CvModelNormalized {
             education: Array.isArray(p.slots?.education) ? p.slots.education : empty.slots.education,
             experience: Array.isArray(p.slots?.experience) ? p.slots.experience : empty.slots.experience,
             skills: Array.isArray(p.slots?.skills) ? p.slots.skills : empty.slots.skills,
+            certifications: Array.isArray(p.slots?.certifications) ? p.slots.certifications : empty.slots.certifications,
         },
     };
 }
@@ -253,7 +279,7 @@ export function sanitizeCvDraftForSave(model: CvModel): CvModel {
         const slots: Slots = {};
         let hasSlotsData = false;
 
-        const { education = [], experience = [], skills = [] } = model.slots;
+        const { education = [], experience = [], skills = [], certifications = [] } = model.slots;
 
         const isBlank = (value: unknown) => typeof value === 'string' && value.trim() === '';
         const isYear = (value: unknown) => typeof value === 'number' && Number.isFinite(value);
@@ -262,10 +288,10 @@ export function sanitizeCvDraftForSave(model: CvModel): CvModel {
             slotItems: NonNullable<Slots[K]>,
             isValid: (item: NonNullable<Slots[K]>[number]) => boolean
         ) => {
-            if (!slotItems.length) return;
-            const validItems = slotItems.filter(isValid);
-            if (!validItems.length) return;
-            (slots as Record<string, (CvEducationItem | CvExperienceItem | CvSkillItem)[]>)[slotName] = validItems;
+            console.log(`Sanitizing slot ${String(slotName)} with ${slotItems.length} items`);
+            const validItems = slotItems.length > 0 ? slotItems.filter(isValid) : [];
+            console.log(`  -> ${validItems.length} valid items retained`);
+            (slots as Record<string, (CvEducationItem | CvExperienceItem | CvSkillItem | CvCertificationItem)[]>)[slotName] = validItems;
             hasSlotsData = true;
         };
 
@@ -291,6 +317,14 @@ export function sanitizeCvDraftForSave(model: CvModel): CvModel {
             typeof item.level === 'string' &&
             isYear(item.years)
         ));
+
+        addSlot('certifications', certifications, (item: CvCertificationItem) => {
+            console.log('Sanitizing certification item:', item);
+            return (
+                !!item.name && !isBlank(item.name) &&
+                !!item.issued
+            )
+        });
 
         if (hasSlotsData) {
             result.slots = slots;

@@ -14,6 +14,7 @@ import {
     personalEducationToCvEducation,
     personalExperienceToCvExperience,
     personalSkillsToCvSkills,
+    personalCertificationsToCvCertifications,
     normalizeCvModel,
     sanitizeCvDraftForSave,
     type CvModel,
@@ -63,6 +64,7 @@ export default function CvPage() {
             setSaveStatus('saving');
             setSaveError(null);
             const sanitized = sanitizeCvDraftForSave(debouncedCvModel);
+            console.log(`Sanitized CV Model:`, sanitized);
             pendingPayloadRef.current = sanitized;
             try {
                 if (!(await fetch(toUrl(`/api/jobs/${jobId}/artifacts`), {
@@ -119,10 +121,11 @@ export default function CvPage() {
     }
 
     // Prepare available items from personal info
-    const { education = [], experience = [], skills = [] } = personal;
+    const { education = [], experience = [], skills = [], certifications = [] } = personal;
     const availableEducation = personalEducationToCvEducation(education);
     const availableExperience = personalExperienceToCvExperience(experience);
     const availableSkills = personalSkillsToCvSkills(skills);
+    const availableCertifications = personalCertificationsToCvCertifications(certifications);
 
     return <div className="print:visible">
         {/* Save status indicator */}
@@ -157,6 +160,7 @@ export default function CvPage() {
             initialModel={initialModel}
             availableEducation={availableEducation}
             availableExperience={availableExperience}
+            availableCertifications={availableCertifications}
             availableSkills={availableSkills}
             onChange={handleCvChange}
         />

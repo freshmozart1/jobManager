@@ -8,7 +8,7 @@ type AppCvEditorPreviewProps = {
     model: CvModelNormalized;
     onHeaderChange: (field: keyof CvModelNormalized['header'], value: string) => void;
     onHeaderAddressChange: (field: keyof CvModelNormalized['header']['address'], value: string) => void;
-    onRemove: (slotType: 'education' | 'experience' | 'skills', itemId: string) => void;
+    onRemove: (slotType: 'education' | 'experience' | 'skills' | 'certifications', itemId: string) => void;
 };
 
 export default function AppCvEditorPreview({ model, onHeaderChange, onHeaderAddressChange, onRemove }: AppCvEditorPreviewProps) {
@@ -100,6 +100,12 @@ export default function AppCvEditorPreview({ model, onHeaderChange, onHeaderAddr
                 title="Skills"
                 items={model.slots.skills}
                 onRemove={(itemId) => onRemove('skills', itemId)}
+            />
+            <AppCvEditorSlot
+                slotType="certifications"
+                title="Certifications"
+                items={model.slots.certifications}
+                onRemove={(itemId) => onRemove('certifications', itemId)}
             />
         </div>
     </div>;

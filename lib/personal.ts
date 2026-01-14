@@ -1,16 +1,8 @@
 import { PersonalInformationCareerGoal, PersonalInformationCertification, PersonalInformationEducation, PersonalInformationExperience, PersonalInformationLanguageSpoken, PersonalInformationMotivation, PersonalInformationSkill } from "@/types";
 import { makeUtcMonthYear, formatMonthYear } from "./utils";
+import { parseMonthDate, toCanonicalMonthIso } from "./date";
 
 type UnknownRecord = Record<string, unknown>;
-
-/**
- * Parse result for month dates with potential error message
- */
-export type ParsedMonthDate = {
-    value: Date | null;
-    error?: string;
-};
-
 
 function trimmedString(source: UnknownRecord, key: string): string {
     const value = source[key];
@@ -28,89 +20,33 @@ function normaliseArray<T>(value: unknown, mapFn: (source: UnknownRecord) => T |
         .filter((item): item is T => item !== null);
 }
 
-/**
- * Parse a month date input (Date, ISO string, or YYYY-MM) into a UTC month-start Date
- * Accepts:
- * - Date objects
- * - ISO strings (any valid ISO date)
- * - YYYY-MM strings
- * - null/undefined -> null
- * Returns: { value: Date | null, error?: string }
- */
-export function parseMonthDate(input: unknown): ParsedMonthDate {
-    if (!input || input === null || input === undefined || input === '') {
-        return { value: null };
-    }
+function normaliseCareerGoalsAndMotivations(value: unknown) {
+    return normaliseArray(value, (source) => {
+        const topic = trimmedString(source, "topic");
+        const description = trimmedString(source, "description");
 
-    if (input instanceof Date) {
-        if (Number.isNaN(input.getTime())) {
-            return { value: null, error: 'Invalid date' };
-        }
-        // Normalize to month start
-        return { value: makeUtcMonthYear(input.getFullYear(), input.getMonth()) };
-    }
+        if (!topic || !description) return null;
 
-    if (typeof input === 'string') {
-        const trimmed = input.trim();
-
-        // Try YYYY-MM format first
-        if (/^\d{4}-\d{2}$/.test(trimmed)) {
-            const [yearStr, monthStr] = trimmed.split("-");
-            const year = Number(yearStr);
-            const month = Number(monthStr);
-
-            if (!Number.isFinite(year) || !Number.isFinite(month)) {
-                return { value: null, error: `Invalid YYYY-MM format: ${trimmed}` };
-            }
-
-            if (month < 1 || month > 12) {
-                return { value: null, error: `Month must be between 1-12, got: ${month}` };
-            }
-
-            return { value: makeUtcMonthYear(year, month - 1) };
-        }
-
-        // Try ISO date string
-        const parsed = new Date(trimmed);
-        if (!Number.isNaN(parsed.getTime())) {
-            return { value: makeUtcMonthYear(parsed.getFullYear(), parsed.getMonth()) };
-        }
-
-        return { value: null, error: `Cannot parse date: ${trimmed}` };
-    }
-
-    if (typeof input === 'number') {
-        const parsed = new Date(input);
-        if (!Number.isNaN(parsed.getTime())) {
-            return { value: makeUtcMonthYear(parsed.getFullYear(), parsed.getMonth()) };
-        }
-        return { value: null, error: `Invalid timestamp: ${input}` };
-    }
-
-    return { value: null, error: `Unsupported date type: ${typeof input}` };
+        return {
+            topic,
+            description,
+            reason_lite: "",
+        };
+    });
 }
 
-/**
- * Convert a Date to canonical month ISO string (YYYY-MM-01T00:00:00.000Z)
- * Used for persistence to ensure consistent storage format
- */
-export function toCanonicalMonthIso(date: Date | null): string | null {
-    if (!date || !(date instanceof Date) || Number.isNaN(date.getTime())) {
-        return null;
+function normaliseTags(input: unknown): string[] {
+    if (!Array.isArray(input)) return [];
+    const seen = new Set<string>();
+    const normalised: string[] = [];
+    for (const value of input) {
+        if (typeof value !== "string") continue;
+        const trimmed = value.trim();
+        if (!trimmed || seen.has(trimmed)) continue;
+        seen.add(trimmed);
+        normalised.push(trimmed);
     }
-    const normalized = makeUtcMonthYear(date.getFullYear(), date.getMonth());
-    return normalized.toISOString();
-}
-
-/**
- * Convert a Date to YYYY-MM format for CV artifacts
- * Maintains backward compatibility with existing CV string contracts
- */
-export function toCvMonthString(date: Date | null): string | null {
-    if (!date || !(date instanceof Date) || Number.isNaN(date.getTime())) {
-        return null;
-    }
-    return formatMonthYear(date);
+    return normalised;
 }
 
 function ensureDate(input: unknown): Date | undefined {
@@ -138,26 +74,6 @@ function ensureDate(input: unknown): Date | undefined {
         }
     }
     return undefined;
-}
-
-export function serializeExperienceItems(
-    items: PersonalInformationExperience[]
-): {
-    from: string;
-    to?: string;
-    role: string;
-    company: string;
-    summary: string;
-    tags: string[];
-}[] {
-    return items.map((item: PersonalInformationExperience) => ({
-        from: formatMonthYear(item.from),
-        to: item.to ? formatMonthYear(item.to) : undefined,
-        role: item.role.trim(),
-        company: item.company.trim(),
-        summary: item.summary.trim(),
-        tags: normaliseTags(item.tags),
-    }));
 }
 
 export function normaliseExperienceItems(value: unknown): PersonalInformationExperience[] {
@@ -252,8 +168,50 @@ export function normaliseSkills(value: unknown): PersonalInformationSkill[] {
             years: Number.isFinite(years) ? years : 0,
             last_used: lastUsedParsed.value,
             primary: Boolean(source.primary),
-        } satisfies PersonalInformationSkill;
+        };
     });
+}
+
+export function normaliseLanguages(value: unknown): PersonalInformationLanguageSpoken[] {
+    return normaliseArray(value, (source) => {
+        const language = trimmedString(source, "language");
+        const level = trimmedString(source, "level");
+
+        if (!language || !level) return null;
+
+        return {
+            language,
+            level,
+        };
+    });
+}
+
+export function normaliseMotivations(value: unknown): PersonalInformationMotivation[] {
+    return normaliseCareerGoalsAndMotivations(value);
+}
+
+export function normaliseCareerGoals(value: unknown): PersonalInformationCareerGoal[] {
+    return normaliseCareerGoalsAndMotivations(value);
+}
+
+export function serializeExperienceItems(
+    items: PersonalInformationExperience[]
+): {
+    from: string;
+    to?: string;
+    role: string;
+    company: string;
+    summary: string;
+    tags: string[];
+}[] {
+    return items.map((item: PersonalInformationExperience) => ({
+        from: formatMonthYear(item.from),
+        to: item.to ? formatMonthYear(item.to) : undefined,
+        role: item.role.trim(),
+        company: item.company.trim(),
+        summary: item.summary.trim(),
+        tags: normaliseTags(item.tags),
+    }));
 }
 
 /**
@@ -296,61 +254,4 @@ export function serializeCertifications(
         issued: toCanonicalMonthIso(item.issued)!,
         expires: toCanonicalMonthIso(item.expires),
     }));
-}
-
-export function normaliseLanguages(value: unknown): PersonalInformationLanguageSpoken[] {
-    return normaliseArray(value, (source) => {
-        const language = trimmedString(source, "language");
-        const level = trimmedString(source, "level");
-
-        if (!language || !level) return null;
-
-        return {
-            language,
-            level,
-        };
-    });
-}
-
-export function normaliseMotivations(value: unknown): PersonalInformationMotivation[] {
-    return normaliseArray(value, (source) => {
-        const topic = trimmedString(source, "topic");
-        const description = trimmedString(source, "description");
-
-        if (!topic || !description) return null;
-
-        return {
-            topic,
-            description,
-            reason_lite: "",
-        };
-    });
-}
-
-export function normaliseCareerGoals(value: unknown): PersonalInformationCareerGoal[] {
-    return normaliseArray(value, (source) => {
-        const topic = trimmedString(source, "topic");
-        const description = trimmedString(source, "description");
-
-        if (!topic || !description) return null;
-
-        return {
-            topic,
-            description,
-            reason_lite: "",
-        };
-    });
-}
-function normaliseTags(input: unknown): string[] {
-    if (!Array.isArray(input)) return [];
-    const seen = new Set<string>();
-    const normalised: string[] = [];
-    for (const value of input) {
-        if (typeof value !== "string") continue;
-        const trimmed = value.trim();
-        if (!trimmed || seen.has(trimmed)) continue;
-        seen.add(trimmed);
-        normalised.push(trimmed);
-    }
-    return normalised;
 }

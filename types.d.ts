@@ -148,8 +148,8 @@ export type PersonalInformationEducation = {
 
 export type PersonalInformationCertification = {
     name: string;
-    issued: string;
-    expires: string | null;
+    issued: Date;
+    expires: Date | null;
 };
 
 export type PersonalInformationLanguageSpoken = {

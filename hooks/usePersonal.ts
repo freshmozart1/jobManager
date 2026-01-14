@@ -1,7 +1,7 @@
 import { PersonalInformation } from "@/types";
 import { useEffect, useState, Dispatch, SetStateAction } from "react";
 import useToUrl from "./useToUrl";
-import { normaliseExperienceItems } from "@/lib/personal";
+import { normaliseExperienceItems, normaliseCertifications } from "@/lib/personal";
 
 export default function usePersonal(): [PersonalInformation | null, Dispatch<SetStateAction<PersonalInformation | null>>, boolean] {
     const toUrl = useToUrl();
@@ -13,12 +13,18 @@ export default function usePersonal(): [PersonalInformation | null, Dispatch<Set
             .then(res => res.json())
             .then((data: PersonalInformation) => {
                 const normalizedExperience = normaliseExperienceItems(data.experience);
+                const normalizedCertifications = normaliseCertifications(data.certifications);
                 // Ensure contact.address exists (normalize for older DB entries)
                 const normalizedContact = {
                     ...data.contact,
                     address: data.contact.address || {}
                 };
-                setPersonalInfo({ ...data, contact: normalizedContact, experience: normalizedExperience });
+                setPersonalInfo({
+                    ...data,
+                    contact: normalizedContact,
+                    experience: normalizedExperience,
+                    certifications: normalizedCertifications
+                });
                 setLoading(false);
             })
             .catch(err => {

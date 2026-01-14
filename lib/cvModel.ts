@@ -158,12 +158,16 @@ export function personalSkillsToCvSkills(items: PersonalInformationSkill[]): CvS
 export function personalCertificationsToCvCertifications(
     items: PersonalInformationCertification[]
 ): CvCertificationItem[] {
-    return items.map((item, idx) => ({
-        id: `cert-${idx}`,
-        name: item.name,
-        issued: item.issued,
-        expires: item.expires,
-    }));
+    return items.map((item, idx) => {
+        const issued = item.issued instanceof Date ? formatDateToYYYYMM(item.issued) : String(item.issued);
+        const expires = item.expires ? (item.expires instanceof Date ? formatDateToYYYYMM(item.expires) : String(item.expires)) : null;
+        return {
+            id: `cert-${idx}`,
+            name: item.name,
+            issued,
+            expires,
+        };
+    });
 }
 
 /**

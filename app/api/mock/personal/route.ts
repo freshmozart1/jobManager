@@ -181,13 +181,18 @@ function generateMockPersonalInformation(): PersonalInformation {
         certifications: [
             {
                 name: "AWS Certified Solutions Architect",
-                issued: "2022-03",
-                expires: "2025-03"
+                issued: "2022-03-01T00:00:00.000Z" as unknown as Date,
+                expires: "2025-03-01T00:00:00.000Z" as unknown as Date
             },
             {
                 name: "Certified Kubernetes Administrator",
-                issued: "2023-01",
+                issued: "2023-01-01T00:00:00.000Z" as unknown as Date,
                 expires: null
+            },
+            {
+                name: "Legacy Certification (YYYY-MM format)",
+                issued: "2021-06" as unknown as Date,
+                expires: "2024-06" as unknown as Date
             }
         ],
         languages_spoken: [

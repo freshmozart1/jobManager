@@ -16,20 +16,6 @@ export function chunkArray<T>(array: T[], size: number): T[][] {
   return result;
 }
 
-export function normaliseTags(input: unknown): string[] {
-  if (!Array.isArray(input)) return [];
-  const seen = new Set<string>();
-  const normalised: string[] = [];
-  for (const value of input) {
-    if (typeof value !== "string") continue;
-    const trimmed = value.trim();
-    if (!trimmed || seen.has(trimmed)) continue;
-    seen.add(trimmed);
-    normalised.push(trimmed);
-  }
-  return normalised;
-}
-
 /**
  * toUrl
  * Converts a relative API path to an absolute URL.

@@ -93,7 +93,7 @@ const PERSONAL_INFORMATION_FIXTURE: PersonalInformation = {
             category: 'Programming Language',
             level: 'Expert',
             years: 6,
-            last_used: '2024-10',
+            last_used: '2024-10-01T00:00:00.000Z' as unknown as Date,
             primary: true
         },
         {
@@ -102,7 +102,7 @@ const PERSONAL_INFORMATION_FIXTURE: PersonalInformation = {
             category: 'Frontend Framework',
             level: 'Advanced',
             years: 5,
-            last_used: '2024-10',
+            last_used: '2024-09' as unknown as Date,
             primary: true
         }
     ],

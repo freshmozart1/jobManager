@@ -1,7 +1,7 @@
 import { PersonalInformation } from "@/types";
 import { useEffect, useState, Dispatch, SetStateAction } from "react";
 import useToUrl from "./useToUrl";
-import { normaliseExperienceItems, normaliseCertifications } from "@/lib/personal";
+import { normaliseExperienceItems, normaliseCertifications, normaliseSkills } from "@/lib/personal";
 
 export default function usePersonal(): [PersonalInformation | null, Dispatch<SetStateAction<PersonalInformation | null>>, boolean] {
     const toUrl = useToUrl();
@@ -14,6 +14,7 @@ export default function usePersonal(): [PersonalInformation | null, Dispatch<Set
             .then((data: PersonalInformation) => {
                 const normalizedExperience = normaliseExperienceItems(data.experience);
                 const normalizedCertifications = normaliseCertifications(data.certifications);
+                const normalizedSkills = normaliseSkills(data.skills);
                 // Ensure contact.address exists (normalize for older DB entries)
                 const normalizedContact = {
                     ...data.contact,
@@ -23,7 +24,8 @@ export default function usePersonal(): [PersonalInformation | null, Dispatch<Set
                     ...data,
                     contact: normalizedContact,
                     experience: normalizedExperience,
-                    certifications: normalizedCertifications
+                    certifications: normalizedCertifications,
+                    skills: normalizedSkills
                 });
                 setLoading(false);
             })

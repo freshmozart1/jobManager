@@ -39,7 +39,6 @@ function validateSkillDraft(
     const normalizedName = normaliseName(name);
     const trimmedCategory = category.trim();
     const years = Number(dYears);
-    const lastUsedMonth = Number(last_used.split("-")[1]);
     const aliasSet = new Set<string>();
 
     if (!normalizedName) errors.name = "Name is required.";
@@ -54,8 +53,9 @@ function validateSkillDraft(
 
     if (Number.isNaN(years) || years < 0) errors.years = "Years must be a non-negative number.";
 
-    if (!/^\d{4}-\d{2}$/.test(last_used)) errors.last_used = "Use YYYY-MM format.";
-    else if (lastUsedMonth < 1 || lastUsedMonth > 12) errors.last_used = "Month must be between 01 and 12.";
+    if (!last_used || !(last_used instanceof Date) || Number.isNaN(last_used.getTime())) {
+        errors.last_used = "Last used date is required.";
+    }
 
     if (aliases.length > maxAliasCount) errors.aliases = `Up to ${maxAliasCount} aliases allowed.`;
 
@@ -105,7 +105,7 @@ export default function AppSkillsEditorContainer({
         category: "",
         level: "",
         years: "",
-        last_used: "",
+        last_used: null,
         aliases: [],
         primary: false,
     }), []);
@@ -237,7 +237,7 @@ export default function AppSkillsEditorContainer({
                 category: skill.category,
                 level: skill.level,
                 years: String(skill.years ?? ""),
-                last_used: skill.last_used ?? "",
+                last_used: skill.last_used instanceof Date ? skill.last_used : null,
                 aliases: skill.aliases ?? [],
                 primary: Boolean(skill.primary),
             });
@@ -278,6 +278,12 @@ export default function AppSkillsEditorContainer({
             const errors = validateSkillDraft(draft, internalSkills, maxAliasCount, maxAliasLength, maxCategoryLength, originalName);
             setDraftErrors(errors);
             if (Object.keys(errors).length > 0) return;
+
+            if (!draft.last_used) {
+                setDraftErrors({ ...errors, last_used: "Last used date is required." });
+                return;
+            }
+
             const skill: PersonalInformationSkill = {
                 name: draft.name.trim(),
                 category: draft.category.trim(),

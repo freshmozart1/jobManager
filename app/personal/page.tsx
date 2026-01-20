@@ -19,7 +19,7 @@ import BadgeInput from "@/components/ui/badgeInput";
 import { AppSkillsEditor } from "@/components/ui/appSkillsEditor";
 import { AppExperienceEditor } from "@/components/ui/appExperienceEditor";
 import AppEducationEditor from "@/components/ui/appEducationEditor";
-import { normaliseExperienceItems, serializeExperienceItems, serializeCertifications } from "@/lib/personal";
+import { normaliseExperienceItems, serializeExperienceItems, serializeCertifications, serializeSkills } from "@/lib/personal";
 import { normaliseEducationItems } from "@/lib/personal";
 import usePersonal from "@/hooks/usePersonal";
 import AppCertificationEditor from "@/components/ui/appCertificationEditor";
@@ -317,10 +317,11 @@ export default function PersonalPage() {
         setSaving(true);
         setEditedField('skills');
         try {
+            const payload = serializeSkills(nextSkills);
             const response = await fetch(toUrl('/api/personal'), {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: 'skills', value: nextSkills })
+                body: JSON.stringify({ type: 'skills', value: payload })
             });
 
             if (!response.ok) {

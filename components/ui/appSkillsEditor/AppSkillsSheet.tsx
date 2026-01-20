@@ -9,13 +9,14 @@ import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import BadgeInput from "@/components/ui/badgeInput";
 import { AppCategoryCombobox } from "@/components/ui/appCategoryCombobox";
+import AppMonthYearPicker from "@/components/ui/appMonthYearPicker";
 
 export type SkillDraft = {
     name: string;
     category: string;
     level: string;
     years: string;
-    last_used: string;
+    last_used: Date | null;
     aliases: string[];
     primary: boolean;
 };
@@ -100,23 +101,15 @@ export function AppSkillsSheet({
                         {draftErrors.years && <p className="text-sm text-destructive">{draftErrors.years}</p>}
                     </div>
                     <div className="space-y-1.5">
-                        <Label htmlFor="skill-last-used">Last used</Label>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Input
-                                    id="skill-last-used"
-                                    value={draft.last_used}
-                                    onChange={(event) => updateDraft({ last_used: event.target.value })}
-                                    placeholder="YYYY-MM"
-                                    aria-invalid={Boolean(draftErrors.last_used)}
-                                />
-                            </TooltipTrigger>
-                            <TooltipContent side="top">
-                                <p>Use YYYY-MM (e.g. 2024-09).</p>
-                                {draftErrors.last_used && <p>Fix to enable save.</p>}
-                            </TooltipContent>
-                        </Tooltip>
-                        {draftErrors.last_used && <p className="text-sm text-destructive">{draftErrors.last_used}</p>}
+                        <AppMonthYearPicker
+                            id="skill-last-used"
+                            label="Last used"
+                            value={draft.last_used || undefined}
+                            onChange={(date) => updateDraft({ last_used: date || null })}
+                            required={true}
+                            disabled={isPersisting}
+                            error={draftErrors.last_used}
+                        />
                     </div>
                 </div>
                 <div className="space-y-1.5">

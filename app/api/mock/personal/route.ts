@@ -95,7 +95,7 @@ function generateMockPersonalInformation(): PersonalInformation {
                 category: "Programming Language",
                 level: "Expert",
                 years: 6,
-                last_used: "2024-10",
+                last_used: "2024-10-01T00:00:00.000Z" as unknown as Date,
                 primary: true
             },
             {
@@ -104,7 +104,7 @@ function generateMockPersonalInformation(): PersonalInformation {
                 category: "Frontend Framework",
                 level: "Expert",
                 years: 5,
-                last_used: "2024-10",
+                last_used: "2024-10-01T00:00:00.000Z" as unknown as Date,
                 primary: true
             },
             {
@@ -113,7 +113,7 @@ function generateMockPersonalInformation(): PersonalInformation {
                 category: "Backend Runtime",
                 level: "Advanced",
                 years: 5,
-                last_used: "2024-10",
+                last_used: "2024-10-01T00:00:00.000Z" as unknown as Date,
                 primary: true
             },
             {
@@ -122,7 +122,7 @@ function generateMockPersonalInformation(): PersonalInformation {
                 category: "Full-Stack Framework",
                 level: "Advanced",
                 years: 3,
-                last_used: "2024-10",
+                last_used: "2024-09-01T00:00:00.000Z" as unknown as Date,
                 primary: false
             },
             {
@@ -131,7 +131,7 @@ function generateMockPersonalInformation(): PersonalInformation {
                 category: "Database",
                 level: "Intermediate",
                 years: 4,
-                last_used: "2024-09",
+                last_used: "2024-09" as unknown as Date,
                 primary: false
             },
             {
@@ -140,7 +140,7 @@ function generateMockPersonalInformation(): PersonalInformation {
                 category: "Cloud Platform",
                 level: "Advanced",
                 years: 4,
-                last_used: "2024-10",
+                last_used: "invalid-date" as unknown as Date,
                 primary: false
             }
         ],

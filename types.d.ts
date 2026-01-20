@@ -126,7 +126,7 @@ export type PersonalInformationSkill = {
     category: string;
     level: string;
     years: number;
-    last_used: string;
+    last_used: Date;
     primary: boolean;
 };
 

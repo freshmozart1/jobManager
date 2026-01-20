@@ -11,7 +11,7 @@ export type SkillDraft = {
     category: string;
     level: string;
     years: string;
-    last_used: string;
+    last_used: Date | null;
     aliases: string[];
     primary: boolean;
 };

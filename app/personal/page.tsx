@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useRef, useState } from "react";
 import useToUrl from "@/hooks/useToUrl";
-import { type PersonalInformationSkill, type PersonalInformationExperience, type PersonalInformationEducation, PersonalInformationCertification, PersonalInformationLanguageSpoken, type PersonalInformationEligibility, type PersonalInformationMotivation, type PersonalInformationCareerGoal } from "@/types";
+import { type PersonalInformationExperience, type PersonalInformationEducation, PersonalInformationCertification, PersonalInformationLanguageSpoken, type PersonalInformationEligibility, type PersonalInformationMotivation, type PersonalInformationCareerGoal } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +16,6 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdownMenu";
 import BadgeInput from "@/components/ui/badgeInput";
-import { AppSkillsEditor } from "@/components/ui/appSkillsEditor";
 import { AppExperienceEditor } from "@/components/ui/appExperienceEditor";
 import AppEducationEditor from "@/components/ui/appEducationEditor";
 import { normaliseExperienceItems, serializeExperienceItems, serializeCertifications, serializeSkills } from "@/lib/personal";
@@ -36,16 +35,10 @@ export default function PersonalPage() {
     const [saving, setSaving] = useState(false);
     const [editedField, setEditedField] = useState<string | null>(null);
     const [showAddressValidation, setShowAddressValidation] = useState(false);
-    const openSkillsSheetRef = useRef<(() => void) | null>(null);
     const [canOpenSkillsSheet, setCanOpenSkillsSheet] = useState(false);
 
     const [personalInfo, setPersonalInfo, loading] = usePersonal();
     const countryNames = useMemo(() => getCountryNames(), []);
-
-    const registerAddSkill = useCallback((handler: (() => void) | null) => {
-        openSkillsSheetRef.current = handler;
-        setCanOpenSkillsSheet(Boolean(handler));
-    }, []);
 
     // Validate address fields (all required, trimmed, postal code no whitespace)
     const isAddressValid = useMemo(() => {
@@ -308,33 +301,6 @@ export default function PersonalPage() {
             throw (error instanceof Error ? error : new Error('Failed to save eligibility.'));
         }
         finally {
-            setSaving(false);
-            setEditedField(null);
-        }
-    };
-
-    const persistSkills = async (nextSkills: PersonalInformationSkill[]) => {
-        setSaving(true);
-        setEditedField('skills');
-        try {
-            const payload = serializeSkills(nextSkills);
-            const response = await fetch(toUrl('/api/personal'), {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: 'skills', value: payload })
-            });
-
-            if (!response.ok) {
-                const payload = await response.text();
-                throw new Error(payload || 'Failed to save skills');
-            }
-
-            const updated = await response.json();
-            setPersonalInfo(prev => prev ? { ...prev, skills: updated.value } : null);
-        } catch (error) {
-            console.error('Error saving skills:', error);
-            throw (error instanceof Error ? error : new Error(String(error)));
-        } finally {
             setSaving(false);
             setEditedField(null);
         }
@@ -753,33 +719,6 @@ export default function PersonalPage() {
                         {saving && editedField === 'preferences' ? <LoaderCircle className="animate-spin" /> : <Save />}
                         Save Preferences
                     </Button>
-                </CardContent>
-            </Card>
-
-            {/* Skills */}
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between gap-2">
-                    <CardTitle>Your skills</CardTitle>
-                    <Button
-                        type="button"
-                        variant="default"
-                        size="icon"
-                        aria-label="Add skill"
-                        onClick={() => openSkillsSheetRef.current?.()}
-                        disabled={!canOpenSkillsSheet}
-                    >
-                        <Plus className="h-4 w-4" />
-                    </Button>
-                </CardHeader>
-                <CardContent>
-                    <AppSkillsEditor
-                        skills={personalInfo.skills}
-                        onChange={(nextSkills) => {
-                            setPersonalInfo(prev => prev ? { ...prev, skills: nextSkills } : prev);
-                        }}
-                        onPersist={persistSkills}
-                        onRegisterAddSkill={registerAddSkill}
-                    />
                 </CardContent>
             </Card>
 

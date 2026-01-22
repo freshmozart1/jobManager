@@ -46,7 +46,7 @@ export default function AppCvEditor({
     onChange,
 }: AppCvEditorProps) {
     const [model, setModel] = useState<CvModelNormalized>(initialModel);
-    const [activeId, setActiveId] = useState<string | null>(null);
+    const [dragOverlayText, setDragOverlayText] = useState<string | null>(null);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -63,12 +63,37 @@ export default function AppCvEditor({
 
     // Drag handlers
     const handleDragStart = (event: DragStartEvent) => {
-        setActiveId(event.active.id as string);
+        const [_, slotType, itemId] = (event.active.id as string).split(':', 3);
+        setDragOverlayText(() => {
+            switch (slotType) {
+                case 'education': {
+                    const item = availableEducation.find((e) => e.id === itemId);
+                    if (item) return item.degree;
+                    break;
+                }
+                case 'experience': {
+                    const item = availableExperience.find((e) => e.id === itemId);
+                    if (item) return item.role;
+                    break;
+                }
+                case 'skills': {
+                    const item = availableSkills.find((s) => s.id === itemId);
+                    if (item) return item.name;
+                    break;
+                }
+                case 'certifications': {
+                    const item = availableCertifications.find((c) => c.id === itemId);
+                    if (item) return item.name;
+                    break;
+                }
+            }
+            return null;
+        });
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
-        setActiveId(null);
+        setDragOverlayText(null);
         if (!over) return;
         const activeIdStr = active.id as string;
         const overIdStr = over.id as string;
@@ -189,7 +214,7 @@ export default function AppCvEditor({
                 </div>
             </div>
             <DragOverlay>
-                {activeId ? <div className="bg-white p-2 shadow-lg rounded">{activeId}</div> : null}
+                <div className="bg-white p-2 shadow-lg rounded font-semibold text-xs">{dragOverlayText ?? <>&nbsp;</>}</div>
             </DragOverlay>
         </DndContext>
     );

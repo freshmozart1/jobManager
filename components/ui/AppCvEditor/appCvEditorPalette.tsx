@@ -64,8 +64,6 @@ export default function AppCvEditorPalette({
                             key={item.id}
                             itemId={item.id}
                             itemTitle={item.name}
-                            itemText={`${item.level} - ${item.years} years`}
-                            disabled={placedSkillIds.includes(item.id)}
                         />
                     )
                 }
@@ -92,8 +90,8 @@ export default function AppCvEditorPalette({
 type AppPaletteItemProps = {
     itemId: string;
     itemTitle: string;
-    itemText: string;
-    disabled: boolean;
+    itemText?: string;
+    disabled?: boolean;
 };
 
 function PaletteItem({ itemId, itemTitle, itemText, disabled }: AppPaletteItemProps) {
@@ -114,7 +112,7 @@ function PaletteItem({ itemId, itemTitle, itemText, disabled }: AppPaletteItemPr
             } ${isDragging ? 'opacity-50' : ''}`}
     >
         <p className='font-semibold text-xs'>{itemTitle}</p>
-        <p className='text-xs text-muted-foreground'>{itemText}</p>
+        {itemText && <p className='text-xs text-muted-foreground'>{itemText}</p>}
     </div>;
 }
 

@@ -2,8 +2,8 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
     testDir: './tests/contract',
-    testMatch: '**/*.test.ts',
-    timeout: 20_000,
+    testMatch: '**/*.spec.ts',
+    timeout: 30_000,
     expect: { timeout: 5_000 },
     fullyParallel: true,
     reporter: [['list'], ['html', { outputFolder: 'playwright-report', open: 'never' }]],

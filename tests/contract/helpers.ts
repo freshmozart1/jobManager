@@ -53,7 +53,7 @@ export function createJobFixture(jobId: string): Job {
     };
 }
 
-const PERSONAL_INFORMATION_FIXTURE: PersonalInformation = {
+const PERSONAL_INFORMATION_FIXTURE: Omit<PersonalInformation, 'skills'> = {
     contact: {
         name: 'Alex Morgan',
         email: 'alex.morgan@example.com',
@@ -86,26 +86,6 @@ const PERSONAL_INFORMATION_FIXTURE: PersonalInformation = {
         work_mode: [{ mode: 'Remote' }],
         industries: ['Software']
     },
-    skills: [
-        {
-            name: 'TypeScript',
-            aliases: ['TS'],
-            category: 'Programming Language',
-            level: 'Expert',
-            years: 6,
-            last_used: '2024-10-01T00:00:00.000Z' as unknown as Date,
-            primary: true
-        },
-        {
-            name: 'React',
-            aliases: ['React.js'],
-            category: 'Frontend Framework',
-            level: 'Advanced',
-            years: 5,
-            last_used: '2024-09' as unknown as Date,
-            primary: true
-        }
-    ],
     experience: [
         {
             from: new Date('2020-01-01'),

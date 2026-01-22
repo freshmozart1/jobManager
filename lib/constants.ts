@@ -3,7 +3,6 @@ export const VALID_PERSONAL_INFORMATION_TYPES = [
     'eligibility',
     'constraints',
     'preferences',
-    'skills',
     'experience',
     'education',
     'certifications',

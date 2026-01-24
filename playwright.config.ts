@@ -9,7 +9,7 @@ export default defineConfig({
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 0,
     workers: process.env.CI ? 2 : undefined,
-    reporter: [['list'], ['html', { outputFolder: 'playwright-report', open: 'never' }]],
+    reporter: [['list'], ['html', { outputFolder: 'playwright-report', open: 'never' }], ['./playwright-reporters/disableHtmlHintReporter.ts']],
     use: {
         trace: 'on-first-retry',
         screenshot: 'only-on-failure',

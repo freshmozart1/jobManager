@@ -163,6 +163,7 @@ export function AppCategoryCombobox({
                                         <CommandItem
                                             key={option}
                                             value={option}
+                                            data-testid={`combobox-option-${option.toLowerCase().replaceAll(' ', '-')}`}
                                             onSelect={() => handleSelect(option)}
                                         >
                                             <Check className={cn("mr-2 h-4 w-4", isSelected ? "opacity-100" : "opacity-0")} />
@@ -175,6 +176,7 @@ export function AppCategoryCombobox({
                                         value={search.trim()}
                                         onSelect={() => handleSelect(search.trim())}
                                         className="text-primary"
+                                        data-testid={`combobox-option-${search.trim().toLowerCase().replaceAll(' ', '-')}`}
                                     >
                                         <Check className="mr-2 h-4 w-4 opacity-0" />
                                         Create &quot;{search.trim()}&quot;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import useToUrl from "@/hooks/useToUrl";
 import { type PersonalInformationExperience, type PersonalInformationEducation, PersonalInformationCertification, PersonalInformationLanguageSpoken, type PersonalInformationEligibility, type PersonalInformationMotivation, type PersonalInformationCareerGoal } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,7 +35,6 @@ export default function PersonalPage() {
     const [saving, setSaving] = useState(false);
     const [editedField, setEditedField] = useState<string | null>(null);
     const [showAddressValidation, setShowAddressValidation] = useState(false);
-    const [canOpenSkillsSheet, setCanOpenSkillsSheet] = useState(false);
 
     const [personalInfo, setPersonalInfo, loading] = usePersonal();
     const countryNames = useMemo(() => getCountryNames(), []);
@@ -402,7 +401,7 @@ export default function PersonalPage() {
             <h1 className="text-3xl font-bold">Personal Information</h1>
 
             {/* Contact */}
-            <Card>
+            <Card role="region" aria-label="Contact Information">
                 <CardHeader>
                     <CardTitle>Contact Information</CardTitle>
                     <CardDescription>Your contact details</CardDescription>
@@ -469,7 +468,7 @@ export default function PersonalPage() {
                         <h3 className="text-sm font-medium mb-3">Address</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="md:col-span-2">
-                                <Label htmlFor="streetAddress">Street Address *</Label>
+                                <Label htmlFor="streetAddress">Street Address</Label>
                                 <Input
                                     id="streetAddress"
                                     value={personalInfo.contact.address?.streetAddress || ''}
@@ -490,7 +489,7 @@ export default function PersonalPage() {
                                 )}
                             </div>
                             <div>
-                                <Label htmlFor="addressLocality">City *</Label>
+                                <Label htmlFor="addressLocality">City</Label>
                                 <Input
                                     id="addressLocality"
                                     value={personalInfo.contact.address?.addressLocality || ''}
@@ -511,7 +510,7 @@ export default function PersonalPage() {
                                 )}
                             </div>
                             <div>
-                                <Label htmlFor="addressRegion">Region/State *</Label>
+                                <Label htmlFor="addressRegion">Region/State</Label>
                                 <Input
                                     id="addressRegion"
                                     value={personalInfo.contact.address?.addressRegion || ''}
@@ -532,7 +531,7 @@ export default function PersonalPage() {
                                 )}
                             </div>
                             <div>
-                                <Label htmlFor="postalCode">Postal Code *</Label>
+                                <Label htmlFor="postalCode">Postal Code</Label>
                                 <Input
                                     id="postalCode"
                                     value={personalInfo.contact.address?.postalCode || ''}
@@ -554,7 +553,7 @@ export default function PersonalPage() {
                                 )}
                             </div>
                             <div>
-                                <Label htmlFor="addressCountry">Country *</Label>
+                                <Label htmlFor="addressCountry">Country</Label>
                                 <AppCategoryCombobox
                                     id="addressCountry"
                                     value={personalInfo.contact.address?.addressCountry || ''}
@@ -577,6 +576,7 @@ export default function PersonalPage() {
                     </div>
 
                     <Button
+                        data-testid="saveContact"
                         onClick={() => handleSave('contact', personalInfo.contact)}
                         disabled={saving && editedField === 'contact'}
                     >

@@ -1,5 +1,5 @@
 import { test, expect, request } from '@playwright/test';
-import { connectTestDb, disconnectTestDb, ensurePersonalInformation } from './helpers';
+import { connectTestDb, disconnectTestDb, ensurePersonalInformation } from '../helpers';
 
 const PERSONAL_TYPES = [
     'contact',

@@ -79,8 +79,8 @@ export type SelectFieldDefinition<T, K extends keyof T = keyof T> = BaseFieldDef
 /**
  * Tags input field (renders BadgeInput).
  */
-export type TagsFieldDefinition<T, K extends keyof T = keyof T> = BaseFieldDefinition<T, K> & {
-    type: "tags";
+export type SkillsFieldDefinition<T, K extends keyof T = keyof T> = BaseFieldDefinition<T, K> & {
+    type: "skills";
 };
 
 /**
@@ -93,7 +93,7 @@ export type FieldDefinition<T> =
     | DateFieldDefinition<T, keyof T>
     | DateStringFieldDefinition<T, keyof T>
     | SelectFieldDefinition<T, keyof T>
-    | TagsFieldDefinition<T, keyof T>;
+    | SkillsFieldDefinition<T, keyof T>;
 
 /**
  * Validation error record (field name → error message).

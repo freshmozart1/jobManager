@@ -141,11 +141,11 @@ function validateCvContent(content: unknown): boolean {
                 if (item.summary !== undefined && (typeof item.summary !== 'string' || isBlank(item.summary))) {
                     return false;
                 }
-                if (item.tags !== undefined) {
-                    if (!Array.isArray(item.tags)) {
+                if (item.skills !== undefined) {
+                    if (!Array.isArray(item.skills)) {
                         return false;
                     }
-                    for (const tag of item.tags) {
+                    for (const tag of item.skills) {
                         if (typeof tag !== 'string' || isBlank(tag)) {
                             return false;
                         }

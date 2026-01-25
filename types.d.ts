@@ -126,7 +126,7 @@ export type PersonalInformationExperience = {
     role: string;
     company: string;
     summary: string;
-    tags: string[];
+    skills: string[];
 };
 
 export type PersonalInformationEducation = {

@@ -76,7 +76,7 @@ export type CvExperienceItem = {
     role: string;
     company: string;
     summary: string;
-    tags: string[];
+    skills: string[];
 };
 
 /**
@@ -117,7 +117,7 @@ export function personalExperienceToCvExperience(
             role: item.role,
             company: item.company,
             summary: item.summary,
-            tags: item.tags,
+            skills: item.skills,
         };
     });
 }
@@ -286,7 +286,7 @@ export function sanitizeCvDraftForSave(model: CvModel): CvModel {
             !!item.role && !isBlank(item.role) &&
             !!item.company && !isBlank(item.company) &&
             !!item.summary && !isBlank(item.summary) &&
-            Array.isArray(item.tags)
+            Array.isArray(item.skills)
         ));
 
         addSlot('certifications', certifications, (item: CvCertificationItem) => {

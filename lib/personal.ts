@@ -35,7 +35,7 @@ function normaliseCareerGoalsAndMotivations(value: unknown) {
     });
 }
 
-function normaliseTags(input: unknown): string[] {
+function normaliseSkills(input: unknown): string[] {
     if (!Array.isArray(input)) return [];
     const seen = new Set<string>();
     const normalised: string[] = [];
@@ -84,14 +84,14 @@ export function normaliseExperienceItems(value: unknown): PersonalInformationExp
         const role = trimmedString(source, "role");
         const company = trimmedString(source, "company");
         const summary = trimmedString(source, "summary");
-        const tags = normaliseTags(source.tags);
+        const skills = normaliseSkills(source.skills);
         if (!role || !company || !summary) return null;
         const normalised: PersonalInformationExperience = {
             from,
             role,
             company,
             summary,
-            tags,
+            skills,
         };
         if (to) {
             normalised.to = to;
@@ -176,7 +176,7 @@ export function serializeExperienceItems(
     role: string;
     company: string;
     summary: string;
-    tags: string[];
+    skills: string[];
 }[] {
     return items.map((item: PersonalInformationExperience) => ({
         from: formatMonthYear(item.from),
@@ -184,7 +184,7 @@ export function serializeExperienceItems(
         role: item.role.trim(),
         company: item.company.trim(),
         summary: item.summary.trim(),
-        tags: normaliseTags(item.tags),
+        skills: normaliseSkills(item.skills),
     }));
 }
 

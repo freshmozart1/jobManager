@@ -59,7 +59,7 @@ const PERSONAL_INFORMATION_FIXTURE: PersonalInformation = {
             role: 'Senior Software Engineer',
             company: 'Tech Corp',
             summary: 'Led development of scalable web applications. Improved API reliability by 30% through contract testing.',
-            tags: ['TypeScript', 'React', 'Node.js', 'API Design']
+            skills: ['TypeScript', 'React', 'Node.js', 'API Design']
         }
     ],
     education: [

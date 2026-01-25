@@ -1,7 +1,6 @@
 import type {
     PersonalInformationEducation,
     PersonalInformationExperience,
-    PersonalInformationSkill,
     PersonalInformationCertification,
 } from '@/types';
 
@@ -31,7 +30,6 @@ export type CvModel = {
     slots?: {
         education?: CvEducationItem[];
         experience?: CvExperienceItem[];
-        skills?: CvSkillItem[];
         certifications?: CvCertificationItem[];
     };
 };
@@ -57,7 +55,6 @@ export type CvModelNormalized = {
     slots: {
         education: CvEducationItem[];
         experience: CvExperienceItem[];
-        skills: CvSkillItem[];
         certifications: CvCertificationItem[];
     };
 };
@@ -80,17 +77,6 @@ export type CvExperienceItem = {
     company: string;
     summary: string;
     tags: string[];
-};
-
-/**
- * Placed item in Skills slot
- */
-export type CvSkillItem = {
-    id: string;
-    name: string;
-    category: string;
-    level: string;
-    years: number;
 };
 
 /**
@@ -145,16 +131,6 @@ function formatDateToYYYYMM(date: Date): string {
     return `${year}-${month}`;
 }
 
-export function personalSkillsToCvSkills(items: PersonalInformationSkill[]): CvSkillItem[] {
-    return items.map(({ name, category, level, years }, idx) => ({
-        id: `skill-${idx}`,
-        name,
-        category,
-        level,
-        years,
-    }));
-}
-
 export function personalCertificationsToCvCertifications(
     items: PersonalInformationCertification[]
 ): CvCertificationItem[] {
@@ -191,7 +167,6 @@ export function createEmptyCvModel(): CvModelNormalized {
         slots: {
             education: [],
             experience: [],
-            skills: [],
             certifications: [],
         },
     };
@@ -200,7 +175,7 @@ export function createEmptyCvModel(): CvModelNormalized {
 /**
  * Validate YYYY-MM date format and month range
  */
-function isValidYYYYMM(dateStr: string): boolean {
+export function isValidYYYYMM(dateStr: string): boolean {
     const match = dateStr.match(/^(\d{4})-(\d{2})$/);
     if (!match) return false;
     const month = parseInt(match[2], 10);
@@ -237,7 +212,6 @@ export function normalizeCvModel(partial: unknown): CvModelNormalized {
         slots: {
             education: Array.isArray(p.slots?.education) ? p.slots.education : empty.slots.education,
             experience: Array.isArray(p.slots?.experience) ? p.slots.experience : empty.slots.experience,
-            skills: Array.isArray(p.slots?.skills) ? p.slots.skills : empty.slots.skills,
             certifications: Array.isArray(p.slots?.certifications) ? p.slots.certifications : empty.slots.certifications,
         },
     };
@@ -283,7 +257,7 @@ export function sanitizeCvDraftForSave(model: CvModel): CvModel {
         const slots: Slots = {};
         let hasSlotsData = false;
 
-        const { education = [], experience = [], skills = [], certifications = [] } = model.slots;
+        const { education = [], experience = [], certifications = [] } = model.slots;
 
         const isBlank = (value: unknown) => typeof value === 'string' && value.trim() === '';
         const isYear = (value: unknown) => typeof value === 'number' && Number.isFinite(value);
@@ -295,7 +269,7 @@ export function sanitizeCvDraftForSave(model: CvModel): CvModel {
             console.log(`Sanitizing slot ${String(slotName)} with ${slotItems.length} items`);
             const validItems = slotItems.length > 0 ? slotItems.filter(isValid) : [];
             console.log(`  -> ${validItems.length} valid items retained`);
-            (slots as Record<string, (CvEducationItem | CvExperienceItem | CvSkillItem | CvCertificationItem)[]>)[slotName] = validItems;
+            (slots as Record<string, (CvEducationItem | CvExperienceItem | CvCertificationItem)[]>)[slotName] = validItems;
             hasSlotsData = true;
         };
 
@@ -313,13 +287,6 @@ export function sanitizeCvDraftForSave(model: CvModel): CvModel {
             !!item.company && !isBlank(item.company) &&
             !!item.summary && !isBlank(item.summary) &&
             Array.isArray(item.tags)
-        ));
-
-        addSlot('skills', skills, (item: CvSkillItem) => (
-            !!item.name && !isBlank(item.name) &&
-            !!item.category && !isBlank(item.category) &&
-            typeof item.level === 'string' &&
-            isYear(item.years)
         ));
 
         addSlot('certifications', certifications, (item: CvCertificationItem) => {

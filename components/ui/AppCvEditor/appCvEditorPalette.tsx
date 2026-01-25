@@ -1,27 +1,23 @@
 'use client';
 
 import { useDraggable } from '@dnd-kit/core';
-import type { CvEducationItem, CvExperienceItem, CvSkillItem, CvCertificationItem } from '@/lib/cvModel';
+import type { CvEducationItem, CvExperienceItem, CvCertificationItem } from '@/lib/cvModel';
 
 type AppCvEditorPaletteProps = {
     education: CvEducationItem[];
     experience: CvExperienceItem[];
-    skills: CvSkillItem[];
     certifications: CvCertificationItem[];
     placedEducationIds: string[];
     placedExperienceIds: string[];
-    placedSkillIds: string[];
     placedCertificationIds: string[];
 };
 
 export default function AppCvEditorPalette({
     education,
     experience,
-    skills,
     certifications,
     placedEducationIds,
     placedExperienceIds,
-    placedSkillIds,
     placedCertificationIds,
 }: AppCvEditorPaletteProps) {
     return (
@@ -51,19 +47,6 @@ export default function AppCvEditorPalette({
                             itemTitle={item.role}
                             itemText={item.company}
                             disabled={placedExperienceIds.includes(item.id)}
-                        />
-                    )
-                }
-            </PaletteGroup>
-
-            {/* Skills Items */}
-            <PaletteGroup title="Skills">
-                {
-                    skills.map(
-                        item => <PaletteItem
-                            key={item.id}
-                            itemId={item.id}
-                            itemTitle={item.name}
                         />
                     )
                 }

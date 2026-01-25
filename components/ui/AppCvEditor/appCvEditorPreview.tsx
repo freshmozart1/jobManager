@@ -3,12 +3,13 @@
 import type { CvModelNormalized } from '@/lib/cvModel';
 import { Input } from '@/components/ui/input';
 import AppCvEditorSlot from './appCvEditorSlot';
+import { AppCvSlotType } from './types';
 
 type AppCvEditorPreviewProps = {
     model: CvModelNormalized;
     onHeaderChange: (field: keyof CvModelNormalized['header'], value: string) => void;
     onHeaderAddressChange: (field: keyof CvModelNormalized['header']['address'], value: string) => void;
-    onRemove: (slotType: 'education' | 'experience' | 'skills' | 'certifications', itemId: string) => void;
+    onRemove: (slotType: AppCvSlotType, itemId: string) => void;
 };
 
 export default function AppCvEditorPreview({ model, onHeaderChange, onHeaderAddressChange, onRemove }: AppCvEditorPreviewProps) {
@@ -104,13 +105,6 @@ export default function AppCvEditorPreview({ model, onHeaderChange, onHeaderAddr
                     title="Education"
                     items={model.slots.education}
                     onRemove={(itemId) => onRemove('education', itemId)}
-                    style={{ marginTop: '10mm' }}
-                />
-                <AppCvEditorSlot
-                    slotType="skills"
-                    title="Skills"
-                    items={model.slots.skills}
-                    onRemove={(itemId) => onRemove('skills', itemId)}
                     style={{ marginTop: '10mm' }}
                 />
                 <AppCvEditorSlot

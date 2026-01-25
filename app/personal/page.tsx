@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { LoaderCircle, Save, ChevronDown, Phone, Globe, MapPin, Users, Briefcase, Building, Plus } from "lucide-react";
+import { LoaderCircle, Save, ChevronDown, Phone, Globe, MapPin, Users, Briefcase, Building } from "lucide-react";
 import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from "@/components/ui/inputGroup";
 import {
     DropdownMenu,
@@ -18,8 +18,7 @@ import {
 import BadgeInput from "@/components/ui/badgeInput";
 import { AppExperienceEditor } from "@/components/ui/appExperienceEditor";
 import AppEducationEditor from "@/components/ui/appEducationEditor";
-import { normaliseExperienceItems, serializeExperienceItems, serializeCertifications, serializeSkills } from "@/lib/personal";
-import { normaliseEducationItems } from "@/lib/personal";
+import { normaliseExperienceItems, serializeExperienceItems, serializeCertifications, normaliseEducationItems } from "@/lib/personal";
 import usePersonal from "@/hooks/usePersonal";
 import AppCertificationEditor from "@/components/ui/appCertificationEditor";
 import AppLanguagesEditor from "@/components/ui/appLanguagesEditor";

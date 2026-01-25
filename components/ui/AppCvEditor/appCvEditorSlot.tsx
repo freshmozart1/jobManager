@@ -4,15 +4,15 @@ import { useDndContext, useDroppable } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { X } from 'lucide-react';
-import type { CvEducationItem, CvExperienceItem, CvSkillItem, CvCertificationItem } from '@/lib/cvModel';
+import type { CvEducationItem, CvExperienceItem, CvCertificationItem } from '@/lib/cvModel';
 import { useMemo } from 'react';
+import { AppCvSlotType } from './types';
 
-type SlotType = 'education' | 'experience' | 'skills' | 'certifications';
 
 type AppCvEditorSlotProps = {
-    slotType: SlotType;
+    slotType: AppCvSlotType;
     title: string;
-    items: (CvEducationItem | CvExperienceItem | CvSkillItem | CvCertificationItem)[];
+    items: (CvEducationItem | CvExperienceItem | CvCertificationItem)[];
     style?: React.CSSProperties;
     onRemove: (itemId: string) => void;
 };
@@ -100,8 +100,8 @@ function SortableSlotItem({
     onRemove,
 }: {
     id: string;
-    item: CvEducationItem | CvExperienceItem | CvSkillItem | CvCertificationItem;
-    slotType: SlotType;
+    item: CvEducationItem | CvExperienceItem | CvCertificationItem;
+    slotType: AppCvSlotType;
     onRemove: () => void;
 }) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -153,9 +153,6 @@ function SortableSlotItem({
                             </p>
                         )}
                     </>
-                )}
-                {slotType === 'skills' && 'name' in item && !isDragging && (
-                    <span className="font-semibold text-xs">{item.name}</span>
                 )}
                 {slotType === 'certifications' && 'issued' in item && !isDragging && (
                     <>

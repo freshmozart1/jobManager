@@ -13,7 +13,6 @@ import {
     createEmptyCvModel,
     personalEducationToCvEducation,
     personalExperienceToCvExperience,
-    personalSkillsToCvSkills,
     personalCertificationsToCvCertifications,
     normalizeCvModel,
     sanitizeCvDraftForSave,
@@ -121,10 +120,9 @@ export default function CvPage() {
     }
 
     // Prepare available items from personal info
-    const { education = [], experience = [], skills = [], certifications = [] } = personal;
+    const { education = [], experience = [], certifications = [] } = personal;
     const availableEducation = personalEducationToCvEducation(education);
     const availableExperience = personalExperienceToCvExperience(experience);
-    const availableSkills = personalSkillsToCvSkills(skills);
     const availableCertifications = personalCertificationsToCvCertifications(certifications);
 
     return <div className="print:visible">
@@ -161,7 +159,6 @@ export default function CvPage() {
             availableEducation={availableEducation}
             availableExperience={availableExperience}
             availableCertifications={availableCertifications}
-            availableSkills={availableSkills}
             onChange={handleCvChange}
         />
     </div>;

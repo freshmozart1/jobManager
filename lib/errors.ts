@@ -98,13 +98,6 @@ export class NoPersonalInformationPreferencesError extends Error {
     }
 }
 
-export class NoPersonalInformationSkillsError extends Error {
-    constructor() {
-        super('No skills information found in personalInformation collection');
-        this.name = 'NoPersonalInformationSkillsError';
-    }
-}
-
 export class NoPersonalInformationExperienceError extends Error {
     constructor() {
         super('No experience information found in personalInformation collection');

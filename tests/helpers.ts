@@ -19,7 +19,7 @@ export async function disconnectTestDb(context: TestDbContext) {
 }
 
 
-const PERSONAL_INFORMATION_FIXTURE: Omit<PersonalInformation, 'skills'> = {
+const PERSONAL_INFORMATION_FIXTURE: PersonalInformation = {
     contact: {
         name: 'Alex Morgan',
         email: 'alex.morgan@example.com',

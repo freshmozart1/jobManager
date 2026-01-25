@@ -108,7 +108,7 @@ export default function AppJobArtifactEditor({ jobId, artifacts = [], disabled =
                         <div>
                             <h4 className="font-semibold text-sm text-muted-foreground">Content Preview</h4>
                             <p className="text-sm text-muted-foreground line-clamp-3">
-                                {cvArtifact.content?.header?.name || 'Untitled CV'} • {cvArtifact.content?.slots?.experience?.length || 0} experience items • {cvArtifact.content?.slots?.skills?.length || 0} skills
+                                {cvArtifact.content?.header?.name || 'Untitled CV'} • {cvArtifact.content?.slots?.experience?.length || 0} experience items
                             </p>
                         </div>
                         <div className="flex gap-4 text-xs text-muted-foreground pt-2">

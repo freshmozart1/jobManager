@@ -4,7 +4,7 @@ import { corsHeaders } from "@/lib/cors";
 import { InvalidArtifactTypeError, JobNotFoundError, NoDatabaseNameError } from "@/lib/errors";
 import mongoPromise from "@/lib/mongodb";
 import { Job, JobArtifact, JobArtifactType } from "@/types";
-import { CvModel } from "@/lib/cvModel";
+import { CvModel, isValidYYYYMM } from "@/lib/cvModel";
 import { NextRequest, NextResponse } from "next/server";
 
 export function OPTIONS() {
@@ -25,16 +25,6 @@ type CvRequestBody = {
 };
 
 type ArtifactRequestBody = CoverLetterRequestBody | CvRequestBody;
-
-/**
- * Validate YYYY-MM date format and month range
- */
-function isValidYYYYMM(dateStr: string): boolean {
-    const match = dateStr.match(/^(\d{4})-(\d{2})$/);
-    if (!match) return false;
-    const month = parseInt(match[2], 10);
-    return month >= 1 && month <= 12;
-}
 
 /**
  * Check if a string is blank (empty or whitespace-only)
@@ -164,26 +154,6 @@ function validateCvContent(content: unknown): boolean {
             }
         }
 
-        // Skills: if present, must be array; validate items if present
-        if (cv.slots.skills !== undefined) {
-            if (!Array.isArray(cv.slots.skills)) {
-                return false;
-            }
-            for (const item of cv.slots.skills) {
-                if (item.name !== undefined && (typeof item.name !== 'string' || isBlank(item.name))) {
-                    return false;
-                }
-                if (item.category !== undefined && (typeof item.category !== 'string' || isBlank(item.category))) {
-                    return false;
-                }
-                if (item.level !== undefined && typeof item.level !== 'string') {
-                    return false;
-                }
-                if (item.years !== undefined && (typeof item.years !== 'number' || !Number.isFinite(item.years))) {
-                    return false;
-                }
-            }
-        }
 
         // Certifications: if present, must be array; validate items if present
         if (cv.slots.certifications !== undefined) {
@@ -236,7 +206,7 @@ async function upsertArtifact(
     if (artifactType === 'cv') {
         if (!validateCvContent(body.content)) {
             return jsonError(400, 'InvalidCvContent',
-                'CV content must be a valid CvModel object. Required: templateId (string). Optional: header, header.address, slots (education/experience/skills/certifications arrays). Blank strings are treated as absent. When present, fields must have valid types: experience dates must be YYYY-MM format, certification issued/expires dates must be YYYY-MM format (expires can be null), numeric fields must be finite numbers.',
+                'CV content must be a valid CvModel object. Required: templateId (string). Optional: header, header.address, slots (education/experience/certifications arrays). Blank strings are treated as absent. When present, fields must have valid types: experience dates must be YYYY-MM format, certification issued/expires dates must be YYYY-MM format (expires can be null), numeric fields must be finite numbers.',
                 origin);
         }
     } else if (artifactType === 'cover-letter') {

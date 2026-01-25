@@ -1,4 +1,4 @@
-import { CvModel, CvModelNormalized, CvTemplate } from "@/lib/cvModel";
+import { CvModelNormalized, CvTemplate } from "@/lib/cvModel";
 import { Button } from '@/components/ui/button';
 import { useCallback } from "react";
 import { Printer } from "lucide-react";

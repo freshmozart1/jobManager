@@ -1,4 +1,4 @@
-import { PersonalInformationCareerGoal, PersonalInformationCertification, PersonalInformationEducation, PersonalInformationExperience, PersonalInformationLanguageSpoken, PersonalInformationMotivation, PersonalInformationSkill } from "@/types";
+import { PersonalInformationCareerGoal, PersonalInformationCertification, PersonalInformationEducation, PersonalInformationExperience, PersonalInformationLanguageSpoken, PersonalInformationMotivation } from "@/types";
 import { makeUtcMonthYear, formatMonthYear } from "./utils";
 import { parseMonthDate, toCanonicalMonthIso } from "./date";
 
@@ -145,32 +145,6 @@ export function normaliseEducationItems(value: unknown): PersonalInformationEduc
     });
 }
 
-export function normaliseSkills(value: unknown): PersonalInformationSkill[] {
-    return normaliseArray(value, (source) => {
-        const name = trimmedString(source, "name");
-        const years = typeof source.years === "number" ? source.years : Number(source.years);
-
-        // Parse last_used date (required)
-        const lastUsedParsed = parseMonthDate(source.last_used);
-        if (!lastUsedParsed.value) throw new Error(`Invalid last_used date for skill "${name}": ${lastUsedParsed.error}`);
-
-        if (!name) return null;
-        return {
-            name,
-            aliases: Array.isArray(source.aliases)
-                ? source.aliases
-                    .filter((a): a is string => typeof a === "string")
-                    .map((a) => a.trim())
-                    .filter(Boolean)
-                : [],
-            category: trimmedString(source, "category"),
-            level: trimmedString(source, "level"),
-            years: Number.isFinite(years) ? years : 0,
-            last_used: lastUsedParsed.value,
-            primary: Boolean(source.primary),
-        };
-    });
-}
 
 export function normaliseLanguages(value: unknown): PersonalInformationLanguageSpoken[] {
     return normaliseArray(value, (source) => {
@@ -211,31 +185,6 @@ export function serializeExperienceItems(
         company: item.company.trim(),
         summary: item.summary.trim(),
         tags: normaliseTags(item.tags),
-    }));
-}
-
-/**
- * Serialize skills to canonical month ISO strings for persistence
- */
-export function serializeSkills(
-    items: PersonalInformationSkill[]
-): {
-    name: string;
-    aliases: string[];
-    category: string;
-    level: string;
-    years: number;
-    last_used: string;
-    primary: boolean;
-}[] {
-    return items.map((item) => ({
-        name: item.name.trim(),
-        aliases: item.aliases,
-        category: item.category.trim(),
-        level: item.level.trim(),
-        years: item.years,
-        last_used: toCanonicalMonthIso(item.last_used)!,
-        primary: item.primary,
     }));
 }
 

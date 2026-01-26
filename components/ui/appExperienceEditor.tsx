@@ -3,7 +3,7 @@
 import { PersonalInformationExperience } from "@/types";
 import { normaliseExperienceItems } from "@/lib/personal";
 import { formatMonthYear } from "@/lib/utils";
-import { MaxTagCount, MaxTagLength } from "@/lib/constants";
+import { MaxSkillCount, MaxSkillLength } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
 import {
     AppItemEditor,
@@ -58,11 +58,11 @@ const experienceConfig: EditorConfig<PersonalInformationExperience> = {
             maxLength: MAX_SUMMARY_LENGTH,
         },
         {
-            type: "tags",
-            name: "tags",
-            label: "Tags",
-            required: false,
-            placeholder: "Type tag and press ','",
+            type: "skills",
+            name: "skills",
+            label: "Skills",
+            required: true,
+            placeholder: "Type skill and press ','",
         },
     ],
     defaultValue: {
@@ -71,7 +71,7 @@ const experienceConfig: EditorConfig<PersonalInformationExperience> = {
         role: "",
         company: "",
         summary: "",
-        tags: [],
+        skills: [],
     },
     getItemLabel: (item) => {
         const role = item.role.trim();
@@ -93,11 +93,11 @@ const experienceConfig: EditorConfig<PersonalInformationExperience> = {
             <p className="text-sm text-muted-foreground">
                 {truncateSummary(item.summary, SUMMARY_SNIPPET_LENGTH)}
             </p>
-            {item.tags.length > 0 && (
+            {item.skills.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                    {item.tags.map((tag, tagIndex) => (
-                        <Badge key={`${tag}-${tagIndex}`} variant="secondary">
-                            {tag}
+                    {item.skills.map((skill, skillIndex) => (
+                        <Badge key={`${skill}-${skillIndex}`} variant="secondary">
+                            {skill}
                         </Badge>
                     ))}
                 </div>
@@ -117,11 +117,11 @@ const experienceConfig: EditorConfig<PersonalInformationExperience> = {
             errors.summary = `Summary must be ${MAX_SUMMARY_LENGTH} characters or fewer.`;
         }
 
-        // Tags validation
-        if (draft.tags.length > MaxTagCount) {
-            errors.tags = `Up to ${MaxTagCount} tags allowed.`;
-        } else if (draft.tags.some((tag) => tag.length > MaxTagLength)) {
-            errors.tags = `Tags must be ${MaxTagLength} characters or fewer.`;
+        // Skills validation
+        if (draft.skills.length > MaxSkillCount) {
+            errors.skills = `Up to ${MaxSkillCount} tags allowed.`;
+        } else if (draft.skills.some((skill) => skill.length > MaxSkillLength)) {
+            errors.skills = `Skills must be ${MaxSkillLength} characters or fewer.`;
         }
 
         return errors;
@@ -134,8 +134,8 @@ const experienceConfig: EditorConfig<PersonalInformationExperience> = {
             draft.role !== initial.role ||
             draft.company !== initial.company ||
             draft.summary !== initial.summary ||
-            draft.tags.length !== initial.tags.length ||
-            draft.tags.some((tag, i) => tag !== initial.tags[i])
+            draft.skills.length !== initial.skills.length ||
+            draft.skills.some((skill, i) => skill !== initial.skills[i])
         );
     },
     normaliseItems: normaliseExperienceItems,

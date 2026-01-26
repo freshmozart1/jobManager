@@ -1,4 +1,4 @@
-import { PersonalInformationCareerGoal, PersonalInformationCertification, PersonalInformationEducation, PersonalInformationExperience, PersonalInformationLanguageSpoken, PersonalInformationMotivation, PersonalInformationSkill } from "@/types";
+import { PersonalInformationCareerGoal, PersonalInformationCertification, PersonalInformationEducation, PersonalInformationExperience, PersonalInformationLanguageSpoken, PersonalInformationMotivation } from "@/types";
 import { makeUtcMonthYear, formatMonthYear } from "./utils";
 import { parseMonthDate, toCanonicalMonthIso } from "./date";
 
@@ -35,7 +35,7 @@ function normaliseCareerGoalsAndMotivations(value: unknown) {
     });
 }
 
-function normaliseTags(input: unknown): string[] {
+function normaliseSkills(input: unknown): string[] {
     if (!Array.isArray(input)) return [];
     const seen = new Set<string>();
     const normalised: string[] = [];
@@ -84,14 +84,14 @@ export function normaliseExperienceItems(value: unknown): PersonalInformationExp
         const role = trimmedString(source, "role");
         const company = trimmedString(source, "company");
         const summary = trimmedString(source, "summary");
-        const tags = normaliseTags(source.tags);
+        const skills = normaliseSkills(source.skills);
         if (!role || !company || !summary) return null;
         const normalised: PersonalInformationExperience = {
             from,
             role,
             company,
             summary,
-            tags,
+            skills,
         };
         if (to) {
             normalised.to = to;
@@ -145,32 +145,6 @@ export function normaliseEducationItems(value: unknown): PersonalInformationEduc
     });
 }
 
-export function normaliseSkills(value: unknown): PersonalInformationSkill[] {
-    return normaliseArray(value, (source) => {
-        const name = trimmedString(source, "name");
-        const years = typeof source.years === "number" ? source.years : Number(source.years);
-
-        // Parse last_used date (required)
-        const lastUsedParsed = parseMonthDate(source.last_used);
-        if (!lastUsedParsed.value) throw new Error(`Invalid last_used date for skill "${name}": ${lastUsedParsed.error}`);
-
-        if (!name) return null;
-        return {
-            name,
-            aliases: Array.isArray(source.aliases)
-                ? source.aliases
-                    .filter((a): a is string => typeof a === "string")
-                    .map((a) => a.trim())
-                    .filter(Boolean)
-                : [],
-            category: trimmedString(source, "category"),
-            level: trimmedString(source, "level"),
-            years: Number.isFinite(years) ? years : 0,
-            last_used: lastUsedParsed.value,
-            primary: Boolean(source.primary),
-        };
-    });
-}
 
 export function normaliseLanguages(value: unknown): PersonalInformationLanguageSpoken[] {
     return normaliseArray(value, (source) => {
@@ -202,7 +176,7 @@ export function serializeExperienceItems(
     role: string;
     company: string;
     summary: string;
-    tags: string[];
+    skills: string[];
 }[] {
     return items.map((item: PersonalInformationExperience) => ({
         from: formatMonthYear(item.from),
@@ -210,32 +184,7 @@ export function serializeExperienceItems(
         role: item.role.trim(),
         company: item.company.trim(),
         summary: item.summary.trim(),
-        tags: normaliseTags(item.tags),
-    }));
-}
-
-/**
- * Serialize skills to canonical month ISO strings for persistence
- */
-export function serializeSkills(
-    items: PersonalInformationSkill[]
-): {
-    name: string;
-    aliases: string[];
-    category: string;
-    level: string;
-    years: number;
-    last_used: string;
-    primary: boolean;
-}[] {
-    return items.map((item) => ({
-        name: item.name.trim(),
-        aliases: item.aliases,
-        category: item.category.trim(),
-        level: item.level.trim(),
-        years: item.years,
-        last_used: toCanonicalMonthIso(item.last_used)!,
-        primary: item.primary,
+        skills: normaliseSkills(item.skills),
     }));
 }
 

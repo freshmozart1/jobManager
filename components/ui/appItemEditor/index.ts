@@ -24,7 +24,7 @@ export type {
     DateFieldDefinition,
     DateStringFieldDefinition,
     SelectFieldDefinition,
-    TagsFieldDefinition,
+    SkillsFieldDefinition as TagsFieldDefinition,
     ValidationErrors,
     EditorConfig,
     GenericItemFormProps,

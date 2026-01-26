@@ -16,7 +16,6 @@ import type {
     CvModelNormalized,
     CvEducationItem,
     CvExperienceItem,
-    CvSkillItem,
     CvCertificationItem,
 } from '@/lib/cvModel';
 import AppCvEditorPalette from './appCvEditorPalette';
@@ -27,12 +26,11 @@ export type AppCvEditorProps = {
     initialModel: CvModelNormalized;
     availableEducation: CvEducationItem[];
     availableExperience: CvExperienceItem[];
-    availableSkills: CvSkillItem[];
     availableCertifications: CvCertificationItem[];
     onChange: (model: CvModel) => void;
 };
 
-type SlotType = 'education' | 'experience' | 'skills' | 'certifications';
+type SlotType = 'education' | 'experience' | 'certifications';
 
 /**
  * Main CV Editor component with drag/drop, fixed slots, and A4 preview
@@ -41,7 +39,6 @@ export default function AppCvEditor({
     initialModel,
     availableEducation,
     availableExperience,
-    availableSkills,
     availableCertifications,
     onChange,
 }: AppCvEditorProps) {
@@ -76,11 +73,6 @@ export default function AppCvEditor({
                     if (item) return item.role;
                     break;
                 }
-                case 'skills': {
-                    const item = availableSkills.find((s) => s.id === itemId);
-                    if (item) return item.name;
-                    break;
-                }
                 case 'certifications': {
                     const item = availableCertifications.find((c) => c.id === itemId);
                     if (item) return item.name;
@@ -110,8 +102,7 @@ export default function AppCvEditor({
             const addItemToSlot = (itemId: string, slot: SlotType) => {
                 const available = slot === 'education' ? availableEducation
                     : slot === 'experience' ? availableExperience
-                        : slot === 'skills' ? availableSkills
-                            : availableCertifications;
+                        : availableCertifications;
                 const item = available.find((i) => i.id === itemId);
                 if (item && !model.slots[slot].some((i) => i.id === item.id)) {
                     setModel((prev) => ({
@@ -128,7 +119,6 @@ export default function AppCvEditor({
 
             if (itemType === 'edu' && slotType === 'education') addItemToSlot(sourceId, 'education');
             else if (itemType === 'exp' && slotType === 'experience') addItemToSlot(sourceId, 'experience');
-            else if (itemType === 'skill' && slotType === 'skills') addItemToSlot(sourceId, 'skills');
             else if (itemType === 'cert' && slotType === 'certifications') addItemToSlot(sourceId, 'certifications');
         }
 
@@ -191,11 +181,9 @@ export default function AppCvEditor({
                 <AppCvEditorPalette
                     education={availableEducation}
                     experience={availableExperience}
-                    skills={availableSkills}
                     certifications={availableCertifications}
                     placedEducationIds={model.slots.education.map((e) => e.id)}
                     placedExperienceIds={model.slots.experience.map((e) => e.id)}
-                    placedSkillIds={model.slots.skills.map((s) => s.id)}
                     placedCertificationIds={model.slots.certifications.map((c) => c.id)}
                 />
                 <div className="flex-1 overflow-y-auto p-8 bg-gray-100">

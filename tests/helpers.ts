@@ -1,5 +1,5 @@
-import { MongoClient, Db, ObjectId } from 'mongodb';
-import type { Job, PersonalInformation } from '@/types';
+import { MongoClient, Db } from 'mongodb';
+import type { PersonalInformation } from '@/types';
 
 export type TestDbContext = {
     client: MongoClient;
@@ -18,40 +18,6 @@ export async function disconnectTestDb(context: TestDbContext) {
     await context.client.close();
 }
 
-export function createJobFixture(jobId: string): Job {
-    const now = new Date();
-    return {
-        id: jobId,
-        trackingId: `tracking-${jobId}`,
-        refId: `ref-${jobId}`,
-        link: `https://example.com/jobs/${jobId}`,
-        title: 'Contract Test Engineer',
-        companyName: 'Contract Testing Co',
-        companyLinkedinUrl: 'https://linkedin.com/company/contract-testing-co',
-        companyLogo: 'https://example.com/assets/logo.png',
-        companyEmployeesCount: 75,
-        location: 'Remote',
-        postedAt: now,
-        salaryInfo: ['USD', '$100k-$120k'],
-        salary: '$110,000',
-        benefits: ['Health', '401k'],
-        descriptionHtml: '<p>Ensure API endpoints meet contract expectations.</p>',
-        applicantsCount: 0,
-        applyUrl: 'https://example.com/apply',
-        descriptionText: 'Ensure API endpoints meet contract expectations.',
-        seniorityLevel: 'Senior',
-        employmentType: 'Full-time',
-        jobFunction: 'Engineering',
-        industries: 'Software',
-        inputUrl: `https://example.com/source/${jobId}`,
-        companyWebsite: 'https://contract-testing.example.com',
-        companySlogan: 'Quality in Every Request',
-        companyDescription: 'We validate critical APIs for fast-moving teams.',
-        filteredAt: now,
-        filterResult: true,
-        filteredBy: new ObjectId()
-    };
-}
 
 const PERSONAL_INFORMATION_FIXTURE: PersonalInformation = {
     contact: {
@@ -86,26 +52,6 @@ const PERSONAL_INFORMATION_FIXTURE: PersonalInformation = {
         work_mode: [{ mode: 'Remote' }],
         industries: ['Software']
     },
-    skills: [
-        {
-            name: 'TypeScript',
-            aliases: ['TS'],
-            category: 'Programming Language',
-            level: 'Expert',
-            years: 6,
-            last_used: '2024-10-01T00:00:00.000Z' as unknown as Date,
-            primary: true
-        },
-        {
-            name: 'React',
-            aliases: ['React.js'],
-            category: 'Frontend Framework',
-            level: 'Advanced',
-            years: 5,
-            last_used: '2024-09' as unknown as Date,
-            primary: true
-        }
-    ],
     experience: [
         {
             from: new Date('2020-01-01'),
@@ -113,7 +59,7 @@ const PERSONAL_INFORMATION_FIXTURE: PersonalInformation = {
             role: 'Senior Software Engineer',
             company: 'Tech Corp',
             summary: 'Led development of scalable web applications. Improved API reliability by 30% through contract testing.',
-            tags: ['TypeScript', 'React', 'Node.js', 'API Design']
+            skills: ['TypeScript', 'React', 'Node.js', 'API Design']
         }
     ],
     education: [
@@ -171,13 +117,4 @@ export async function ensurePersonalInformation(db: Db) {
             )
         )
     );
-}
-
-export async function seedJob(db: Db, job: Job) {
-    await db.collection<Job>('jobs').deleteOne({ id: job.id });
-    await db.collection<Job>('jobs').insertOne(job);
-}
-
-export async function cleanupJobData(db: Db, jobId: string) {
-    await db.collection('jobs').deleteOne({ id: jobId });
 }

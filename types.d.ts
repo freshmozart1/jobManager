@@ -120,23 +120,13 @@ export type PersonalInformationPreferences = {
     industries: string[];
 };
 
-export type PersonalInformationSkill = {
-    name: string;
-    aliases: string[];
-    category: string;
-    level: string;
-    years: number;
-    last_used: Date;
-    primary: boolean;
-};
-
 export type PersonalInformationExperience = {
     from: Date;
     to?: Date;
     role: string;
     company: string;
     summary: string;
-    tags: string[];
+    skills: string[];
 };
 
 export type PersonalInformationEducation = {
@@ -177,7 +167,6 @@ export type PersonalInformation = {
     eligibility: PersonalInformationEligibility,
     constraints: PersonalInformationConstraints,
     preferences: PersonalInformationPreferences,
-    skills: PersonalInformationSkill[],
     experience: PersonalInformationExperience[],
     education: PersonalInformationEducation[],
     certifications: PersonalInformationCertification[],

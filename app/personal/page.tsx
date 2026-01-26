@@ -1,13 +1,13 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import useToUrl from "@/hooks/useToUrl";
-import { type PersonalInformationSkill, type PersonalInformationExperience, type PersonalInformationEducation, PersonalInformationCertification, PersonalInformationLanguageSpoken, type PersonalInformationEligibility, type PersonalInformationMotivation, type PersonalInformationCareerGoal } from "@/types";
+import { type PersonalInformationExperience, type PersonalInformationEducation, PersonalInformationCertification, PersonalInformationLanguageSpoken, type PersonalInformationEligibility, type PersonalInformationMotivation, type PersonalInformationCareerGoal } from "@/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { LoaderCircle, Save, ChevronDown, Phone, Globe, MapPin, Users, Briefcase, Building, Plus } from "lucide-react";
+import { LoaderCircle, Save, ChevronDown, Phone, Globe, MapPin, Users, Briefcase, Building } from "lucide-react";
 import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from "@/components/ui/inputGroup";
 import {
     DropdownMenu,
@@ -16,11 +16,9 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdownMenu";
 import BadgeInput from "@/components/ui/badgeInput";
-import { AppSkillsEditor } from "@/components/ui/appSkillsEditor";
 import { AppExperienceEditor } from "@/components/ui/appExperienceEditor";
 import AppEducationEditor from "@/components/ui/appEducationEditor";
-import { normaliseExperienceItems, serializeExperienceItems, serializeCertifications, serializeSkills } from "@/lib/personal";
-import { normaliseEducationItems } from "@/lib/personal";
+import { normaliseExperienceItems, serializeExperienceItems, serializeCertifications, normaliseEducationItems } from "@/lib/personal";
 import usePersonal from "@/hooks/usePersonal";
 import AppCertificationEditor from "@/components/ui/appCertificationEditor";
 import AppLanguagesEditor from "@/components/ui/appLanguagesEditor";
@@ -31,21 +29,34 @@ import AppCareerGoalsEditor from "@/components/ui/appCareerGoalsEditor";
 import { AppCategoryCombobox } from "@/components/ui/appCategoryCombobox";
 import { getCountryNames } from "@/lib/countries";
 
+function AppPersonalCard({
+    title,
+    description,
+    children
+}: {
+    title: string;
+    description: string;
+    children: React.ReactNode;
+}) {
+    return <Card role="region" aria-label={title}>
+        <CardHeader>
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+            {children}
+        </CardContent>
+    </Card>
+}
+
 export default function PersonalPage() {
     const toUrl = useToUrl();
     const [saving, setSaving] = useState(false);
     const [editedField, setEditedField] = useState<string | null>(null);
     const [showAddressValidation, setShowAddressValidation] = useState(false);
-    const openSkillsSheetRef = useRef<(() => void) | null>(null);
-    const [canOpenSkillsSheet, setCanOpenSkillsSheet] = useState(false);
 
     const [personalInfo, setPersonalInfo, loading] = usePersonal();
     const countryNames = useMemo(() => getCountryNames(), []);
-
-    const registerAddSkill = useCallback((handler: (() => void) | null) => {
-        openSkillsSheetRef.current = handler;
-        setCanOpenSkillsSheet(Boolean(handler));
-    }, []);
 
     // Validate address fields (all required, trimmed, postal code no whitespace)
     const isAddressValid = useMemo(() => {
@@ -313,33 +324,6 @@ export default function PersonalPage() {
         }
     };
 
-    const persistSkills = async (nextSkills: PersonalInformationSkill[]) => {
-        setSaving(true);
-        setEditedField('skills');
-        try {
-            const payload = serializeSkills(nextSkills);
-            const response = await fetch(toUrl('/api/personal'), {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: 'skills', value: payload })
-            });
-
-            if (!response.ok) {
-                const payload = await response.text();
-                throw new Error(payload || 'Failed to save skills');
-            }
-
-            const updated = await response.json();
-            setPersonalInfo(prev => prev ? { ...prev, skills: updated.value } : null);
-        } catch (error) {
-            console.error('Error saving skills:', error);
-            throw (error instanceof Error ? error : new Error(String(error)));
-        } finally {
-            setSaving(false);
-            setEditedField(null);
-        }
-    };
-
     const persistMotivations = async (nextMotivations: PersonalInformationMotivation[]) => {
         setSaving(true);
         setEditedField('motivations');
@@ -434,476 +418,400 @@ export default function PersonalPage() {
     return (
         <>
             <h1 className="text-3xl font-bold">Personal Information</h1>
-
             {/* Contact */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Contact Information</CardTitle>
-                    <CardDescription>Your contact details</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
+            <AppPersonalCard
+                title="Contact Information"
+                description="Your contact details including address, phone, and website"
+            >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <Label htmlFor="name">Name</Label>
+                        <Input
+                            id="name"
+                            value={personalInfo.contact.name}
+                            onChange={(e) => setPersonalInfo(prev => prev ? {
+                                ...prev,
+                                contact: { ...prev.contact, name: e.target.value }
+                            } : null)}
+                        />
+                    </div>
+                    <div>
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                            id="email"
+                            type="email"
+                            value={personalInfo.contact.email}
+                            onChange={(e) => setPersonalInfo(prev => prev ? {
+                                ...prev,
+                                contact: { ...prev.contact, email: e.target.value }
+                            } : null)}
+                        />
+                    </div>
+                    <div>
+                        <Label htmlFor="phone">Phone</Label>
+                        <InputGroup className="[--radius:0.5rem]">
+                            <InputGroupAddon align="inline-start" className="px-4 py-2">
+                                <Phone className="size-4 text-muted-foreground" />
+                            </InputGroupAddon>
+                            <InputGroupInput
+                                id="phone"
+                                type="tel"
+                                value={personalInfo.contact.phone}
+                                onChange={(e) => setPersonalInfo(prev => prev ? {
+                                    ...prev,
+                                    contact: { ...prev.contact, phone: e.target.value }
+                                } : null)}
+                            />
+                        </InputGroup>
+                    </div>
+                    <div>
+                        <BadgeInput
+                            id="portfolio"
+                            label="Portfolio URLs"
+                            value={personalInfo.contact.portfolio_urls}
+                            onChange={(urls) => setPersonalInfo(prev => prev ? {
+                                ...prev,
+                                contact: { ...prev.contact, portfolio_urls: urls }
+                            } : null)}
+                            placeholder="Type URL and press ','"
+                            icon={Globe}
+                        />
+                    </div>
+                </div>
+
+                {/* Address Section */}
+                <div className="pt-4 border-t">
+                    <h3 className="text-sm font-medium mb-3">Address</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <Label htmlFor="name">Name</Label>
+                        <div className="md:col-span-2">
+                            <Label htmlFor="streetAddress">Street Address</Label>
                             <Input
-                                id="name"
-                                value={personalInfo.contact.name}
-                                onChange={(e) => setPersonalInfo(prev => prev ? {
-                                    ...prev,
-                                    contact: { ...prev.contact, name: e.target.value }
-                                } : null)}
-                            />
-                        </div>
-                        <div>
-                            <Label htmlFor="email">Email</Label>
-                            <Input
-                                id="email"
-                                type="email"
-                                value={personalInfo.contact.email}
-                                onChange={(e) => setPersonalInfo(prev => prev ? {
-                                    ...prev,
-                                    contact: { ...prev.contact, email: e.target.value }
-                                } : null)}
-                            />
-                        </div>
-                        <div>
-                            <Label htmlFor="phone">Phone</Label>
-                            <InputGroup className="[--radius:0.5rem]">
-                                <InputGroupAddon align="inline-start" className="px-4 py-2">
-                                    <Phone className="size-4 text-muted-foreground" />
-                                </InputGroupAddon>
-                                <InputGroupInput
-                                    id="phone"
-                                    type="tel"
-                                    value={personalInfo.contact.phone}
-                                    onChange={(e) => setPersonalInfo(prev => prev ? {
+                                id="streetAddress"
+                                value={personalInfo.contact.address?.streetAddress || ''}
+                                onChange={(e) => {
+                                    setPersonalInfo(prev => prev ? {
                                         ...prev,
-                                        contact: { ...prev.contact, phone: e.target.value }
-                                    } : null)}
-                                />
-                            </InputGroup>
+                                        contact: {
+                                            ...prev.contact,
+                                            address: { ...prev.contact.address, streetAddress: e.target.value }
+                                        }
+                                    } : null);
+                                }}
+                                placeholder="123 Main Street"
+                                className={showAddressValidation && !(personalInfo.contact.address?.streetAddress || '').trim() ? 'border-destructive' : ''}
+                            />
+                            {showAddressValidation && !(personalInfo.contact.address?.streetAddress || '').trim() && (
+                                <p className="text-xs text-destructive mt-1">Street address is required</p>
+                            )}
                         </div>
                         <div>
-                            <BadgeInput
-                                id="portfolio"
-                                label="Portfolio URLs"
-                                value={personalInfo.contact.portfolio_urls}
-                                onChange={(urls) => setPersonalInfo(prev => prev ? {
-                                    ...prev,
-                                    contact: { ...prev.contact, portfolio_urls: urls }
-                                } : null)}
-                                placeholder="Type URL and press ','"
-                                icon={Globe}
+                            <Label htmlFor="addressLocality">City</Label>
+                            <Input
+                                id="addressLocality"
+                                value={personalInfo.contact.address?.addressLocality || ''}
+                                onChange={(e) => {
+                                    setPersonalInfo(prev => prev ? {
+                                        ...prev,
+                                        contact: {
+                                            ...prev.contact,
+                                            address: { ...prev.contact.address, addressLocality: e.target.value }
+                                        }
+                                    } : null);
+                                }}
+                                placeholder="New York"
+                                className={showAddressValidation && !(personalInfo.contact.address?.addressLocality || '').trim() ? 'border-destructive' : ''}
+                            />
+                            {showAddressValidation && !(personalInfo.contact.address?.addressLocality || '').trim() && (
+                                <p className="text-xs text-destructive mt-1">City is required</p>
+                            )}
+                        </div>
+                        <div>
+                            <Label htmlFor="addressRegion">Region/State</Label>
+                            <Input
+                                id="addressRegion"
+                                value={personalInfo.contact.address?.addressRegion || ''}
+                                onChange={(e) => {
+                                    setPersonalInfo(prev => prev ? {
+                                        ...prev,
+                                        contact: {
+                                            ...prev.contact,
+                                            address: { ...prev.contact.address, addressRegion: e.target.value }
+                                        }
+                                    } : null);
+                                }}
+                                placeholder="NY"
+                                className={showAddressValidation && !(personalInfo.contact.address?.addressRegion || '').trim() ? 'border-destructive' : ''}
+                            />
+                            {showAddressValidation && !(personalInfo.contact.address?.addressRegion || '').trim() && (
+                                <p className="text-xs text-destructive mt-1">Region is required</p>
+                            )}
+                        </div>
+                        <div>
+                            <Label htmlFor="postalCode">Postal Code</Label>
+                            <Input
+                                id="postalCode"
+                                value={personalInfo.contact.address?.postalCode || ''}
+                                onChange={(e) => {
+                                    const noWhitespace = e.target.value.replace(/\s/g, '');
+                                    setPersonalInfo(prev => prev ? {
+                                        ...prev,
+                                        contact: {
+                                            ...prev.contact,
+                                            address: { ...prev.contact.address, postalCode: noWhitespace }
+                                        }
+                                    } : null);
+                                }}
+                                placeholder="10001"
+                                className={showAddressValidation && !(personalInfo.contact.address?.postalCode || '').replace(/\s/g, '') ? 'border-destructive' : ''}
+                            />
+                            {showAddressValidation && !(personalInfo.contact.address?.postalCode || '').replace(/\s/g, '') && (
+                                <p className="text-xs text-destructive mt-1">Postal code is required</p>
+                            )}
+                        </div>
+                        <div>
+                            <Label htmlFor="addressCountry">Country</Label>
+                            <AppCategoryCombobox
+                                id="addressCountry"
+                                value={personalInfo.contact.address?.addressCountry || ''}
+                                options={countryNames}
+                                onChange={(country) => {
+                                    setPersonalInfo(prev => prev ? {
+                                        ...prev,
+                                        contact: {
+                                            ...prev.contact,
+                                            address: { ...prev.contact.address, addressCountry: country }
+                                        }
+                                    } : null);
+                                }}
+                                placeholder="Select a country"
+                                allowCustomValue={false}
+                                error={showAddressValidation && !(personalInfo.contact.address?.addressCountry || '').trim() ? 'Country is required' : undefined}
                             />
                         </div>
                     </div>
+                </div>
 
-                    {/* Address Section */}
-                    <div className="pt-4 border-t">
-                        <h3 className="text-sm font-medium mb-3">Address</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="md:col-span-2">
-                                <Label htmlFor="streetAddress">Street Address *</Label>
-                                <Input
-                                    id="streetAddress"
-                                    value={personalInfo.contact.address?.streetAddress || ''}
-                                    onChange={(e) => {
-                                        setPersonalInfo(prev => prev ? {
-                                            ...prev,
-                                            contact: {
-                                                ...prev.contact,
-                                                address: { ...prev.contact.address, streetAddress: e.target.value }
-                                            }
-                                        } : null);
-                                    }}
-                                    placeholder="123 Main Street"
-                                    className={showAddressValidation && !(personalInfo.contact.address?.streetAddress || '').trim() ? 'border-destructive' : ''}
-                                />
-                                {showAddressValidation && !(personalInfo.contact.address?.streetAddress || '').trim() && (
-                                    <p className="text-xs text-destructive mt-1">Street address is required</p>
-                                )}
-                            </div>
-                            <div>
-                                <Label htmlFor="addressLocality">City *</Label>
-                                <Input
-                                    id="addressLocality"
-                                    value={personalInfo.contact.address?.addressLocality || ''}
-                                    onChange={(e) => {
-                                        setPersonalInfo(prev => prev ? {
-                                            ...prev,
-                                            contact: {
-                                                ...prev.contact,
-                                                address: { ...prev.contact.address, addressLocality: e.target.value }
-                                            }
-                                        } : null);
-                                    }}
-                                    placeholder="New York"
-                                    className={showAddressValidation && !(personalInfo.contact.address?.addressLocality || '').trim() ? 'border-destructive' : ''}
-                                />
-                                {showAddressValidation && !(personalInfo.contact.address?.addressLocality || '').trim() && (
-                                    <p className="text-xs text-destructive mt-1">City is required</p>
-                                )}
-                            </div>
-                            <div>
-                                <Label htmlFor="addressRegion">Region/State *</Label>
-                                <Input
-                                    id="addressRegion"
-                                    value={personalInfo.contact.address?.addressRegion || ''}
-                                    onChange={(e) => {
-                                        setPersonalInfo(prev => prev ? {
-                                            ...prev,
-                                            contact: {
-                                                ...prev.contact,
-                                                address: { ...prev.contact.address, addressRegion: e.target.value }
-                                            }
-                                        } : null);
-                                    }}
-                                    placeholder="NY"
-                                    className={showAddressValidation && !(personalInfo.contact.address?.addressRegion || '').trim() ? 'border-destructive' : ''}
-                                />
-                                {showAddressValidation && !(personalInfo.contact.address?.addressRegion || '').trim() && (
-                                    <p className="text-xs text-destructive mt-1">Region is required</p>
-                                )}
-                            </div>
-                            <div>
-                                <Label htmlFor="postalCode">Postal Code *</Label>
-                                <Input
-                                    id="postalCode"
-                                    value={personalInfo.contact.address?.postalCode || ''}
-                                    onChange={(e) => {
-                                        const noWhitespace = e.target.value.replace(/\s/g, '');
-                                        setPersonalInfo(prev => prev ? {
-                                            ...prev,
-                                            contact: {
-                                                ...prev.contact,
-                                                address: { ...prev.contact.address, postalCode: noWhitespace }
-                                            }
-                                        } : null);
-                                    }}
-                                    placeholder="10001"
-                                    className={showAddressValidation && !(personalInfo.contact.address?.postalCode || '').replace(/\s/g, '') ? 'border-destructive' : ''}
-                                />
-                                {showAddressValidation && !(personalInfo.contact.address?.postalCode || '').replace(/\s/g, '') && (
-                                    <p className="text-xs text-destructive mt-1">Postal code is required</p>
-                                )}
-                            </div>
-                            <div>
-                                <Label htmlFor="addressCountry">Country *</Label>
-                                <AppCategoryCombobox
-                                    id="addressCountry"
-                                    value={personalInfo.contact.address?.addressCountry || ''}
-                                    options={countryNames}
-                                    onChange={(country) => {
-                                        setPersonalInfo(prev => prev ? {
-                                            ...prev,
-                                            contact: {
-                                                ...prev.contact,
-                                                address: { ...prev.contact.address, addressCountry: country }
-                                            }
-                                        } : null);
-                                    }}
-                                    placeholder="Select a country"
-                                    allowCustomValue={false}
-                                    error={showAddressValidation && !(personalInfo.contact.address?.addressCountry || '').trim() ? 'Country is required' : undefined}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    <Button
-                        onClick={() => handleSave('contact', personalInfo.contact)}
-                        disabled={saving && editedField === 'contact'}
-                    >
-                        {saving && editedField === 'contact' ? <LoaderCircle className="animate-spin" /> : <Save />}
-                        Save Contact
-                    </Button>
-                </CardContent>
-            </Card>
+                <Button
+                    data-testid="saveContact"
+                    onClick={() => handleSave('contact', personalInfo.contact)}
+                    disabled={saving && editedField === 'contact'}
+                >
+                    {saving && editedField === 'contact' ? <LoaderCircle className="animate-spin" /> : <Save />}
+                    Save Contact
+                </Button>
+            </AppPersonalCard>
 
             {/* Constraints */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Job Constraints</CardTitle>
-                    <CardDescription>Your salary and location requirements</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="space-y-4">
-                        <div>
-                            <Label htmlFor="salary-amount">Minimum Salary</Label>
-                            <InputGroup className="[--radius:0.5rem]">
-                                <InputGroupAddon align="inline-start">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <InputGroupButton variant="ghost" className="!pl-3 !pr-2 text-sm min-w-[3rem]">
-                                                {personalInfo.constraints.salary_min.currency || '$'} <ChevronDown className="size-3 ml-1" />
-                                            </InputGroupButton>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="start" className="[--radius:0.5rem]">
-                                            <DropdownMenuItem onClick={() => handleCurrencyChange('$')}>$</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => handleCurrencyChange('€')}>€</DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </InputGroupAddon>
-                                <InputGroupInput
-                                    id="salary-amount"
-                                    type="number"
-                                    placeholder="Enter minimum salary"
-                                    value={personalInfo.constraints.salary_min.amount}
-                                    onChange={(e) => setPersonalInfo(prev => prev ? {
-                                        ...prev,
-                                        constraints: {
-                                            ...prev.constraints,
-                                            salary_min: { ...prev.constraints.salary_min, amount: Number(e.target.value) }
-                                        }
-                                    } : null)}
-                                />
-                            </InputGroup>
-                        </div>
-                        <div>
-                            <BadgeInput
-                                id="locations"
-                                label="Allowed Locations"
-                                value={personalInfo.constraints.locations_allowed}
-                                onChange={(locations) => setPersonalInfo(prev => prev ? {
-                                    ...prev,
-                                    constraints: {
-                                        ...prev.constraints,
-                                        locations_allowed: locations
-                                    }
-                                } : null)}
-                                placeholder="Type location and press ','"
-                                icon={MapPin}
-                            />
-                        </div>
-                    </div>
-                    <Button
-                        onClick={() => handleSave('constraints', personalInfo.constraints)}
-                        disabled={saving && editedField === 'constraints'}
-                    >
-                        {saving && editedField === 'constraints' ? <LoaderCircle className="animate-spin" /> : <Save />}
-                        Save Constraints
-                    </Button>
-                </CardContent>
-            </Card>
+            <AppPersonalCard
+                title="Job Constraints"
+                description="Your job search constraints including salary and location"
+            >
+                <Label htmlFor="salary-amount">Minimum Salary</Label>
+                <InputGroup className="[--radius:0.5rem]">
+                    <InputGroupAddon align="inline-start">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <InputGroupButton variant="ghost" className="!pl-3 !pr-2 text-sm min-w-[3rem]">
+                                    {personalInfo.constraints.salary_min.currency || '$'} <ChevronDown className="size-3 ml-1" />
+                                </InputGroupButton>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="[--radius:0.5rem]">
+                                <DropdownMenuItem onClick={() => handleCurrencyChange('$')}>$</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleCurrencyChange('€')}>€</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </InputGroupAddon>
+                    <InputGroupInput
+                        id="salary-amount"
+                        type="number"
+                        placeholder="Enter minimum salary"
+                        value={personalInfo.constraints.salary_min.amount}
+                        onChange={(e) => setPersonalInfo(prev => prev ? {
+                            ...prev,
+                            constraints: {
+                                ...prev.constraints,
+                                salary_min: { ...prev.constraints.salary_min, amount: Number(e.target.value) }
+                            }
+                        } : null)}
+                    />
+                </InputGroup>
+                <BadgeInput
+                    id="locations"
+                    label="Allowed Locations"
+                    value={personalInfo.constraints.locations_allowed}
+                    onChange={(locations) => setPersonalInfo(prev => prev ? {
+                        ...prev,
+                        constraints: {
+                            ...prev.constraints,
+                            locations_allowed: locations
+                        }
+                    } : null)}
+                    placeholder="Type location and press ','"
+                    icon={MapPin}
+                />
+                <Button
+                    onClick={() => handleSave('constraints', personalInfo.constraints)}
+                    disabled={saving && editedField === 'constraints'}
+                >
+                    {saving && editedField === 'constraints' ? <LoaderCircle className="animate-spin" /> : <Save />}
+                    Save Constraints
+                </Button>
+            </AppPersonalCard>
 
             {/* Preferences */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Job Preferences</CardTitle>
-                    <CardDescription>Your preferred roles and work environment</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="space-y-4">
-                        <div>
-                            <BadgeInput
-                                id="roles"
-                                label="Preferred Roles"
-                                value={personalInfo.preferences.roles}
-                                onChange={(roles) => setPersonalInfo(prev => prev ? {
-                                    ...prev,
-                                    preferences: { ...prev.preferences, roles }
-                                } : null)}
-                                placeholder="Type role and press ','"
-                                icon={Briefcase}
-                            />
-                        </div>
-                        <div>
-                            <BadgeInput
-                                id="seniority"
-                                label="Seniority Levels"
-                                value={personalInfo.preferences.seniority}
-                                onChange={(seniority) => setPersonalInfo(prev => prev ? {
-                                    ...prev,
-                                    preferences: { ...prev.preferences, seniority }
-                                } : null)}
-                                placeholder="Type level and press ','"
-                            />
-                        </div>
-                        <div>
-                            <BadgeInput
-                                id="company-size"
-                                label="Company Sizes"
-                                value={personalInfo.preferences.company_size}
-                                onChange={(company_size) => setPersonalInfo(prev => prev ? {
-                                    ...prev,
-                                    preferences: { ...prev.preferences, company_size }
-                                } : null)}
-                                placeholder="Type size and press ','"
-                                icon={Users}
-                            />
-                        </div>
-                        <div>
-                            <BadgeInput
-                                id="industries"
-                                label="Industries"
-                                value={personalInfo.preferences.industries}
-                                onChange={(industries) => setPersonalInfo(prev => prev ? {
-                                    ...prev,
-                                    preferences: { ...prev.preferences, industries }
-                                } : null)}
-                                placeholder="Type industry and press ','"
-                                icon={Building}
-                            />
-                        </div>
-                    </div>
-                    <Button
-                        onClick={() => handleSave('preferences', personalInfo.preferences)}
-                        disabled={saving && editedField === 'preferences'}
-                    >
-                        {saving && editedField === 'preferences' ? <LoaderCircle className="animate-spin" /> : <Save />}
-                        Save Preferences
-                    </Button>
-                </CardContent>
-            </Card>
-
-            {/* Skills */}
-            <Card>
-                <CardHeader className="flex flex-row items-center justify-between gap-2">
-                    <CardTitle>Your skills</CardTitle>
-                    <Button
-                        type="button"
-                        variant="default"
-                        size="icon"
-                        aria-label="Add skill"
-                        onClick={() => openSkillsSheetRef.current?.()}
-                        disabled={!canOpenSkillsSheet}
-                    >
-                        <Plus className="h-4 w-4" />
-                    </Button>
-                </CardHeader>
-                <CardContent>
-                    <AppSkillsEditor
-                        skills={personalInfo.skills}
-                        onChange={(nextSkills) => {
-                            setPersonalInfo(prev => prev ? { ...prev, skills: nextSkills } : prev);
-                        }}
-                        onPersist={persistSkills}
-                        onRegisterAddSkill={registerAddSkill}
-                    />
-                </CardContent>
-            </Card>
+            <AppPersonalCard
+                title="Job Preferences"
+                description="Your preferred roles and work environment"
+            >
+                <BadgeInput
+                    id="roles"
+                    label="Preferred Roles"
+                    value={personalInfo.preferences.roles}
+                    onChange={(roles) => setPersonalInfo(prev => prev ? {
+                        ...prev,
+                        preferences: { ...prev.preferences, roles }
+                    } : null)}
+                    placeholder="Type role and press ','"
+                    icon={Briefcase}
+                />
+                <BadgeInput
+                    id="seniority"
+                    label="Seniority Levels"
+                    value={personalInfo.preferences.seniority}
+                    onChange={(seniority) => setPersonalInfo(prev => prev ? {
+                        ...prev,
+                        preferences: { ...prev.preferences, seniority }
+                    } : null)}
+                    placeholder="Type level and press ','"
+                />
+                <BadgeInput
+                    id="company-size"
+                    label="Company Sizes"
+                    value={personalInfo.preferences.company_size}
+                    onChange={(company_size) => setPersonalInfo(prev => prev ? {
+                        ...prev,
+                        preferences: { ...prev.preferences, company_size }
+                    } : null)}
+                    placeholder="Type size and press ','"
+                    icon={Users}
+                />
+                <BadgeInput
+                    id="industries"
+                    label="Industries"
+                    value={personalInfo.preferences.industries}
+                    onChange={(industries) => setPersonalInfo(prev => prev ? {
+                        ...prev,
+                        preferences: { ...prev.preferences, industries }
+                    } : null)}
+                    placeholder="Type industry and press ','"
+                    icon={Building}
+                />
+                <Button
+                    onClick={() => handleSave('preferences', personalInfo.preferences)}
+                    disabled={saving && editedField === 'preferences'}
+                >
+                    {saving && editedField === 'preferences' ? <LoaderCircle className="animate-spin" /> : <Save />}
+                    Save Preferences
+                </Button>
+            </AppPersonalCard>
 
             {/* Experience */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Experience</CardTitle>
-                    <CardDescription>Your professional experience</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <AppExperienceEditor
-                        experience={personalInfo.experience}
-                        onChange={(items) => setPersonalInfo(prev => prev ? { ...prev, experience: items } : prev)}
-                        onPersist={persistExperience}
-                    />
-                </CardContent>
-            </Card>
+            <AppPersonalCard
+                title="Professional Experience"
+                description="Your professional experience"
+            >
+                <AppExperienceEditor
+                    experience={personalInfo.experience}
+                    onChange={(items) => setPersonalInfo(prev => prev ? { ...prev, experience: items } : prev)}
+                    onPersist={persistExperience}
+                />
+            </AppPersonalCard>
 
             {/* Education */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Education</CardTitle>
-                    <CardDescription>Your educational background</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <AppEducationEditor
-                        education={personalInfo.education}
-                        onChange={(items) => setPersonalInfo(prev => prev ? { ...prev, education: items } : prev)}
-                        onPersist={persistEducation}
-                    />
-                </CardContent>
-            </Card>
+            <AppPersonalCard
+                title="Education"
+                description="Your educational background"
+            >
+                <AppEducationEditor
+                    education={personalInfo.education}
+                    onChange={(items) => setPersonalInfo(prev => prev ? { ...prev, education: items } : prev)}
+                    onPersist={persistEducation}
+                />
+            </AppPersonalCard>
 
             {/* Eligibility */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Eligibility</CardTitle>
-                    <CardDescription>Work authorization and availability</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <AppEligibilityEditor
-                        eligibility={personalInfo.eligibility}
-                        onChange={(eligibility) => setPersonalInfo(prev => prev ? { ...prev, eligibility } : prev)}
-                        onPersist={persistEligibility}
-                        saving={saving && editedField === 'eligibility'}
-                    />
-                </CardContent>
-            </Card>
+            <AppPersonalCard
+                title="Eligibility"
+                description="Work authorization and availability"
+            >
+                <AppEligibilityEditor
+                    eligibility={personalInfo.eligibility}
+                    onChange={(eligibility) => setPersonalInfo(prev => prev ? { ...prev, eligibility } : prev)}
+                    onPersist={persistEligibility}
+                    saving={saving && editedField === 'eligibility'}
+                />
+            </AppPersonalCard>
 
             {/* Certifications */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Certifications</CardTitle>
-                    <CardDescription>Your professional certifications</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <AppCertificationEditor
-                        certifications={personalInfo.certifications}
-                        onChange={(items) => setPersonalInfo(prev => prev ? { ...prev, certifications: items } : prev)}
-                        onPersist={persistCertifications}
-                    />
-                </CardContent>
-            </Card>
+            <AppPersonalCard
+                title="Certifications"
+                description="Your professional certifications"
+            >
+                <AppCertificationEditor
+                    certifications={personalInfo.certifications}
+                    onChange={(items) => setPersonalInfo(prev => prev ? { ...prev, certifications: items } : prev)}
+                    onPersist={persistCertifications}
+                />
+            </AppPersonalCard>
 
             {/* Languages */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Languages</CardTitle>
-                    <CardDescription>Languages you speak</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <AppLanguagesEditor
-                        languages={personalInfo.languages_spoken}
-                        onChange={(items) => setPersonalInfo(prev => prev ? { ...prev, languages_spoken: items } : prev)}
-                        onPersist={persistLanguages}
-                    />
-                </CardContent>
-            </Card>
+            <AppPersonalCard
+                title="Languages Spoken"
+                description="Languages you speak"
+            >
+                <AppLanguagesEditor
+                    languages={personalInfo.languages_spoken}
+                    onChange={(items) => setPersonalInfo(prev => prev ? { ...prev, languages_spoken: items } : prev)}
+                    onPersist={persistLanguages}
+                />
+            </AppPersonalCard>
 
             {/* Exclusions */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Exclusions</CardTitle>
-                    <CardDescription>Things you want to avoid</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <AppExclusionsEditor
-                        exclusions={personalInfo.exclusions}
-                        onChange={(exclusions) => setPersonalInfo(prev => prev ? { ...prev, exclusions } : prev)}
-                        onSave={() => handleSave('exclusions', personalInfo.exclusions)}
-                        saving={saving && editedField === 'exclusions'}
-                    />
-                </CardContent>
-            </Card>
+            <AppPersonalCard
+                title="Exclusions"
+                description="Things you want to avoid"
+            >
+                <AppExclusionsEditor
+                    exclusions={personalInfo.exclusions}
+                    onChange={(exclusions) => setPersonalInfo(prev => prev ? { ...prev, exclusions } : prev)}
+                    onSave={() => handleSave('exclusions', personalInfo.exclusions)}
+                    saving={saving && editedField === 'exclusions'}
+                />
+            </AppPersonalCard>
 
             {/* Motivations */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Motivations</CardTitle>
-                    <CardDescription>What motivates you in your career</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <AppMotivationsEditor
-                        motivations={personalInfo.motivations}
-                        onChange={(items) => setPersonalInfo(prev => prev ? { ...prev, motivations: items } : prev)}
-                        onPersist={persistMotivations}
-                    />
-                </CardContent>
-            </Card>
+            <AppPersonalCard
+                title="Motivations"
+                description="What motivates you in your career"
+            >
+                <AppMotivationsEditor
+                    motivations={personalInfo.motivations}
+                    onChange={(items) => setPersonalInfo(prev => prev ? { ...prev, motivations: items } : prev)}
+                    onPersist={persistMotivations}
+                />
+            </AppPersonalCard>
 
             {/* Career Goals */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Career Goals</CardTitle>
-                    <CardDescription>Your long-term career objectives</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <AppCareerGoalsEditor
-                        careerGoals={personalInfo.career_goals}
-                        onChange={(items) => setPersonalInfo(prev => prev ? { ...prev, career_goals: items } : prev)}
-                        onPersist={persistCareerGoals}
-                    />
-                </CardContent>
-            </Card>
+            <AppPersonalCard
+                title="Career Goals"
+                description="Your long-term career objectives"
+            >
+                <AppCareerGoalsEditor
+                    careerGoals={personalInfo.career_goals}
+                    onChange={(items) => setPersonalInfo(prev => prev ? { ...prev, career_goals: items } : prev)}
+                    onPersist={persistCareerGoals}
+                />
+            </AppPersonalCard>
         </>
     );
 }

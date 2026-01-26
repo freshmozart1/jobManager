@@ -14,7 +14,7 @@
 /coverage
 
 # next.js
-/.next/
+/.next*/
 /out/
 
 # production
@@ -47,3 +47,10 @@ next-env.d.ts
 
 test-results
 app/playground/page.tsx
+
+# Playwright
+node_modules/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/

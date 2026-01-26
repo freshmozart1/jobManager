@@ -21,7 +21,7 @@ import type {
     DateFieldDefinition,
     DateStringFieldDefinition,
     SelectFieldDefinition,
-    TagsFieldDefinition,
+    SkillsFieldDefinition,
 } from "./types";
 
 type AppGenericItemFormProps<T> = {
@@ -50,11 +50,11 @@ function defaultIsDirty<T>(draft: T, initial: T, fields: FieldDefinition<T>[]): 
             const draftDate = draftVal instanceof Date ? draftVal.getTime() : draftVal;
             const initDate = initVal instanceof Date ? initVal.getTime() : initVal;
             if (draftDate !== initDate) return true;
-        } else if (field.type === "tags") {
-            const draftTags = Array.isArray(draftVal) ? draftVal : [];
-            const initTags = Array.isArray(initVal) ? initVal : [];
-            if (draftTags.length !== initTags.length) return true;
-            if (draftTags.some((t, i) => t !== initTags[i])) return true;
+        } else if (field.type === "skills") {
+            const draftSkills = Array.isArray(draftVal) ? draftVal : [];
+            const initSkills = Array.isArray(initVal) ? initVal : [];
+            if (draftSkills.length !== initSkills.length) return true;
+            if (draftSkills.some((t, i) => t !== initSkills[i])) return true;
         } else if (draftVal !== initVal) {
             return true;
         }
@@ -93,7 +93,7 @@ function validateRequired<T>(draft: T, fields: FieldDefinition<T>[]): Validation
                     errors[field.name] = `${field.label} is required.`;
                 }
                 break;
-            case "tags":
+            case "skills":
                 if (!Array.isArray(value) || value.length === 0) {
                     errors[field.name] = `${field.label} is required.`;
                 }
@@ -268,11 +268,11 @@ function renderField<T>(
             );
         }
 
-        case "tags": {
-            const tagsField = field as TagsFieldDefinition<T, keyof T>;
+        case "skills": {
+            const skillsField = field as SkillsFieldDefinition<T, keyof T>;
             return (
                 <div key={id} className="space-y-1.5">
-                    <Label htmlFor={id}>{tagsField.label}</Label>
+                    <Label htmlFor={id}>{skillsField.label}</Label>
                     <BadgeInput
                         id={id}
                         value={Array.isArray(value) ? value : []}
@@ -280,7 +280,7 @@ function renderField<T>(
                             setDraft((prev) => setFieldValue(prev, field.name, next));
                             if (next.length > 0) clearFieldError();
                         }}
-                        placeholder={tagsField.placeholder}
+                        placeholder={skillsField.placeholder}
                         disabled={disabled}
                     />
                     {error && <p className="text-sm text-destructive">{error}</p>}

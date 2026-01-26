@@ -136,16 +136,12 @@ const personalInformationArray = [
 ];
 
 let dbContext: Awaited<ReturnType<typeof connectTestDb>>;
-let dbName = '';
 
-test.beforeAll(async ({ }, testInfo) => {
-    dbName = `jobmanager_e2e_tests_${testInfo.project.name}`;
-    process.env.DATABASE_NAME = dbName;
+test.beforeAll(async () => {
     dbContext = await connectTestDb();
 });
 
 test.afterAll(async () => {
-    await dbContext.client.db(dbName).dropDatabase();
     await disconnectTestDb(dbContext);
 });
 
@@ -162,6 +158,9 @@ test.afterEach(async () => {
 
 test('Personal Information E2E Flow', async ({ page, baseURL }) => {
     // Navigate to the personal information page
+    await page.setExtraHTTPHeaders({
+        'x-test-db': dbContext.db.databaseName
+    })
     await page.goto(`${baseURL}/personal`);
     await page.getByLabel('Name').fill('Alex Morgan');
     await page.getByLabel('Email').fill('alex.morgan@example.com');

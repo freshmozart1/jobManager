@@ -3,13 +3,16 @@ import { useEffect, useState, Dispatch, SetStateAction } from "react";
 import useToUrl from "./useToUrl";
 import { normaliseExperienceItems, normaliseCertifications } from "@/lib/personal";
 
-export default function usePersonal(): [PersonalInformation | null, Dispatch<SetStateAction<PersonalInformation | null>>, boolean] {
+export default function usePersonal(xTestDb?: string): [PersonalInformation | null, Dispatch<SetStateAction<PersonalInformation | null>>, boolean] {
     const toUrl = useToUrl();
     const [personalInfo, setPersonalInfo] = useState<PersonalInformation | null>(null);
     const [loading, setLoading] = useState(true);
     useEffect(() => {
         const controller = new AbortController();
-        fetch(toUrl('/api/personal'), { signal: controller.signal })
+        fetch(toUrl('/api/personal'), {
+            headers: xTestDb ? { 'x-test-db': xTestDb } : undefined,
+            signal: controller.signal
+        })
             .then(res => res.json())
             .then((data: PersonalInformation) => {
                 const normalizedExperience = normaliseExperienceItems(data.experience);
@@ -36,7 +39,7 @@ export default function usePersonal(): [PersonalInformation | null, Dispatch<Set
         return () => {
             controller.abort('Component cleanup');
         };
-    }, [toUrl]);
+    }, [toUrl, xTestDb]);
 
     return [personalInfo, setPersonalInfo, loading];
 }

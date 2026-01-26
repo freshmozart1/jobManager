@@ -8,13 +8,13 @@ export type TestDbContext = {
 
 export async function connectTestDb(): Promise<TestDbContext> {
     const uri = process.env.MONGODB_CONNECTION_STRING;
-    const dbName = process.env.DATABASE_NAME;
-    if (!uri || !dbName) throw new Error('MongoDB connection details are required for contract tests');
+    if (!uri) throw new Error('MongoDB connection details are required for contract tests');
     const client = await new MongoClient(uri).connect();
-    return { client, db: client.db(dbName) };
+    return { client, db: client.db('jobmanager_test_' + process.env.TEST_WORKER_INDEX) };
 }
 
 export async function disconnectTestDb(context: TestDbContext) {
+    await context.db.dropDatabase();
     await context.client.close();
 }
 

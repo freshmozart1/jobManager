@@ -15,7 +15,7 @@ const PERSONAL_TYPES = [
     'career_goals'
 ];
 
-test.skip(!process.env.MONGODB_CONNECTION_STRING || !process.env.DATABASE_NAME, 'MongoDB connection env vars required');
+test.skip(!process.env.MONGODB_CONNECTION_STRING, 'MongoDB connection env vars required');
 
 let dbContext: Awaited<ReturnType<typeof connectTestDb>>;
 
@@ -38,7 +38,11 @@ test('GET /api/personal returns full personal information payload', async ({ bas
     const docs = await Promise.all(PERSONAL_TYPES.map(type => dbContext.db.collection('personalInformation').findOne({ type })));
     const api = await request.newContext({ baseURL });
     try {
-        const res = await api.get('/api/personal');
+        const res = await api.get('/api/personal', {
+            headers: {
+                'x-test-db': dbContext.db.databaseName
+            }
+        });
         expect(res.status(), await res.text()).toBe(200);
         const data = await res.json();
         for (let i = 0; i < PERSONAL_TYPES.length; i += 1) {
@@ -75,6 +79,9 @@ test('PUT /api/personal upserts and returns updated document', async ({ baseURL 
     const api = await request.newContext({ baseURL });
     try {
         const res = await api.put('/api/personal', {
+            headers: {
+                'x-test-db': dbContext.db.databaseName
+            },
             data: {
                 type: 'contact',
                 value: payload

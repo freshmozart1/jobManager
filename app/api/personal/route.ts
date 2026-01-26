@@ -13,10 +13,9 @@ type PersonalInformationDocument = {
     value: PersonalInformationContact | PersonalInformationEligibility | PersonalInformationConstraints | PersonalInformationPreferences | PersonalInformationExperience[] | PersonalInformationEducation[] | PersonalInformationCertification[] | PersonalInformationLanguageSpoken[] | PersonalInformationExclusions | PersonalInformationMotivation[] | PersonalInformationCareerGoal[];
 }
 
-async function init() {
-    const { DATABASE_NAME } = process.env;
-    if (!DATABASE_NAME) throw new NoDatabaseNameError();
-    const db = (await mongoPromise).db(DATABASE_NAME);
+async function init(databaseName: string | undefined): Promise<Db> {
+    if (!databaseName) throw new NoDatabaseNameError();
+    const db = (await mongoPromise).db(databaseName);
     await db.command({ ping: 1 }, { timeoutMS: 3000 });
     return db;
 };
@@ -25,7 +24,7 @@ export function OPTIONS() {
     return new NextResponse(null, { headers: corsHeaders() });
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
     return NextResponse.json(Object.fromEntries(await Promise.all([
         ['contact', NoPersonalInformationContactError.name],
         ['eligibility', NoPersonalInformationEligibilityError.name],
@@ -39,7 +38,7 @@ export async function GET() {
         ['motivations', NoPersonalInformationMotivationsError.name],
         ['career_goals', NoPersonalInformationCareerGoalsError.name]
     ].map(async ([key, errName]) => {
-        const doc = await init().then((db: Db) => db.collection<PersonalInformationDocument>('personalInformation').findOne({ type: key }));
+        const doc = await init(req.headers.get('x-test-db') || process.env.DATABASE_NAME).then((db: Db) => db.collection<PersonalInformationDocument>('personalInformation').findOne({ type: key }));
         if (!doc) throw { status: 400, statusText: errName };
         return [key, doc.value];
     }))), { headers: corsHeaders() });
@@ -60,7 +59,7 @@ export async function PUT(req: NextRequest) {
             { status: 400, statusText: InvalidPersonalInformationTypeError.name, headers: corsHeaders(origin) }
         );
     }
-    const updatedDoc = await init().then((db: Db) => {
+    const updatedDoc = await init(req.headers.get('x-test-db') || process.env.DATABASE_NAME).then((db: Db) => {
         return db.collection<PersonalInformationDocument>('personalInformation').findOneAndUpdate(
             { type },
             { $set: { value } },

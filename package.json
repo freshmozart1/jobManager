@@ -8,7 +8,7 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "test:contract": "DATABASE_NAME=jobmanager_contract_tests playwright test -c playwright.contract.config.ts",
+    "test:contract": "playwright test -c playwright.contract.config.ts",
     "test:e2e": "playwright test -c playwright.config.ts",
     "test:e2e:headed": "playwright test -c playwright.config.ts --headed",
     "test:e2e:ui": "playwright test -c playwright.config.ts --ui",

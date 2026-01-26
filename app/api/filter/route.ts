@@ -11,6 +11,7 @@ import z from "zod";
 import { safeCall } from "@/lib/safeCall";
 
 type ScrapeUrlDocument = {
+    _id: ObjectId;
     url: string;
 };
 
@@ -21,7 +22,9 @@ export function OPTIONS() {
 export async function POST(req: NextRequest) {
     const runner = new Runner({ workflowName: 'jobManager - filter jobs' });
     const { APIFY_TOKEN, DATABASE_NAME, OPENAI_API_KEY } = process.env;
-    const missingEnv = !DATABASE_NAME ? NoDatabaseNameError.name :
+    const headerDbName = req.headers.get('x-test-db') || undefined;
+    const effectiveDbName = headerDbName ?? DATABASE_NAME;
+    const missingEnv = !effectiveDbName ? NoDatabaseNameError.name :
         !OPENAI_API_KEY ? NoOpenAIKeyError.name :
             !APIFY_TOKEN ? NoApifyTokenError.name : null;
     if (missingEnv) return NextResponse.json({}, { status: 500, statusText: missingEnv });
@@ -29,7 +32,7 @@ export async function POST(req: NextRequest) {
     if (!rawPromptId || !ObjectId.isValid(rawPromptId)) return NextResponse.json({}, { status: 400, statusText: MissingPromptIdInRequestBodyError.name });
     if (!actorName) return NextResponse.json({}, { status: 400, statusText: NoActorQueryParameterError.name });
     const promptId = new ObjectId(rawPromptId);
-    const db = (await mongoPromise).db(DATABASE_NAME);
+    const db = (await mongoPromise).db(effectiveDbName);
     await db.command({ ping: 1 }, { timeoutMS: 3000 });
     const urls = await db.collection<ScrapeUrlDocument>("scrapeUrls").find().toArray().then(d => d.map(x => x.url));
     if (!urls.length) return NextResponse.json({}, { status: 500, statusText: NoScrapeUrlsError.name });
@@ -37,58 +40,40 @@ export async function POST(req: NextRequest) {
         .findOne({ _id: promptId }, { projection: { prompt: 1, updatedAt: 1 } });
     if (!promptDoc) return NextResponse.json({}, { status: 404, statusText: PromptNotFoundError.name });
     const apify = new ApifyClient({ token: APIFY_TOKEN });
-    const lastRun = await apify.actor(actorName).runs().list({ limit: 1, desc: true }).then(r => r.items[0]);
-    let scrapedJobs = lastRun && lastRun.startedAt.toDateString() === new Date().toDateString()
+    const [lastRun, skipIds] = await Promise.all([
+        apify.actor(actorName).runs().list({ limit: 1, desc: true }).then(r => r.items[0]),
+        db.collection<{ id: string }>('jobs').aggregate<{ id: string }>([
+            {
+                $match: {
+                    filteredBy: promptId,
+                    filteredAt: { $gte: promptDoc.updatedAt },
+                    'filterResult.error': { $exists: false }
+                },
+            },
+            {
+                $project: { _id: 0, id: 1 }
+            }
+        ]).toArray().then(docs => new Set(docs.map(x => x.id)))
+    ]);
+    const scrapedJobs = (lastRun && lastRun.startedAt.toDateString() === new Date().toDateString()
         ? (await apify.dataset<ScrapedJob>(lastRun.defaultDatasetId!).listItems()).items
         : (await apify.actor(actorName).call({ urls, count: 100 }).then(run =>
             apify.dataset<ScrapedJob>(run.defaultDatasetId!).listItems()
-        )).items;
-    const [withErrors, outdated, notOutdated, differentPrompt] = await Promise.all(
-        ([
-            [{ 'filterResult.error': { $exists: true } }, 'withErrors'],
-            [{ filteredBy: promptId, filteredAt: { $lt: promptDoc.updatedAt } }, 'outdated'],
-            [{ filteredBy: promptId, filteredAt: { $gte: promptDoc.updatedAt } }, 'notOutdated'],
-            [{ filteredBy: { $ne: promptId } }, 'differentPrompt']
-        ] as const).map(([filter]) =>
-            db.collection<{ id: string }>("jobs")
-                .find(filter, { projection: { id: 1 } })
-                .map(d => d.id).toArray()
-                .then(ids => new Set(ids))
-        )
-    );
-    const mustUpdate = (id: string) => withErrors.has(id) || outdated.has(id) || differentPrompt.has(id);
-    scrapedJobs = scrapedJobs.filter(j => mustUpdate(j.id) || !notOutdated.has(j.id));
+        )).items).filter(j => !skipIds.has(j.id));
     const jobs: Job[] = [], rejects: Job[] = [], errors: Job[] = [];
     if (!scrapedJobs.length) return NextResponse.json({ jobs, rejects, errors }, { status: 200, headers: corsHeaders(req.headers.get('origin') || undefined) });
-    let personalInformation: PersonalInformation;
-    try {
-        const response = await fetch(toUrl('/api/personal'));
-        if (!response.ok) {
-            return NextResponse.json({}, { status: response.status, statusText: response.statusText, headers: corsHeaders(req.headers.get('origin') || undefined) });
-        }
-        personalInformation = await response.json();
+    const personalInformationResponse = await fetch(toUrl('/api/personal'));
+    if (!personalInformationResponse.ok) {
+        console.error('Failed to fetch personal information:', personalInformationResponse.statusText);
+        return NextResponse.json({}, { status: personalInformationResponse.status, statusText: personalInformationResponse.statusText, headers: corsHeaders(req.headers.get('origin') || undefined) });
     }
-    catch (e: unknown) { //todo #80:
-        let status = 500;
-        let statusText = 'Error fetching personal information';
-        if (typeof e === 'object' && e !== null) {
-            if ('status' in e) {
-                const rawStatus = (e as { status?: unknown }).status;
-                if (typeof rawStatus === 'number') status = rawStatus;
-            }
-            if ('statusText' in e) {
-                const rawText = (e as { statusText?: unknown }).statusText;
-                if (typeof rawText === 'string') statusText = rawText;
-            }
-        }
-        return NextResponse.json({}, { status, statusText, headers: corsHeaders(req.headers.get('origin') || undefined) });
-    }
+    const personalInformation: PersonalInformation = await personalInformationResponse.json();
     const runTrace = startAgentRun({
         agent: 'filter',
-        promptVersion: promptDoc.updatedAt.toISOString(),
+        promptVersion: promptId.toString(),
         input: { jobsCount: scrapedJobs.length, promptId }
     });
-    const scrapedJobChunks = chunkArray(scrapedJobs, 5);
+    const scrapedJobChunks = chunkArray(scrapedJobs, 1);
     const settled = await Promise.allSettled(scrapedJobChunks.map((chunk, chunkIndex) =>
         safeCall<Job[]>(`Filter chunk ${chunkIndex + 1}`, async () => {
             const agentOutput = z.object({ output: z.array(z.boolean()) });
@@ -103,7 +88,7 @@ export async function POST(req: NextRequest) {
                         name: 'next_job',
                         description: 'Get next job or null.',
                         parameters: z.object({}),
-                        execute: () => jobIndex < chunk.length ? chunk[jobIndex++] : (jobIndex = 0, null)
+                        execute: () => jobIndex < chunk.length ? chunk[jobIndex++] : null
                     }), tool({
                         name: 'get_profile',
                         description: 'Return applicant profile.',
@@ -146,11 +131,11 @@ export async function POST(req: NextRequest) {
         }
     }
     console.log(`Filtered jobs: ${jobs.length} accepted, ${rejects.length} rejected, ${errors.length} errors.`);
-    await Promise.all([...jobs, ...rejects, ...errors].map(j =>
-        mustUpdate(j.id)
-            ? db.collection<Job>('jobs').updateOne({ id: j.id }, { $set: j })
-            : db.collection<Job>('jobs').insertOne({ ...j })
-    ));
+    await Promise.all([...jobs, ...rejects, ...errors].map(job => db.collection<Job>('jobs').updateOne(
+        { id: job.id },
+        { $set: job },
+        { upsert: true }
+    )));
     completeAgentRun(runTrace, {
         output: { accepted: jobs.length, rejected: rejects.length, errors: errors.length }
     });

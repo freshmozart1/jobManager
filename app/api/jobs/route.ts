@@ -4,10 +4,29 @@ import { NextResponse } from "next/server";
 import { corsHeaders } from "@/lib/cors";
 import { Job } from "@/types";
 
+/**
+ * Handles CORS preflight requests for the jobs API route.
+ */
 export function OPTIONS() {
     return new NextResponse(null, { headers: corsHeaders() });
 }
 
+/**
+ * Returns jobs, optionally filtered by `filterResult`.
+ *
+ * Query params:
+ * - `filterResult=true|false|error|undefined`
+ * - `filter=relevant` (alias for `filterResult=true`)
+ *
+ * Behavior:
+ * - `true` => `filterResult: true`
+ * - `false` => `filterResult: false`
+ * - `error` => `filterResult.error` exists
+ * - `undefined` => `filterResult` missing
+ * - otherwise returns all jobs
+ *
+ * Uses CORS headers based on the request `origin`.
+ */
 export async function GET(req: Request) {
     const DATABASE_NAME = process.env.DATABASE_NAME;
     if (!DATABASE_NAME) return NextResponse.json({}, { status: 500, statusText: NoDatabaseNameError.name });

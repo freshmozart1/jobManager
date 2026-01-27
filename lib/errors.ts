@@ -63,13 +63,6 @@ export class MissingSortOrOrderQueryParameterError extends Error {
     }
 }
 
-export class MissingPromptIdInRequestBodyError extends Error {
-    constructor() {
-        super('Missing promptId in request body');
-        this.name = 'MissingPromptIdInRequestBodyError';
-    }
-}
-
 export class NoPersonalInformationContactError extends Error {
     constructor() {
         super('No contact information found in personalInformation collection');
@@ -144,13 +137,6 @@ export class NoPersonalInformationCareerGoalsError extends Error {
     constructor() {
         super('No career goals information found in personalInformation collection');
         this.name = 'NoPersonalInformationCareerGoalsError';
-    }
-}
-
-export class PromptNotFoundError extends Error {
-    constructor() {
-        super('Prompt not found for the specified agent type');
-        this.name = 'PromptNotFoundError';
     }
 }
 

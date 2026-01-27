@@ -12,9 +12,6 @@ Job Manager is a web application that scrapes, stores, and displays job listings
 /app                 # Next.js App Router pages and API routes
   /api               # API endpoints
     /jobs            # Job-related endpoints
-    /prompts         # AI prompt endpoints
-    /filter          # Job filtering endpoints
-    /mock            # Mock data endpoints
   /jobs              # Job listing pages
   /search            # Search interface
   layout.tsx         # Root layout

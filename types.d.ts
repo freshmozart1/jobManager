@@ -178,17 +178,6 @@ export type PersonalInformation = {
     career_goals: PersonalInformationCareerGoal[];
 };
 
-export type AgentType = 'filter' | 'writer' | 'evaluator';
-
-export type PromptDocument = {
-    _id: ObjectId;
-    agentType: AgentType;
-    name: string;
-    createdAt: Date;
-    updatedAt: Date;
-    prompt: string;
-};
-
 export type AgentRunRetryOptions = {
     retries?: number;
     baseDelayMs?: number;

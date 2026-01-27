@@ -62,10 +62,12 @@ export type CvArtifact = {
 
 export type JobArtifact = CoverLetterArtifact | CvArtifact;
 
-export type Job = ScrapedJob & {
+export type FilteredJob = ScrapedJob & {
     filteredAt: Date;
     filterResult: boolean | { error: string };
-    filteredBy: ObjectId;
+};
+
+export type Job = FilteredJob & {
     appliedAt?: Date;
     artifacts?: JobArtifact[];
 };

@@ -125,7 +125,6 @@ export async function POST(req: NextRequest) {
                     ...job,
                     filteredAt: new Date(),
                     filterResult: { error: `Chunk error: ${String(r.reason)}` },
-                    filteredBy: promptId
                 });
             }
         }

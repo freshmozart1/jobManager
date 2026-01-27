@@ -36,13 +36,7 @@
     "**/*.tsx",
     "next-env.d.ts",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
-    ".next-chromium/types/**/*.ts",
-    ".next-chromium/dev/types/**/*.ts",
-    ".next-firefox/types/**/*.ts",
-    ".next-firefox/dev/types/**/*.ts",
-    ".next-webkit/types/**/*.ts",
-    ".next-webkit/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

@@ -41,6 +41,49 @@ export type ScrapedJob = {
     companyDescription?: string | undefined;
 };
 
+export type ScrapedJobEmbeddingFields = Pick<ScrapedJob,
+    'title'
+    | 'location'
+    | 'salaryInfo'
+    | 'salary'
+    | 'benefits'
+    | 'descriptionText'
+    | 'seniorityLevel'
+    | 'employmentType'
+>;
+
+export type EmbeddingVector = number[];
+
+export type JobFeedbackLabel = 'like' | 'dislike';
+
+export type JobFeedback = {
+    userId: string;
+    jobId: string;
+    label: JobFeedbackLabel;
+    job: ScrapedJobEmbeddingFields;
+    createdAt: Date;
+    updatedAt: Date;
+};
+
+export type JobEmbedding = {
+    userId: string;
+    jobId: string;
+    model: string;
+    embedding: EmbeddingVector;
+    createdAt: Date;
+    updatedAt: Date;
+};
+
+export type ComparisonVectors = {
+    userId: string;
+    model: string;
+    positive?: EmbeddingVector | null;
+    negative?: EmbeddingVector | null;
+    likesCount: number;
+    dislikesCount: number;
+    updatedAt: Date;
+};
+
 export type JobArtifactType = 'cover-letter' | 'cv';
 
 export type CoverLetterArtifact = {
@@ -70,6 +113,10 @@ export type FilteredJob = ScrapedJob & {
 export type Job = FilteredJob & {
     appliedAt?: Date;
     artifacts?: JobArtifact[];
+};
+
+export type JobDocument = Job & {
+    userId: string;
 };
 
 

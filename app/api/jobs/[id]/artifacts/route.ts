@@ -3,9 +3,10 @@ import { JOB_ARTIFACT_TYPES } from "@/lib/constants";
 import { corsHeaders } from "@/lib/cors";
 import { InvalidArtifactTypeError, JobNotFoundError, NoDatabaseNameError } from "@/lib/errors";
 import mongoPromise from "@/lib/mongodb";
-import { Job, JobArtifact, JobArtifactType } from "@/types";
+import { JobArtifact, JobArtifactType, JobDocument } from "@/types";
 import { CvModel, isValidYYYYMM } from "@/lib/cvModel";
 import { NextRequest, NextResponse } from "next/server";
+import { getDatabaseName, getUserId } from "@/lib/request";
 
 export function OPTIONS() {
     return new NextResponse(null, { headers: corsHeaders() });
@@ -182,8 +183,8 @@ async function upsertArtifact(
     { params }: { params: Promise<{ id: string }> },
     parseBody: () => Promise<ArtifactRequestBody>
 ) {
-    const DATABASE_NAME = process.env.DATABASE_NAME;
-    if (!DATABASE_NAME) {
+    const databaseName = getDatabaseName(req);
+    if (!databaseName) {
         return NextResponse.json({}, { status: 500, statusText: NoDatabaseNameError.name });
     }
 
@@ -215,14 +216,15 @@ async function upsertArtifact(
         }
     }
 
-    const db = (await mongoPromise).db(DATABASE_NAME);
+    const db = (await mongoPromise).db(databaseName);
     await db.command({ ping: 1 }, { timeoutMS: 3000 });
 
     const { id } = await params;
+    const userId = getUserId(req);
 
-    const job = await db.collection<Job>('jobs').findOne(
-        { id },
-        { projection: { _id: 0, id: 1, artifacts: 1 } }
+    const job = await db.collection<JobDocument>('jobs').findOne(
+        { userId, id },
+        { projection: { _id: 0, userId: 0, id: 1, artifacts: 1 } }
     );
 
     if (!job) {
@@ -255,8 +257,8 @@ async function upsertArtifact(
 
     if (existingArtifact) {
         // Update existing artifact using array filters
-        await db.collection<Job>('jobs').updateOne(
-            { id },
+        await db.collection<JobDocument>('jobs').updateOne(
+            { userId, id },
             {
                 $set: {
                     'artifacts.$[elem]': artifact
@@ -268,8 +270,8 @@ async function upsertArtifact(
         );
     } else {
         // Push new artifact to array (or initialize array if it doesn't exist)
-        await db.collection<Job>('jobs').updateOne(
-            { id },
+        await db.collection<JobDocument>('jobs').updateOne(
+            { userId, id },
             {
                 $push: {
                     artifacts: artifact

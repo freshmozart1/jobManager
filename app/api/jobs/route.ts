@@ -2,7 +2,8 @@ import { NoDatabaseNameError } from "@/lib/errors";
 import mongoPromise from "@/lib/mongodb";
 import { NextResponse } from "next/server";
 import { corsHeaders } from "@/lib/cors";
-import { Job } from "@/types";
+import { JobDocument } from "@/types";
+import { getDatabaseName, getUserId } from "@/lib/request";
 
 /**
  * Handles CORS preflight requests for the jobs API route.
@@ -28,11 +29,12 @@ export function OPTIONS() {
  * Uses CORS headers based on the request `origin`.
  */
 export async function GET(req: Request) {
-    const DATABASE_NAME = process.env.DATABASE_NAME;
-    if (!DATABASE_NAME) return NextResponse.json({}, { status: 500, statusText: NoDatabaseNameError.name });
-    const db = (await mongoPromise).db(DATABASE_NAME);
+    const databaseName = getDatabaseName(req);
+    if (!databaseName) return NextResponse.json({}, { status: 500, statusText: NoDatabaseNameError.name });
+    const db = (await mongoPromise).db(databaseName);
     await db.command({ ping: 1 }, { timeoutMS: 3000 });
     const origin = req.headers.get('origin') || undefined;
+    const userId = getUserId(req);
 
     // Parse query parameters
     const url = new URL(req.url);
@@ -40,7 +42,7 @@ export async function GET(req: Request) {
     const filterAlias = url.searchParams.get('filter'); // e.g., filter=relevant
 
     // Build MongoDB query based on filterResult parameter
-    const query: Record<string, boolean | { $exists: boolean } | { error: { $exists: boolean } }> = {};
+    const query: Record<string, boolean | string | { $exists: boolean } | { error: { $exists: boolean } }> = { userId };
     const filterParam = filterResultParam ?? (filterAlias === 'relevant' ? 'true' : undefined);
     if (filterParam === 'true') {
         query.filterResult = true;
@@ -54,7 +56,7 @@ export async function GET(req: Request) {
     // If filterParam is null or any other value, return all jobs (empty query)
 
     return NextResponse.json(
-        await db.collection<Job>('jobs').find(query, { projection: { _id: 0 } }).toArray(),
+        await db.collection<JobDocument>('jobs').find(query, { projection: { _id: 0, userId: 0 } }).toArray(),
         { headers: corsHeaders(origin) }
     );
 }

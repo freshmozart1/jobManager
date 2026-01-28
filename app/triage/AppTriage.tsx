@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { ScrapedJob } from "@/types";
 import { cn } from "@/lib/utils";
+import useToUrl from "@/hooks/useToUrl";
 
 const ACTOR_NAME = 'curious_coder/linkedin-jobs-scraper';
 const CARD_OFFSET_Y = 12;
@@ -21,35 +22,62 @@ export default function AppTriage() {
     const [jobs, setJobs] = useState<ScrapedJob[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [fetchState, setFetchState] = useState<FetchState>({ status: 'idle' });
+    const toUrl = useToUrl();
 
     useEffect(() => {
         let isMounted = true;
-        setFetchState({ status: 'loading' });
-        fetch(`/api/jobs/scrape?actorName=${encodeURIComponent(ACTOR_NAME)}&count=10`)
-            .then(async res => {
-                const text = await res.text();
-                if (!res.ok) throw new Error(text || 'Failed to load jobs');
-                return JSON.parse(text) as ScrapedJob[];
-            })
-            .then(data => {
+        void (async () => {
+            setFetchState({ status: 'loading' });
+            try {
                 if (!isMounted) return;
-                setJobs(data.slice(0, 10));
+                const response = await fetch(
+                    toUrl(`/api/jobs/scrape?actorName=${encodeURIComponent(ACTOR_NAME)}&count=10`)
+                );
+                const text = await response.text();
+                if (!response.ok) throw new Error(text || 'Failed to load jobs');
+                const scrapedJobs = JSON.parse(text) as ScrapedJob[];
+
+                const filterResponses = await Promise.all(
+                    scrapedJobs.map(async (job, sji2) => {
+                        if (!(new Set(
+                            Array.from({ length: scrapedJobs.length }, (_, i) => i)
+                                .sort(() => Math.random() - 0.5)
+                                .slice(0, Math.floor(scrapedJobs.length / 2))
+                        )).has(sji2)) return { index: sji2, filterResult: null };
+                        try {
+                            const filterResponse = await fetch(toUrl('/api/jobs/filter'), {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ job })
+                            });
+                            if (!filterResponse.ok) return { index: sji2, filterResult: null };
+                            return {
+                                index: sji2,
+                                filterResult: (JSON.parse(await filterResponse.text()) as { filterResult?: boolean }).filterResult ?? null
+                            };
+                        } catch {
+                            return { index: sji2, filterResult: null };
+                        }
+                    })
+                );
+                setJobs(scrapedJobs.filter((_, sji1) => ((filterResponses).find(item => item.index === sji1))?.filterResult === false ? false : true));
                 setFetchState({ status: 'ready' });
-            })
-            .catch(error => {
+            } catch (error) {
                 if (!isMounted) return;
-                setFetchState({ status: 'error', message: error?.message ?? 'Failed to load jobs' });
-            });
+                setFetchState({ status: 'error', message: (error as Error)?.message ?? 'Failed to load jobs' });
+            }
+        })();
         return () => {
             isMounted = false;
         };
-    }, []);
+    }, [toUrl]);
 
     const remainingJobs = useMemo(() => jobs.slice(currentIndex), [jobs, currentIndex]);
-    const activeJob = remainingJobs[0];
 
     const handleFeedback = (job: ScrapedJob, label: FeedbackLabel) => {
-        void fetch('/api/feedback', {
+        void fetch(toUrl('/api/feedback'), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -142,7 +170,7 @@ export default function AppTriage() {
                 </div>
             )}
 
-            {activeJob && fetchState.status === 'ready' && (
+            {remainingJobs[0] && fetchState.status === 'ready' && (
                 <div className="text-sm text-muted-foreground">{currentIndex + 1} / {jobs.length} reviewed</div>
             )}
         </div>
